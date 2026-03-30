@@ -1,9 +1,9 @@
 #include <stdint.h>
 
 class MnemonicGenerator {
-    private:
-    uint8_t wordCount;
+private:
+  uint8_t wordCount;
 
-    public:
-    MnemonicGenerator(const uint8_t words);
+public:
+  // MnemonicGenerator(const uint8_t words);
 };

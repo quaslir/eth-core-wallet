@@ -6,19 +6,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
 src/main.cpp
-src/mnemonic.cpp)
+src/mnemonic.cpp
+src/utils.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 if(NOT CMAKE_BUILD_TYPE)
-set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
+set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build" FORCE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 target_compile_options(${PROJECT_NAME} PRIVATE
-        -Wall -Wextra -Wpedantic -Werror
+        -Wall -Wextra -Wpedantic -Werror -g
         -Wshadow -Wnon-virtual-dtor -Wold-style-cast
         -Wcast-align -Wunused-parameter
         -fstack-protector-strong
@@ -43,6 +44,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CPPCHECK "${CPPCHECK_COMMAN
 endif()
 endif()
 
+file(GLOB_RECURSE ALL_FILES "src/*.cpp" "include/*.hpp")
 find_program(CLANG_FORMAT_EXE NAMES "clang-format")
 
 if(CLANG_FORMAT_EXE)
@@ -52,3 +54,6 @@ COMMAND ${CLANG_FORMAT_EXE} -i -style=LLVM ${ALL_FILES}
 COMMENT "Formatting all source files with clang format..."
 )
 endif()
+
+find_package(OpenSSL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto)
