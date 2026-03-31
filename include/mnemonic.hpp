@@ -8,9 +8,9 @@ private:
   crypto_utils::Hashes hashes;
 
   std::vector<uint8_t> genNumber(size_t bytes) const;
-  std::vector<uint8_t> createKey(std::vector<uint8_t> &&randNumber, std::vector<bool> &checkSum);
-
+  std::vector<uint8_t> createMnemonic(std::vector<uint8_t> &&randNumber, std::vector<bool> &&checkSum);
+  std::vector<uint8_t> createSalt(void);
 public:
   MnemonicGenerator();
-  void generateSeedPhrase(uint16_t bits);
+  std::vector<uint8_t> generateSeed(uint16_t bits);
 };

@@ -4,6 +4,7 @@
 #include <vector>
 int main(void) {
   MnemonicGenerator mem;
-  mem.generateSeedPhrase(256);
+  std::vector<uint8_t> seed = mem.generateSeed(256);
+
   return 0;
 }

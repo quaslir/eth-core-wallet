@@ -5,8 +5,8 @@
 #include "bip39.hpp"
 MnemonicGenerator::MnemonicGenerator() {}
 
-std::vector<uint8_t> MnemonicGenerator::createKey(std::vector<uint8_t> &&randNumber,
-                                  std::vector<bool>&checkSum){
+std::vector<uint8_t> MnemonicGenerator::createMnemonic(std::vector<uint8_t> &&randNumber,
+                                  std::vector<bool>&&checkSum){
 std::vector<bool> seed;
 seed.reserve(randNumber.size() * 8 + checkSum.size());
 
@@ -28,6 +28,7 @@ for(size_t i = 0; i < seed.size(); i+=11) {
   indexes.push_back(index);
 }
 
+OPENSSL_cleanse(randNumber.data(), randNumber.size());
 std::vector<std::uint8_t> mnemonic;
 
 for(size_t i = 0; i < indexes.size(); i++) {
@@ -38,18 +39,25 @@ for(size_t i = 0; i < indexes.size(); i++) {
   }
 }
 
-for (const auto & c : mnemonic) std::cout << c;
-
+OPENSSL_cleanse(indexes.data(), indexes.size() * sizeof(uint16_t));
 return mnemonic;
 }
 
-void MnemonicGenerator::generateSeedPhrase(uint16_t bits) {
+std::vector<uint8_t> MnemonicGenerator::generateSeed(uint16_t bits) {
   size_t bytes = bits / 8;
   int checkSumBits = bits / 32;
   std::vector<uint8_t> randNumber = genNumber(bytes);
   std::vector<uint8_t> hash = hashes.sha256(randNumber);
+
   std::vector<bool> checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
-  createKey(std::move(randNumber),checksum);
+  OPENSSL_cleanse(hash.data(), hash.size());
+  std::vector<uint8_t> mnemonic = createMnemonic(std::move(randNumber),std::move(checksum));
+
+  std::vector<uint8_t> salt = createSalt();
+
+  std::vector<uint8_t> masterseed = hashes.PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
+  OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
+  return masterseed;
 }
 
 std::vector<uint8_t> MnemonicGenerator::genNumber(size_t bytes) const {
@@ -61,4 +69,13 @@ std::vector<uint8_t> MnemonicGenerator::genNumber(size_t bytes) const {
   }
 
   return buf;
+}
+
+std::vector<uint8_t> MnemonicGenerator::createSalt(void) {
+std::string_view view = "mnemonic";
+std::vector<uint8_t> salt;
+
+salt.insert(salt.end(), view.begin(), view.end());
+
+return salt;
 }
