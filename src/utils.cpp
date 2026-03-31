@@ -31,5 +31,22 @@ std::vector<uint8_t> Hashes::sha256(const std::vector<uint8_t> &msg) {
 
   return hash;
 }
+std::vector<uint8_t> Hashes::PBKDF2_HMAC_SHA512(std::vector<uint8_t>  &data, std::vector<uint8_t>  & salt, int iter) const {
+std::vector<uint8_t> out (64);
+PKCS5_PBKDF2_HMAC(reinterpret_cast<char *> (data.data()), static_cast<int>(data.size()), 
+reinterpret_cast<unsigned char*>(salt.data()), static_cast<int>(salt.size()), iter, EVP_sha512(), 
+static_cast<int>(out.size()), reinterpret_cast<unsigned char *>(out.data()));
 
+return out;
+}
+
+std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits) {
+  std::vector<bool> checksum(checkSumBits);
+
+  for(int i = 0; i < checkSumBits; i++) {
+    checksum[i] = (byte >> (7 - i)) & 1;
+  }
+
+  return checksum;
+}
 } // namespace crypto_utils

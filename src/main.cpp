@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 int main(void) {
-MnemonicGenerator mem;
-mem.generateSeedPhrase(256);
+  MnemonicGenerator mem;
+  mem.generateSeedPhrase(256);
   return 0;
 }

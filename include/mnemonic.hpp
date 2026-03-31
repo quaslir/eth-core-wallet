@@ -1,15 +1,15 @@
-#include <stdint.h>
-#include <vector>
-#include <utils.hpp>
 #include <openssl/rand.h>
-
+#include <stdint.h>
+#include "utils.hpp"
+#include <vector>
+#include <string_view>
 class MnemonicGenerator {
 private:
-std::vector<uint16_t> key;
-crypto_utils::Hashes hashes;
+  crypto_utils::Hashes hashes;
 
-std::vector<uint8_t> genNumber(size_t bytes) const;
-void createKey(std::vector<uint8_t> && randNumber, uint8_t checkSum);
+  std::vector<uint8_t> genNumber(size_t bytes) const;
+  std::vector<uint8_t> createKey(std::vector<uint8_t> &&randNumber, std::vector<bool> &checkSum);
+
 public:
   MnemonicGenerator();
   void generateSeedPhrase(uint16_t bits);

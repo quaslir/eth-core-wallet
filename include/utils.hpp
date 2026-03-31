@@ -2,9 +2,8 @@
 #include <stdint.h>
 #include <vector>
 extern "C" {
-#include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 }
 
 namespace crypto_utils {
@@ -33,6 +32,9 @@ private:
 public:
   Hashes();
   std::vector<uint8_t> sha256(const std::vector<uint8_t> &msg);
+  std::vector<uint8_t> PBKDF2_HMAC_SHA512(std::vector<uint8_t>  &data, std::vector<uint8_t>  & salt, int iter) const; 
 };
+
+std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits);
 
 } // namespace crypto_utils
