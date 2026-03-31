@@ -32,16 +32,21 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 find_program(CPPCHECK_EXE NAMES "cppcheck")
 
 if(CPPCHECK_EXE)
-
-set(CPPCHECK_COMMAND
-${CPPCHECK_EXE}
-"--enable=all"
-"--suppress=missingIncludeSystem"
-)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CPPCHECK "${CPPCHECK_COMMAND}")
-
+    file(GLOB_RECURSE CPPCHECK_SOURCES "src/*.cpp" "include/*.hpp")
+    
+    add_custom_target(cppcheck
+        COMMAND ${CPPCHECK_EXE}
+            --enable=all
+            --std=c++20
+            --inconclusive
+            --suppress=missingIncludeSystem
+            --inline-suppr
+            -I ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CPPCHECK_SOURCES}
+        COMMENT "Running static analysis with cppcheck..."
+    )
 endif()
+
 endif()
 
 file(GLOB_RECURSE ALL_FILES "src/*.cpp" "include/*.hpp")

@@ -1,3 +1,4 @@
+#pragma once
 #include <memory>
 #include <stdint.h>
 #include <vector>
@@ -32,9 +33,12 @@ private:
 public:
   Hashes();
   std::vector<uint8_t> sha256(const std::vector<uint8_t> &msg);
-  std::vector<uint8_t> PBKDF2_HMAC_SHA512(std::vector<uint8_t>  &data, std::vector<uint8_t>  & salt, int iter) const; 
+  static std::vector<uint8_t> PBKDF2_HMAC_SHA512(std::vector<uint8_t> &data,
+                                                 std::vector<uint8_t> &salt,
+                                                 int iter);
 };
-
+std::vector<uint8_t> HMAC_SHA512(std::string_view key,
+                                 const std::vector<uint8_t> &data);
 std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits);
 
 } // namespace crypto_utils
