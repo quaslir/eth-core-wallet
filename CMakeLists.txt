@@ -9,9 +9,12 @@ src/main.cpp
 src/mnemonic.cpp
 src/utils.cpp)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SECP256K1 REQUIRED libsecp256k1)
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE include)
+target_include_directories(${PROJECT_NAME} PRIVATE include ${SECP256K1_INCLUDE_DIRS})
 
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build" FORCE)
@@ -61,4 +64,4 @@ COMMENT "Formatting all source files with clang format..."
 endif()
 
 find_package(OpenSSL REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto)
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto ${SECP256K1_LDFLAGS})

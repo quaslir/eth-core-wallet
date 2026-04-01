@@ -4,8 +4,9 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-               "/opt/homebrew/opt/openssl@3/include",
-                "/usr/local/include"
+    "/opt/homebrew/opt/openssl@3/include",
+    "/opt/homebrew/opt/secp256k1/include",
+    "/opt/homebrew/include"
             ],
             "defines": [],
             "compilerPath": "/opt/homebrew/opt/llvm/bin/clang",

@@ -68,4 +68,27 @@ std::vector<uint8_t> HMAC_SHA512(std::string_view key,
 
   return out;
 }
+
+std::vector<uint8_t> HMAC_SHA512(const std::vector<uint8_t> &key,
+                                 const std::vector<uint8_t> &data) {
+  std::vector<uint8_t> out(64);
+  unsigned int len;
+  if (!HMAC(EVP_sha512(), key.data(), static_cast<int>(key.size()), data.data(),
+            static_cast<int>(data.size()), out.data(), &len)) {
+    throw std::runtime_error("OpenSSL: HMAC_SHA512 failed");
+  }
+
+  return out;
+}
+
+
+void split_key(const std::vector<uint8_t>& master_private_key, std::vector<uint8_t> & private_key, std::vector<uint8_t> &chain_key) {
+
+    if(master_private_key.size() != 64) {
+        throw std::invalid_argument("Master key must be exactly 64 bytes");
+    }
+
+std::copy(master_private_key.begin() + 32,master_private_key.begin(), private_key.begin());
+std::copy(master_private_key.begin() + 32, master_private_key.end(), chain_key.begin());
+}
 } // namespace crypto_utils

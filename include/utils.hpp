@@ -39,6 +39,16 @@ public:
 };
 std::vector<uint8_t> HMAC_SHA512(std::string_view key,
                                  const std::vector<uint8_t> &data);
+                                 std::vector<uint8_t> HMAC_SHA512(const std::vector<uint8_t>&key,
+                                 const std::vector<uint8_t> &data);
 std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits);
+void split_key(const std::vector<uint8_t>& master_private_key, std::vector<uint8_t> & private_key, std::vector<uint8_t> &chain_key);
 
+const std::vector<uint32_t> path_deriv = {
+  0x8000002C, 
+    0x8000003C, 
+    0x80000000, 
+    0x00000000, 
+    0x00000000  
+};
 } // namespace crypto_utils
