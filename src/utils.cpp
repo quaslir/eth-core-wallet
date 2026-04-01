@@ -88,7 +88,7 @@ void split_key(const std::vector<uint8_t>& master_private_key, std::vector<uint8
         throw std::invalid_argument("Master key must be exactly 64 bytes");
     }
 
-std::copy(master_private_key.begin() + 32,master_private_key.begin(), private_key.begin());
-std::copy(master_private_key.begin() + 32, master_private_key.end(), chain_key.begin());
+private_key.assign(master_private_key.begin(),master_private_key.begin() + 32);
+chain_key.assign(master_private_key.begin() + 32, master_private_key.end());
 }
 } // namespace crypto_utils

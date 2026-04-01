@@ -1,6 +1,6 @@
 #include <derive.hpp>
 #include <stdexcept>
-
+#include "Keccak256.hpp"
 #include "utils.hpp"
 extern "C" {
     #include <openssl/bn.h>
@@ -84,4 +84,24 @@ std::vector<uint8_t> Key_Derive::add_mod_n(const std::vector<uint8_t>& IL, const
     BN_CTX_free(bn_ctx);
 
     return child_priv;
+}
+
+
+std::vector<uint8_t> Key_Derive::generate_address(const std::vector<uint8_t> & private_key) {
+    secp256k1_pubkey public_key;
+    std::vector<uint8_t> uncompressed_public_key(65);
+     size_t len = 65;
+
+    if(!secp256k1_ec_pubkey_create(context, &public_key, private_key.data())) {
+        throw std::runtime_error("Invalid private key");
+    }
+
+    secp256k1_ec_pubkey_serialize(context, uncompressed_public_key.data(), &len, &public_key, SECP256K1_EC_UNCOMPRESSED);
+
+    uint8_t full_hash[32];
+    Keccak256::getHash(uncompressed_public_key.data() + 1, len - 1, full_hash);
+    std::vector<uint8_t> eth_address(full_hash + 12, full_hash + 32);
+
+    return eth_address;
+    
 }

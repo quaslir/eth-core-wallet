@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SOURCES
 src/main.cpp
 src/mnemonic.cpp
-src/utils.cpp)
+src/utils.cpp
+src/derive.cpp)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SECP256K1 REQUIRED libsecp256k1)
@@ -65,3 +66,6 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto ${SECP256K1_LDFLAGS})
+
+add_subdirectory(external)
+target_link_libraries(${PROJECT_NAME} PRIVATE tools)

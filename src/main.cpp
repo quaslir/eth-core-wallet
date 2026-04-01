@@ -17,8 +17,23 @@ int main(void) {
 
   crypto_utils::split_key(masterNode, private_key, chain_key);
   Key_Derive devk;
+
   for(size_t i = 0; i < 5; i++) {
     devk.derive_child(private_key, chain_key, crypto_utils::path_deriv[i]);
+  }
+  
+ 
+
+   std::cout << "PRIVATE_KEY: 0x";
+  for(size_t i = 0; i < private_key.size(); i++) {
+    printf("%02x", private_key[i]);
+  }
+
+    std::cout << "\nPUBLIC_KEY: 0x";
+    std::vector<uint8_t> eth_addr = devk.generate_address(private_key);
+
+    for(size_t i = 0; i < eth_addr.size(); i++) {
+    printf("%02x", eth_addr[i]);
   }
   return 0;
 }
