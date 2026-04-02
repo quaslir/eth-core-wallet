@@ -49,3 +49,7 @@ void split_key(const std::vector<uint8_t> &master_private_key,
 const std::vector<uint32_t> path_deriv = {0x8000002C, 0x8000003C, 0x80000000,
                                           0x00000000, 0x00000000};
 } // namespace crypto_utils
+
+namespace tech_utils {
+  void clear_stdin(void);
+}

@@ -1,5 +1,7 @@
 #include "utils.hpp"
 #include <stdexcept>
+#include <iostream>
+#include <numeric>
 namespace crypto_utils {
 
 Hashes::Hashes() {
@@ -94,3 +96,11 @@ void split_key(const std::vector<uint8_t> &master_private_key,
   chain_key.assign(master_private_key.begin() + 32, master_private_key.end());
 }
 } // namespace crypto_utils
+
+namespace tech_utils {
+  void clear_stdin(void) {
+    std::cin.clear();
+
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+}
