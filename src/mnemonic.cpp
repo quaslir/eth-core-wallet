@@ -54,7 +54,7 @@ std::vector<uint8_t> MnemonicGenerator::generateSeed(uint16_t bits) {
   OPENSSL_cleanse(hash.data(), hash.size());
   std::vector<uint8_t> mnemonic =
       createMnemonic(std::move(randNumber), std::move(checksum));
-for(size_t i = 0; i < mnemonic.size(); i++) {
+  for (size_t i = 0; i < mnemonic.size(); i++) {
     printf("%c", mnemonic[i]);
   }
   std::cout << std::endl;

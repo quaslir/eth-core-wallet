@@ -81,14 +81,16 @@ std::vector<uint8_t> HMAC_SHA512(const std::vector<uint8_t> &key,
   return out;
 }
 
+void split_key(const std::vector<uint8_t> &master_private_key,
+               std::vector<uint8_t> &private_key,
+               std::vector<uint8_t> &chain_key) {
 
-void split_key(const std::vector<uint8_t>& master_private_key, std::vector<uint8_t> & private_key, std::vector<uint8_t> &chain_key) {
+  if (master_private_key.size() != 64) {
+    throw std::invalid_argument("Master key must be exactly 64 bytes");
+  }
 
-    if(master_private_key.size() != 64) {
-        throw std::invalid_argument("Master key must be exactly 64 bytes");
-    }
-
-private_key.assign(master_private_key.begin(),master_private_key.begin() + 32);
-chain_key.assign(master_private_key.begin() + 32, master_private_key.end());
+  private_key.assign(master_private_key.begin(),
+                     master_private_key.begin() + 32);
+  chain_key.assign(master_private_key.begin() + 32, master_private_key.end());
 }
 } // namespace crypto_utils
