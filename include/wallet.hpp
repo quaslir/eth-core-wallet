@@ -14,7 +14,7 @@ class Wallet {
     int get_number_of_bits(void) const;
     public:
     bytes_data prepare_mnemonic(int strength);
-    void finalize_from_mnemonic(std::vector<uint8_t> &mnemonic);
+    void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase);
     bytes_data get_eth_address(void) const;
     bytes_data get_private_key(void) const;
     long long getIndex(void) const;

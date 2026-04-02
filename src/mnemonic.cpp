@@ -57,12 +57,13 @@ bytes_data hash = hashes.sha256(randNumber);
   return mnemonic;
 }
 
-bytes_data MnemonicGenerator::generateSeed(bytes_data & mnemonic) {
-bytes_data salt = createSalt();
+bytes_data MnemonicGenerator::generateSeed(bytes_data & mnemonic,  bytes_data& passphrase) {
+bytes_data salt = createSalt(passphrase);
 
  bytes_data masterseed =
       hashes.PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
+  OPENSSL_cleanse(passphrase.data(), passphrase.size());
   return masterseed;
 }
 
@@ -78,7 +79,7 @@ bytes_data buf(bytes);
 }
 
 bytes_data
-MnemonicGenerator::createSalt(std::string_view passphrase) {
+MnemonicGenerator::createSalt(bytes_data& passphrase) {
   std::string_view view = "mnemonic";
 bytes_data salt;
 
@@ -88,3 +89,4 @@ bytes_data salt;
   }
   return salt;
 }
+

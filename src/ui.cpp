@@ -17,9 +17,8 @@ void UserInterface::print_welcome_message(void) {
     std::cout << "--------------------------------------------" << std::endl;
     std::cout << "Please select an operation:" << std::endl;
     std::cout << "  1. Generate New Wallet" << std::endl;
-    std::cout << "  2. Import Private Key" << std::endl;
-    std::cout << "  3. Derive Address from Existing Key" << std::endl;
-    std::cout << "  4. Exit" << std::endl;
+    std::cout << "  2. Import Wallet" << std::endl;
+    std::cout << "  2. Exit" << std::endl;
     std::cout << "--------------------------------------------" << std::endl;
     std::cout << ">>> Option: ";
 }
@@ -28,7 +27,7 @@ void UserInterface::make_choice_from_welcome_message(void) {
 int choice = 0;
 std::cin >> choice;
 
-while(choice != 1 && choice != 2 && choice != 3 && choice != 4) {
+while(choice != 1 && choice != 2 && choice != 3) {
     tech_utils::clear_stdin();
     std::cout << "Incorrect choice, please enter correct option" << std::endl;
      std::cout << ">>> Option: ";
@@ -80,7 +79,8 @@ void UserInterface::handle_wallet_creation(void) {
    bytes_data mnemonic = wallet.prepare_mnemonic(strength);
    display_mnemonic(mnemonic);
    confirm_liability_waiver();
-   wallet.finalize_from_mnemonic(mnemonic);
+   bytes_data passphrase = receive_passphrase();
+   wallet.finalize_from_mnemonic(mnemonic, passphrase);
 
    std::cout << "PRIVATE_KEY: 0x";
   for (size_t i = 0; i < wallet.get_private_key().size(); i++) {
@@ -93,6 +93,7 @@ void UserInterface::handle_wallet_creation(void) {
     printf("%02x", wallet.get_eth_address()[i]);
   }
 }
+
 
 int UserInterface::prompt_entropy_selection(void) const {
     std::cout << "\n[ STEP 1: ENTROPY SELECTION ]" << std::endl;
@@ -146,4 +147,25 @@ while(input != "I AM RESPONSIBLE") {
     std::getline(std::cin, input);
 }
 std::cout << "\n\033[1;32m[SYSTEM] Mnemonic wiped. Wallet initialized.\033[0m" << std::endl;
+}
+
+bytes_data UserInterface::receive_passphrase(void) const {
+std::cout << "\n\033[1;36m[ STEP 3: OPTIONAL PASSPHRASE (25th Word) ]\033[0m" << std::endl;
+    std::cout << "------------------------------------------------------------" << std::endl;
+    std::cout << "  A Passphrase adds an extra layer of security to your seed." << std::endl;
+    std::cout << "  [!] WARNING: It is NOT a password for the app." << std::endl;
+    std::cout << "  [!] WARNING: Different passphrase = DIFFERENT WALLET." << std::endl;
+    std::cout << "  Leave EMPTY and press Enter if you don't want to use one." << std::endl;
+    std::cout << "------------------------------------------------------------" << std::endl;
+    std::cout << ">>> Enter Passphrase: ";
+
+    bytes_data pass;
+    pass.reserve(128);
+
+    char ch;
+   while(std::cin.get(ch) && ch != '\n') {
+    pass.push_back(static_cast<uint8_t>(ch));
+   }
+
+   return pass;
 }

@@ -15,4 +15,5 @@ class UserInterface {
     int prompt_entropy_selection(void) const;
     void display_mnemonic(const bytes_data& mnemonic) const;
     void confirm_liability_waiver(void) const;
+    bytes_data receive_passphrase(void) const;
 };

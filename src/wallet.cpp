@@ -10,9 +10,9 @@ bytes_data Wallet::prepare_mnemonic(int strength) {
   return mem.generateMnemonic(strength);
 }
 
-void Wallet::finalize_from_mnemonic(std::vector<uint8_t> &mnemonic) {
+void Wallet::finalize_from_mnemonic(std::vector<uint8_t> &mnemonic, bytes_data &passphrase) {
   MnemonicGenerator mem;
-  bytes_data seed = mem.generateSeed(mnemonic);
+  bytes_data seed = mem.generateSeed(mnemonic, passphrase);
   std::string_view key = "Bitcoin seed";
   bytes_data masterNode = crypto_utils::HMAC_SHA512(key, seed);
   OPENSSL_cleanse(seed.data(), seed.size());

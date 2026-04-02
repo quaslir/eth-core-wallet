@@ -11,10 +11,10 @@ private:
   static bytes_data genNumber(size_t bytes);
   static bytes_data createMnemonic(bytes_data &randNumber,
                                              bytes_data &checkSum);
-  static bytes_data createSalt(std::string_view passphrase = "");
+  static bytes_data createSalt( bytes_data& passphrase);
 
 public:
   MnemonicGenerator();
-  bytes_data generateSeed(bytes_data & mnemonic);
+  bytes_data generateSeed(bytes_data & mnemonic, bytes_data& passphrase);
   bytes_data generateMnemonic(uint16_t bits);
 };
