@@ -12,5 +12,5 @@ class UserInterface {
     static void print_welcome_message(void);
     void make_choice_from_welcome_message(void);
     void apply_choice_from_welcome_message(int choice);
-
+    void print_wallet_ui(void) const;
 };

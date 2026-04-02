@@ -1,9 +1,11 @@
 #include "wallet.hpp"
-
+#include <iostream>
 void Wallet::generate(int strength) {
-    (void) strength;
-     MnemonicGenerator mem;
-  bytes_data seed = mem.generateSeed(128);
+    MnemonicGenerator mem;
+  bytes_data mnemonic = mem.generateMnemonic(strength);
+  
+
+  bytes_data seed = mem.generateSeed(mnemonic);
   std::string_view key = "Bitcoin seed";
   bytes_data masterNode = crypto_utils::HMAC_SHA512(key, seed);
   OPENSSL_cleanse(seed.data(), seed.size());
@@ -12,6 +14,8 @@ void Wallet::generate(int strength) {
 
   KEY_PAIR keys;
   crypto_utils::split_key(masterNode, keys.parent_key, keys.chain_key);
+  master_node = masterNode;
+  OPENSSL_cleanse(masterNode.data(), masterNode.size());
   Key_Derive devk;
 
   for (size_t i = 0; i < 5; i++) {
@@ -19,12 +23,18 @@ void Wallet::generate(int strength) {
   }
 
 eth_address = devk.generate_address(keys.parent_key);
-priv_key = std::move(keys.parent_key);
+
+priv_key = keys.parent_key;
+OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
+
 }
 
  bytes_data Wallet::get_eth_address(void) const {
     return this->eth_address;
  }
-    bytes_data Wallet::get_private_key(void) const {
+bytes_data Wallet::get_private_key(void) const {
         return this->priv_key;
     }
+long long Wallet::getIndex(void) const {
+return this->index;
+}

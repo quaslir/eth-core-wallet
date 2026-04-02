@@ -6,7 +6,7 @@ extern "C" {
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 }
-
+using bytes_data = std::vector<uint8_t>;
 namespace crypto_utils {
 
 struct EVPMDCTXDeleter {
@@ -32,19 +32,19 @@ private:
 
 public:
   Hashes();
-  std::vector<uint8_t> sha256(const std::vector<uint8_t> &msg);
-  static std::vector<uint8_t> PBKDF2_HMAC_SHA512(std::vector<uint8_t> &data,
-                                                 std::vector<uint8_t> &salt,
+  bytes_data sha256(const bytes_data &msg);
+  static bytes_data PBKDF2_HMAC_SHA512(bytes_data &data,
+                                                 bytes_data &salt,
                                                  int iter);
 };
-std::vector<uint8_t> HMAC_SHA512(std::string_view key,
-                                 const std::vector<uint8_t> &data);
-std::vector<uint8_t> HMAC_SHA512(const std::vector<uint8_t> &key,
-                                 const std::vector<uint8_t> &data);
+bytes_data HMAC_SHA512(std::string_view key,
+                                 const bytes_data &data);
+bytes_data HMAC_SHA512(const std::vector<uint8_t> &key,
+                                 const bytes_data &data);
 std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits);
-void split_key(const std::vector<uint8_t> &master_private_key,
-               std::vector<uint8_t> &private_key,
-               std::vector<uint8_t> &chain_key);
+void split_key(const bytes_data &master_private_key,
+               bytes_data &private_key,
+               bytes_data &chain_key);
 
 const std::vector<uint32_t> path_deriv = {0x8000002C, 0x8000003C, 0x80000000,
                                           0x00000000, 0x00000000};
@@ -52,4 +52,5 @@ const std::vector<uint32_t> path_deriv = {0x8000002C, 0x8000003C, 0x80000000,
 
 namespace tech_utils {
   void clear_stdin(void);
+  void print_hex(const std::vector<uint8_t>& data);
 }

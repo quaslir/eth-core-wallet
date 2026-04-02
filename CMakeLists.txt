@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(eth-core-wallet)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
 src/main.cpp
 src/mnemonic.cpp
@@ -53,6 +53,9 @@ if(CPPCHECK_EXE)
         COMMENT "Running static analysis with cppcheck..."
     )
 endif()
+
+find_program(CLANGTIDY_EXE NAMES "clang-tidy")
+
 
 endif()
 

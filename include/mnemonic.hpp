@@ -3,16 +3,18 @@
 #include <stdint.h>
 #include <string_view>
 #include <vector>
+using bytes_data = std::vector<uint8_t>;
 class MnemonicGenerator {
 private:
   crypto_utils::Hashes hashes;
 
-  static std::vector<uint8_t> genNumber(size_t bytes);
-  static std::vector<uint8_t> createMnemonic(std::vector<uint8_t> &&randNumber,
+  static bytes_data genNumber(size_t bytes);
+  static bytes_data createMnemonic(bytes_data &&randNumber,
                                              std::vector<bool> &&checkSum);
-  static std::vector<uint8_t> createSalt(std::string_view passphrase = "");
+  static bytes_data createSalt(std::string_view passphrase = "");
 
 public:
   MnemonicGenerator();
-  std::vector<uint8_t> generateSeed(uint16_t bits);
+  bytes_data generateSeed(bytes_data & mnemonic);
+  bytes_data generateMnemonic(uint16_t bits);
 };

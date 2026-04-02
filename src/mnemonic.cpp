@@ -5,8 +5,8 @@
 #include <iostream>
 MnemonicGenerator::MnemonicGenerator() {}
 
-std::vector<uint8_t>
-MnemonicGenerator::createMnemonic(std::vector<uint8_t> &&randNumber,
+bytes_data
+MnemonicGenerator::createMnemonic(bytes_data &&randNumber,
                                   std::vector<bool> &&checkSum) {
   std::vector<bool> seed;
   seed.reserve(randNumber.size() * 8 + checkSum.size());
@@ -28,9 +28,8 @@ MnemonicGenerator::createMnemonic(std::vector<uint8_t> &&randNumber,
 
     indexes.push_back(index);
   }
-
   OPENSSL_cleanse(randNumber.data(), randNumber.size());
-  std::vector<std::uint8_t> mnemonic;
+  bytes_data mnemonic;
 
   for (size_t i = 0; i < indexes.size(); i++) {
     std::string_view word = bip_39::bip_39_words[indexes[i]];
@@ -44,30 +43,28 @@ MnemonicGenerator::createMnemonic(std::vector<uint8_t> &&randNumber,
   return mnemonic;
 }
 
-std::vector<uint8_t> MnemonicGenerator::generateSeed(uint16_t bits) {
+bytes_data MnemonicGenerator::generateMnemonic(uint16_t bits) {
   size_t bytes = bits / 8;
   int checkSumBits = bits / 32;
-  std::vector<uint8_t> randNumber = genNumber(bytes);
-  std::vector<uint8_t> hash = hashes.sha256(randNumber);
+bytes_data randNumber = genNumber(bytes);
+bytes_data hash = hashes.sha256(randNumber);
 
   std::vector<bool> checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
   OPENSSL_cleanse(hash.data(), hash.size());
-  std::vector<uint8_t> mnemonic =
-      createMnemonic(std::move(randNumber), std::move(checksum));
-  for (size_t i = 0; i < mnemonic.size(); i++) {
-    printf("%c", mnemonic[i]);
-  }
-  std::cout << std::endl;
-  std::vector<uint8_t> salt = createSalt();
+  return createMnemonic(std::move(randNumber), std::move(checksum));
+}
 
-  std::vector<uint8_t> masterseed =
+bytes_data MnemonicGenerator::generateSeed(bytes_data & mnemonic) {
+bytes_data salt = createSalt();
+
+ bytes_data masterseed =
       hashes.PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
   return masterseed;
 }
 
-std::vector<uint8_t> MnemonicGenerator::genNumber(size_t bytes) {
-  std::vector<uint8_t> buf(bytes);
+bytes_data MnemonicGenerator::genNumber(size_t bytes) {
+bytes_data buf(bytes);
 
   if (RAND_bytes(buf.data(), static_cast<int>(bytes)) != 1) {
     throw std::runtime_error(
@@ -77,10 +74,10 @@ std::vector<uint8_t> MnemonicGenerator::genNumber(size_t bytes) {
   return buf;
 }
 
-std::vector<uint8_t>
+bytes_data
 MnemonicGenerator::createSalt(std::string_view passphrase) {
   std::string_view view = "mnemonic";
-  std::vector<uint8_t> salt;
+bytes_data salt;
 
   salt.insert(salt.end(), view.begin(), view.end());
   if (!passphrase.empty()) {
