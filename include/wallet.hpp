@@ -11,8 +11,10 @@ class Wallet {
     bytes_data master_node;
     long long index = 0;
 
+    int get_number_of_bits(void) const;
     public:
-    void generate(int strength = 128);
+    bytes_data prepare_mnemonic(int strength);
+    void finalize_from_mnemonic(std::vector<uint8_t> &mnemonic);
     bytes_data get_eth_address(void) const;
     bytes_data get_private_key(void) const;
     long long getIndex(void) const;

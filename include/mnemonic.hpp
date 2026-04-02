@@ -9,8 +9,8 @@ private:
   crypto_utils::Hashes hashes;
 
   static bytes_data genNumber(size_t bytes);
-  static bytes_data createMnemonic(bytes_data &&randNumber,
-                                             std::vector<bool> &&checkSum);
+  static bytes_data createMnemonic(bytes_data &randNumber,
+                                             bytes_data &checkSum);
   static bytes_data createSalt(std::string_view passphrase = "");
 
 public:

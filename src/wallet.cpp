@@ -1,10 +1,17 @@
 #include "wallet.hpp"
 #include <iostream>
-void Wallet::generate(int strength) {
-    MnemonicGenerator mem;
-  bytes_data mnemonic = mem.generateMnemonic(strength);
-  
 
+int Wallet::get_number_of_bits(void) const {
+return 0;
+}
+
+bytes_data Wallet::prepare_mnemonic(int strength) {
+    MnemonicGenerator mem;
+  return mem.generateMnemonic(strength);
+}
+
+void Wallet::finalize_from_mnemonic(std::vector<uint8_t> &mnemonic) {
+  MnemonicGenerator mem;
   bytes_data seed = mem.generateSeed(mnemonic);
   std::string_view key = "Bitcoin seed";
   bytes_data masterNode = crypto_utils::HMAC_SHA512(key, seed);

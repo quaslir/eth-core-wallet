@@ -6,9 +6,9 @@
 MnemonicGenerator::MnemonicGenerator() {}
 
 bytes_data
-MnemonicGenerator::createMnemonic(bytes_data &&randNumber,
-                                  std::vector<bool> &&checkSum) {
-  std::vector<bool> seed;
+MnemonicGenerator::createMnemonic(bytes_data &randNumber,
+                                  bytes_data& checkSum) {
+  bytes_data seed;
   seed.reserve(randNumber.size() * 8 + checkSum.size());
 
   for (const auto &byte : randNumber) {
@@ -17,6 +17,8 @@ MnemonicGenerator::createMnemonic(bytes_data &&randNumber,
     }
   }
   seed.insert(seed.end(), checkSum.begin(), checkSum.end());
+  OPENSSL_cleanse(randNumber.data(), randNumber.size());
+  OPENSSL_cleanse(checkSum.data(), checkSum.size());
   std::vector<uint16_t> indexes;
 
   for (size_t i = 0; i < seed.size(); i += 11) {
@@ -28,7 +30,7 @@ MnemonicGenerator::createMnemonic(bytes_data &&randNumber,
 
     indexes.push_back(index);
   }
-  OPENSSL_cleanse(randNumber.data(), randNumber.size());
+OPENSSL_cleanse(seed.data(), seed.size());
   bytes_data mnemonic;
 
   for (size_t i = 0; i < indexes.size(); i++) {
@@ -49,9 +51,10 @@ bytes_data MnemonicGenerator::generateMnemonic(uint16_t bits) {
 bytes_data randNumber = genNumber(bytes);
 bytes_data hash = hashes.sha256(randNumber);
 
-  std::vector<bool> checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
+  bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
   OPENSSL_cleanse(hash.data(), hash.size());
-  return createMnemonic(std::move(randNumber), std::move(checksum));
+  bytes_data mnemonic = createMnemonic(randNumber, checksum);
+  return mnemonic;
 }
 
 bytes_data MnemonicGenerator::generateSeed(bytes_data & mnemonic) {

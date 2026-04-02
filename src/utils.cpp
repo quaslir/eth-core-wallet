@@ -50,8 +50,8 @@ bytes_data Hashes::PBKDF2_HMAC_SHA512(bytes_data&data,
   return out;
 }
 
-std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits) {
-  std::vector<bool> checksum(checkSumBits);
+bytes_data getCheckSum(uint8_t byte, int checkSumBits) {
+  bytes_data checksum(checkSumBits);
 
   for (int i = 0; i < checkSumBits; i++) {
     checksum[i] = (byte >> (7 - i)) & 1;

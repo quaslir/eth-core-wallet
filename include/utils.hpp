@@ -41,7 +41,7 @@ bytes_data HMAC_SHA512(std::string_view key,
                                  const bytes_data &data);
 bytes_data HMAC_SHA512(const std::vector<uint8_t> &key,
                                  const bytes_data &data);
-std::vector<bool> getCheckSum(uint8_t byte, int checkSumBits);
+bytes_data getCheckSum(uint8_t byte, int checkSumBits);
 void split_key(const bytes_data &master_private_key,
                bytes_data &private_key,
                bytes_data &chain_key);
