@@ -114,4 +114,34 @@ namespace tech_utils {
       }
       std::cout << std::endl;
     }
+
+    bytes_data toBits(const std::vector<uint16_t>& data) {
+      bytes_data binaryData;
+      binaryData.reserve(data.size() * 11);
+
+      for(const auto& byte2 : data) {
+        for(int i = 10; i >= 0; i--) {
+          binaryData.push_back(byte2 >> i & 1);
+        }
+      }
+      return binaryData;
+    }
+
+    bytes_data to_bytes_from_bits(const bytes_data&data) {
+      if(data.size() % 8 != 0) {
+        return {};
+      }
+
+      bytes_data new_data;
+      new_data.reserve(data.size() / 8);
+      for(size_t i = 0; i < data.size(); i+=8) {
+        uint8_t byte = 0;
+        for(size_t j = 0; j < 8; j++) {
+          byte = (byte << 1) | (data[j + i] & 1);
+        }
+        new_data.push_back(byte);
+      }
+
+      return new_data;
+    }
 }

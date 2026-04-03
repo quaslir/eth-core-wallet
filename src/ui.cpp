@@ -18,7 +18,7 @@ void UserInterface::print_welcome_message(void) {
     std::cout << "Please select an operation:" << std::endl;
     std::cout << "  1. Generate New Wallet" << std::endl;
     std::cout << "  2. Import Wallet" << std::endl;
-    std::cout << "  2. Exit" << std::endl;
+    std::cout << "  3. Exit" << std::endl;
     std::cout << "--------------------------------------------" << std::endl;
     std::cout << ">>> Option: ";
 }
@@ -42,10 +42,9 @@ apply_choice_from_welcome_message(choice);
             handle_wallet_creation();
             break;
             case 2:
+            handle_wallet_import();
             break;
             case 3:
-            break;
-            case 4: 
             break;
         }
 }
@@ -81,17 +80,6 @@ void UserInterface::handle_wallet_creation(void) {
    confirm_liability_waiver();
    bytes_data passphrase = receive_passphrase();
    wallet.finalize_from_mnemonic(mnemonic, passphrase);
-
-   std::cout << "PRIVATE_KEY: 0x";
-  for (size_t i = 0; i < wallet.get_private_key().size(); i++) {
-    printf("%02x",wallet.get_private_key()[i]);
-  }
-
-  std::cout << "\nPUBLIC_KEY: 0x";
-
-  for (size_t i = 0; i < wallet.get_eth_address().size(); i++) {
-    printf("%02x", wallet.get_eth_address()[i]);
-  }
 }
 
 
@@ -169,3 +157,30 @@ std::cout << "\n\033[1;36m[ STEP 3: OPTIONAL PASSPHRASE (25th Word) ]\033[0m" <<
 
    return pass;
 }
+
+void UserInterface::handle_wallet_import(void) {
+std::string mnemonic = request_input_mnemonic();
+if(mnemonic.empty()) return; //handle
+std::cout << wallet.correct_mnemonic(mnemonic) << std::endl;
+}
+    std::string UserInterface::request_input_mnemonic(void) {
+        std::string mnemonic, passphrase;
+
+        std::cout << "\n==================================================\n";
+    std::cout << "                [ WALLET IMPORT ]                 \n";
+    std::cout << "==================================================\n\n";
+
+    std::cout << "STEP 1: ENTER MNEMONIC PHRASE\n";
+    std::cout << "Input 12, 15, 18, 21, or 24 words separated by space.\n";
+    std::cout << "Note: Typos will result in a different wallet address.\n";
+    std::cout << "> ";
+
+    tech_utils::clear_stdin();
+    std::getline(std::cin, mnemonic);
+
+    std::cout << "\n--------------------------------------------------\n";
+    std::cout << "[ STATUS ] VALIDATING CHECKSUM...\n";
+    std::cout << "--------------------------------------------------\n";
+
+    return mnemonic;
+    }

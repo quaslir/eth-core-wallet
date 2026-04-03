@@ -13,8 +13,11 @@ private:
                                              bytes_data &checkSum);
   static bytes_data createSalt( bytes_data& passphrase);
 
+
+
 public:
   MnemonicGenerator();
   bytes_data generateSeed(bytes_data & mnemonic, bytes_data& passphrase);
   bytes_data generateMnemonic(uint16_t bits);
+  bool mnemonic_is_correct(std::string_view mnemonic);
 };

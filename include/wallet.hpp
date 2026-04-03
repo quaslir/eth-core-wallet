@@ -9,6 +9,7 @@ class Wallet {
     bytes_data priv_key;
     bytes_data eth_address;
     bytes_data master_node;
+    MnemonicGenerator mem;
     long long index = 0;
 
     int get_number_of_bits(void) const;
@@ -17,5 +18,6 @@ class Wallet {
     void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase);
     bytes_data get_eth_address(void) const;
     bytes_data get_private_key(void) const;
+    bool correct_mnemonic(std::string& mnemonic);
     long long getIndex(void) const;
 };

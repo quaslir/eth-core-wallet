@@ -6,12 +6,10 @@ return 0;
 }
 
 bytes_data Wallet::prepare_mnemonic(int strength) {
-    MnemonicGenerator mem;
   return mem.generateMnemonic(strength);
 }
 
 void Wallet::finalize_from_mnemonic(std::vector<uint8_t> &mnemonic, bytes_data &passphrase) {
-  MnemonicGenerator mem;
   bytes_data seed = mem.generateSeed(mnemonic, passphrase);
   std::string_view key = "Bitcoin seed";
   bytes_data masterNode = crypto_utils::HMAC_SHA512(key, seed);
@@ -44,4 +42,8 @@ bytes_data Wallet::get_private_key(void) const {
     }
 long long Wallet::getIndex(void) const {
 return this->index;
+}
+
+bool Wallet::correct_mnemonic(std::string& mnemonic) {
+return mem.mnemonic_is_correct(mnemonic);
 }

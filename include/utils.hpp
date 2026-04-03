@@ -39,7 +39,7 @@ public:
 };
 bytes_data HMAC_SHA512(std::string_view key,
                                  const bytes_data &data);
-bytes_data HMAC_SHA512(const std::vector<uint8_t> &key,
+bytes_data HMAC_SHA512(const bytes_data &key,
                                  const bytes_data &data);
 bytes_data getCheckSum(uint8_t byte, int checkSumBits);
 void split_key(const bytes_data &master_private_key,
@@ -52,5 +52,7 @@ const std::vector<uint32_t> path_deriv = {0x8000002C, 0x8000003C, 0x80000000,
 
 namespace tech_utils {
   void clear_stdin(void);
-  void print_hex(const std::vector<uint8_t>& data);
+  void print_hex(const bytes_data& data);
+  bytes_data toBits(const std::vector<uint16_t>& data);
+  bytes_data to_bytes_from_bits(const bytes_data&data);
 }

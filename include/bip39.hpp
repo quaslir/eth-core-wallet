@@ -1,6 +1,6 @@
 #include <array>
 #include <string_view>
-
+#include <unordered_map>
 namespace bip_39 {
 constexpr std::array<std::string_view, 2048> bip_39_words = {
     "abandon",  "ability",  "able",     "about",    "above",    "absent",
@@ -347,4 +347,14 @@ constexpr std::array<std::string_view, 2048> bip_39_words = {
     "zone",     "zoo",
 
 };
+
+int getIndex(std::string_view word) {
+    auto it = std::lower_bound(bip_39_words.begin(), bip_39_words.end(), word);
+
+    if(it != bip_39_words.end() && *it == word) {
+        return std::distance(bip_39_words.begin(), it);
+    }
+
+    return -1;
+}
 }

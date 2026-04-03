@@ -3,6 +3,9 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <algorithm>
+#include <iterator>
+#include <ranges>
 MnemonicGenerator::MnemonicGenerator() {}
 
 bytes_data
@@ -90,3 +93,33 @@ bytes_data salt;
   return salt;
 }
 
+bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
+std::vector<uint16_t> mnemonic_indexes;
+
+int checkSum = 0;
+auto words = mnemonic | std::views::split(' ');
+
+for(auto word_range : words) {
+  std::string_view word{word_range.begin(), word_range.end()};
+  int index = bip_39::getIndex(word);
+  if(index < 0) return false;
+  mnemonic_indexes.push_back(index);
+}
+
+checkSum = static_cast<int>(mnemonic_indexes.size() / 3);
+
+
+
+bytes_data mnemonic_in_binary = tech_utils::toBits(mnemonic_indexes);
+bytes_data check_sum_from_mnemonic (checkSum);
+
+check_sum_from_mnemonic.assign(std::make_move_iterator(mnemonic_in_binary.end() - checkSum), std::make_move_iterator(mnemonic_in_binary.end()));
+
+mnemonic_in_binary.erase(mnemonic_in_binary.end() - checkSum, mnemonic_in_binary.end());
+
+
+bytes_data hash = hashes.sha256(tech_utils::to_bytes_from_bits(mnemonic_in_binary));
+bytes_data check_sum_sha256 = crypto_utils::getCheckSum(hash[0], checkSum);
+
+return check_sum_sha256 == check_sum_from_mnemonic;
+}
