@@ -1,5 +1,7 @@
 #include "cli.hpp"
 #include "utils.hpp"
+#include <iomanip>
+#include "config.hpp"
 namespace cli {
     void print_welcome_message(void) {
     std::cout << "============================================" << std::endl;
@@ -16,23 +18,20 @@ namespace cli {
     std::cout << ">>> Option: ";
 }
 
-int prompt_entropy_selection(void) {
-    std::cout << "\n[ STEP 1: ENTROPY SELECTION ]" << std::endl;
-    std::cout << "--------------------------------------------" << std::endl;
-    std::cout << "  1. 128-bit (12 words) - Standard Security" << std::endl;
-    std::cout << "  2. 256-bit (24 words) - [RECOMMENDED] Ultra Security" << std::endl;
-    std::cout << "--------------------------------------------" << std::endl;
-    std::cout << ">>> Choice [1-2]: ";
-
-    int choice = 0;
-    std::cin >> choice;
-    while(choice != 1 && choice != 2) {
-        tech_utils::clear_stdin();
-        std::cout << "\033[1;31m[ERROR] Invalid choice. Enter 1 or 2: \033[0m";
-        std::cin >> choice;
-    }
-
-    return choice == 1 ? 128 : 256;
+void render_bit_length_menu() {
+    std::cout << "============================================================\n"
+              << "             [ STEP 2: SELECT ENTROPY LENGTH ]              \n"
+              << "============================================================\n"
+              << " [1] 128 BITS (12 WORDS)\n"
+              << "     Standard security. Ideal for \"Hot\" wallets and\n"
+              << "     frequent transactions. Easy to write and store.\n\n"
+              << " [2] 256 BITS (24 WORDS)\n"
+              << "     Military-grade security. Recommended for \"Cold\"\n"
+              << "     storage. Impossible to brute-force, even in theory.\n"
+              << "------------------------------------------------------------\n"
+              << " [B] BACK TO CONFIG\n"
+              << "============================================================\n"
+              << " > ";
 }
 
 void display_mnemonic(const bytes_data& mnemonic) {
@@ -67,7 +66,6 @@ while(input != "I AM RESPONSIBLE") {
     std::cout << "\033[1;31m[!] Incorrect. Type 'I AM RESPONSIBLE' to wipe memory: \033[0m";
     std::getline(std::cin, input);
 }
-std::cout << "\n\033[1;32m[SYSTEM] Mnemonic wiped. Wallet initialized.\033[0m" << std::endl;
 }
 
 bytes_data receive_passphrase(void) {
@@ -138,5 +136,62 @@ std::cout << "\n[ ERROR ] Invalid Mnemonic Phrase!\n";
         std::cout << "3. Incorrect number of words (must be 12, 15, 18, 21, or 24).\n";
         std::cout << "Please try again.\n";
         std::cout << "--------------------------------------------------\n";
+}
+
+char render_config_menu(const Config& cfg) {
+
+    std::cout << "\033[2J\033[H"; 
+
+    std::cout << "============================================================\n";
+    std::cout << "               [ SEED GENERATION CONFIG ]                   \n";
+    std::cout << "============================================================\n";
+
+    std::cout << " 1. ENTROPY SOURCE : [ " << (cfg.user_entropy ? "OS CSPRNG + USER MIX" : "OS CSPRNG ONLY") << " ]\n";
+    std::cout << " 2. BIT-LENGTH     : [ " << cfg.bit_length << " bits (" << (cfg.bit_length / 32 * 3) << " words) ]\n";
+    std::cout << " 3. PASSPHRASE     : [ " << (cfg.use_passphrase ? "ENABLED (BIP-39 SALT)" : "DISABLED") << " ]\n";
+    std::cout << " 4. DERIVATION     : [ " << cfg.derivation_path << " ]\n";
+
+    std::cout << "------------------------------------------------------------\n";
+    
+
+    std::cout << " [\033[1;32mG\033[0m] GENERATE NOW      "
+              << "[\033[1;34mE\033[0m] EDIT CONFIG      "
+              << "[\033[1;31mB\033[0m] BACK\n";
+              
+    std::cout << "============================================================\n";
+    std::cout << " > ";
+    std::cout.flush(); 
+    char input;
+    std::cin.get(input);
+    if(input != '1' && input != '2' && input != '3' && input != '4' && input != 'g' && input != 'e' && input != 'b') {
+        return render_config_menu(cfg);
+    }
+
+    return input;
+
+}
+
+void cli::print_wallet_ui(const Wallet& wallet) {
+    std::cout << "\033[2J\033[1;1H"; 
+
+    std::cout << "\033[1;32m" << "====================================================" << "\033[0m" << std::endl;
+    std::cout << "          \033[1;37mETH CORE WALLET - SESSION ACTIVE\033[0m" << std::endl;
+    std::cout << "\033[1;32m" << "====================================================" << "\033[0m" << std::endl;
+
+    std::cout << "  [ADDRESS]  \033[1;33m"; 
+    tech_utils::print_hex(wallet.get_eth_address());
+    std::cout << "\033[0m";
+    std::cout << "  [PATH]     m/44'/60'/0'/0/" << wallet.getIndex() << std::endl;
+    std::cout << "  [NETWORK]  Ethereum Mainnet (Offline Mode)" << std::endl;
+    std::cout << "\033[1;32m" << "----------------------------------------------------" << "\033[0m" << std::endl;
+
+    std::cout << "  1. \033[1;37mSend Transaction\033[0m (Requires RPC)" << std::endl;
+    std::cout << "  2. \033[1;37mNext Address\033[0m    (Derive Index " << wallet.getIndex() + 1 << ")" << std::endl;
+    std::cout << "  3. \033[1;37mSwitch Account\033[0m  (BIP-44 Account Level)" << std::endl;
+    std::cout << "  4. \033[1;37mExport Key\033[0m      (Show Private Hex)" << std::endl;
+    std::cout << "  5. \033[1;31mLock & Exit\033[0m     (Wipe Memory)" << std::endl;
+
+    std::cout << "\033[1;32m" << "====================================================" << "\033[0m" << std::endl;
+    std::cout << ">>> Select action: ";
 }
 }

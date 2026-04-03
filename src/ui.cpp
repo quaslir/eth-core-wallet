@@ -1,14 +1,12 @@
 #include "ui.hpp"
 #include "cli.hpp"
 #include <iostream>
-
+#include "config.hpp"
 void UserInterface::load(void) {
     cli::print_welcome_message();
     make_choice_from_welcome_message();
-    print_wallet_ui();
+    cli::print_wallet_ui(wallet);
 }
-
-
 
 
 void UserInterface::make_choice_from_welcome_message(void) {
@@ -37,33 +35,10 @@ apply_choice_from_welcome_message(choice);
         }
 }
 
-void UserInterface::print_wallet_ui(void) const {
-    std::cout << "\033[2J\033[1;1H"; 
-
-    std::cout << "\033[1;32m" << "====================================================" << "\033[0m" << std::endl;
-    std::cout << "          \033[1;37mETH CORE WALLET - SESSION ACTIVE\033[0m" << std::endl;
-    std::cout << "\033[1;32m" << "====================================================" << "\033[0m" << std::endl;
-
-    std::cout << "  [ADDRESS]  \033[1;33m"; 
-    tech_utils::print_hex(wallet.get_eth_address());
-    std::cout << "\033[0m" << std::endl;
-    std::cout << "  [PATH]     m/44'/60'/0'/0/" << wallet.getIndex() << std::endl;
-    std::cout << "  [NETWORK]  Ethereum Mainnet (Offline Mode)" << std::endl;
-    std::cout << "\033[1;32m" << "----------------------------------------------------" << "\033[0m" << std::endl;
-
-    std::cout << "  1. \033[1;37mSend Transaction\033[0m (Requires RPC)" << std::endl;
-    std::cout << "  2. \033[1;37mNext Address\033[0m    (Derive Index " << wallet.getIndex() + 1 << ")" << std::endl;
-    std::cout << "  3. \033[1;37mSwitch Account\033[0m  (BIP-44 Account Level)" << std::endl;
-    std::cout << "  4. \033[1;37mExport Key\033[0m      (Show Private Hex)" << std::endl;
-    std::cout << "  5. \033[1;31mLock & Exit\033[0m     (Wipe Memory)" << std::endl;
-
-    std::cout << "\033[1;32m" << "====================================================" << "\033[0m" << std::endl;
-    std::cout << ">>> Select action: ";
-}
 
 void UserInterface::handle_wallet_creation(void) {
-    int strength = cli::prompt_entropy_selection();
-   bytes_data mnemonic = wallet.prepare_mnemonic(strength);
+    cli::render_config_menu(config);
+   bytes_data mnemonic = wallet.prepare_mnemonic(128);
    cli::display_mnemonic(mnemonic);
    cli::confirm_liability_waiver();
    bytes_data passphrase = cli::receive_passphrase();
@@ -81,4 +56,24 @@ mnemonic = cli::request_input_mnemonic();
 
 std::string passphrase = cli::request_input_optional_passphrase();
 wallet.import_wallet(mnemonic, passphrase);
+}
+
+bool UserInterface::handle_seed_generation_config(void) {
+    char choice = cli::render_config_menu(config);
+    if(choice == 'g') return 1;
+    else if(choice == 'b') return 0;
+
+    else if(choice == '1') {
+        
+    }
+    else if(choice == '2') {
+
+    }
+    else if(choice == '3') {
+
+    }
+    else if(choice == '4') {
+
+    }
+
 }

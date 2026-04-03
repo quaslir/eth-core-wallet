@@ -31,7 +31,7 @@ eth_address = devk.generate_address(keys.parent_key);
 
 priv_key = keys.parent_key;
 OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
-
+OPENSSL_cleanse(keys.chain_key.data(), keys.chain_key.size());
 }
 
  bytes_data Wallet::get_eth_address(void) const {
