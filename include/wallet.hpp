@@ -19,5 +19,6 @@ class Wallet {
     bytes_data get_eth_address(void) const;
     bytes_data get_private_key(void) const;
     bool correct_mnemonic(std::string& mnemonic);
+    void import_wallet(std::string& mnemonic, std::string& passphrase);
     long long getIndex(void) const;
 };

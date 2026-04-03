@@ -109,8 +109,8 @@ for(auto word_range : words) {
 checkSum = static_cast<int>(mnemonic_indexes.size() / 3);
 
 
-
 bytes_data mnemonic_in_binary = tech_utils::toBits(mnemonic_indexes);
+OPENSSL_cleanse(mnemonic_indexes.data(), mnemonic_indexes.size() * sizeof(uint16_t));
 bytes_data check_sum_from_mnemonic (checkSum);
 
 check_sum_from_mnemonic.assign(std::make_move_iterator(mnemonic_in_binary.end() - checkSum), std::make_move_iterator(mnemonic_in_binary.end()));
@@ -119,7 +119,14 @@ mnemonic_in_binary.erase(mnemonic_in_binary.end() - checkSum, mnemonic_in_binary
 
 
 bytes_data hash = hashes.sha256(tech_utils::to_bytes_from_bits(mnemonic_in_binary));
+OPENSSL_cleanse(mnemonic_in_binary.data(), mnemonic_in_binary.size());
+
 bytes_data check_sum_sha256 = crypto_utils::getCheckSum(hash[0], checkSum);
 
-return check_sum_sha256 == check_sum_from_mnemonic;
+bool result = check_sum_sha256 == check_sum_from_mnemonic;
+
+OPENSSL_cleanse(check_sum_from_mnemonic.data(), check_sum_from_mnemonic.size());
+OPENSSL_cleanse(check_sum_sha256.data(), check_sum_sha256.size());
+
+return result;
 }

@@ -11,7 +11,8 @@ src/utils.cpp
 src/derive.cpp
 src/ui.cpp
 src/security.cpp
-src/wallet.cpp)
+src/wallet.cpp
+src/cli.cpp)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SECP256K1 REQUIRED libsecp256k1)
