@@ -3,11 +3,15 @@
 #include "utils.hpp"
 #include <iomanip>
 namespace cli {
-void print_welcome_message(void) {
+void print_welcome_message(std::string_view error_msg) {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================" << std::endl;
   std::cout << "       ETH CORE WALLET v1.0 (Dev Alpha)     " << std::endl;
   std::cout << "============================================" << std::endl;
+  if(!error_msg.empty()) {
+    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
+    std::cout << "--------------------------------------------\n";
+  }
   std::cout << "[INFO] System initialized." << std::endl;
   std::cout << "[INFO] Cryptography: secp256k1 + Keccak-256" << std::endl;
   std::cout << "--------------------------------------------" << std::endl;
@@ -58,7 +62,7 @@ void display_mnemonic(const bytes_data &mnemonic) {
             << "\033[0m" << std::endl;
 }
 
-void confirm_liability_waiver(void) {
+void confirm_liability_waiver(std::string_view error_msg) {
   std::cout << "\n\033[1;31m[!!!] FINAL LEGAL & SECURITY WARNING [!!!]\033[0m"
             << std::endl;
   std::cout << "1. This app will NOW WIPE the mnemonic from memory."
@@ -69,8 +73,13 @@ void confirm_liability_waiver(void) {
             << std::endl;
   std::cout << "\nTo proceed, type exactly: \033[1;37mI AM RESPONSIBLE\033[0m"
             << std::endl;
+          if(!error_msg.empty()) {
+    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
+    std::cout << "--------------------------------------------\n";
+  }
   std::cout << ">>> ";
   std::string input = tech_utils::read_stdin();
+  
   
 
   while (input != "I AM RESPONSIBLE") {
@@ -132,14 +141,17 @@ void incorrect_mnemonic_text(void) {
   std::cout << "--------------------------------------------------\n";
 }
 
-char render_config_menu(const Config &cfg) {
+char render_config_menu(const Config &cfg, std::string_view error_msg ) {
 
   std::cout << "\033[2J\033[1;1H";
 
   std::cout << "============================================================\n";
   std::cout << "               [ SEED GENERATION CONFIG ]                   \n";
   std::cout << "============================================================\n";
-
+    if(!error_msg.empty()) {
+    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
+    std::cout << "--------------------------------------------\n";
+  }
   std::cout << " 1. ENTROPY SOURCE : [ "
             << (!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX" : "OS CSPRNG ONLY")
             << " ]\n";
@@ -161,7 +173,7 @@ char render_config_menu(const Config &cfg) {
   std::string input;
 input = tech_utils::read_stdin();
 
-  if (input != "1" && input != "2" && input != "3" && input != "4" &&
+  while(input != "1" && input != "2" && input != "3" && input != "4" &&
       input != "b" && input != "e" && input != "g") {
     return render_config_menu(cfg);
   }
@@ -170,7 +182,7 @@ input = tech_utils::read_stdin();
 }
 
 
-void print_wallet_ui(const Wallet &wallet) {
+void print_wallet_ui(const Wallet &wallet, std::string_view error_msg) {
   std::cout << "\033[2J\033[1;1H";
 
   std::cout << "\033[1;32m"
@@ -181,6 +193,10 @@ void print_wallet_ui(const Wallet &wallet) {
   std::cout << "\033[1;32m"
             << "===================================================="
             << "\033[0m" << std::endl;
+            if(!error_msg.empty()) {
+    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
+    std::cout << "--------------------------------------------\n";
+  }
 
   std::cout << "  [ADDRESS]  \033[1;33m";
   tech_utils::print_hex(wallet.get_eth_address());

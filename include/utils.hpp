@@ -2,6 +2,7 @@
 #include <memory>
 #include <stdint.h>
 #include <vector>
+#include <charconv>
 extern "C" {
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -54,4 +55,6 @@ std::string read_stdin(void);
 void print_hex(const bytes_data &data);
 bytes_data toBits(const std::vector<uint16_t> &data);
 bytes_data to_bytes_from_bits(const bytes_data &data);
+uint32_t parse_uint32(const std::string&data);
+void trim(std::string& data);
 } // namespace tech_utils

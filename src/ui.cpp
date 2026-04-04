@@ -40,7 +40,8 @@ void UserInterface::handle_wallet_creation(void) {
   cli::display_mnemonic(mnemonic);
   cli::confirm_liability_waiver();
 
-  wallet.finalize_from_mnemonic(mnemonic, config.passphrase);
+  const std::vector<uint32_t> PATH_DERIVE = Key_Derive::parse_derive_path(config.derivation_path);
+  wallet.finalize_from_mnemonic(mnemonic, config.passphrase, PATH_DERIVE);
   state = WALLET_UI;
 }
 

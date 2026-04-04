@@ -18,7 +18,7 @@ private:
 
 public:
   bytes_data prepare_mnemonic(Config& conf);
-  void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase);
+  void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase, const std::vector<uint32_t>& path_deriv);
   bytes_data get_eth_address(void) const;
   bytes_data get_private_key(void) const;
   bool correct_mnemonic(std::string &mnemonic);

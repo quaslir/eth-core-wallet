@@ -154,4 +154,24 @@ bytes_data to_bytes_from_bits(const bytes_data &data) {
   return new_data;
 }
 
+
+uint32_t parse_uint32(const std::string&data)  {
+uint32_t result = 0;
+
+std::from_chars(data.data(), data.data() + data.size(), result);
+return result;
+}
+
+void trim(std::string& data) {
+  size_t end = data.find_last_not_of(" \t\r\n");
+
+  if(end == std::string::npos) {
+    data.clear();
+    return;
+  }
+    data.erase(end + 1);
+  size_t start = data.find_first_not_of(" \t\r\n");
+ 
+  data.erase(0, start);
+}
 } // namespace tech_utils

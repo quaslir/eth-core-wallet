@@ -7,12 +7,12 @@ using bytes_data = std::vector<uint8_t>;
 namespace cli {
 std::string request_input_mnemonic(void);
 std::string request_input_optional_passphrase(void);
-void print_welcome_message(void);
+void print_welcome_message(std::string_view error_msg = "");
 int make_choice_from_welcome_message(void);
 void display_mnemonic(const bytes_data &mnemonic);
-void confirm_liability_waiver(void);
+void confirm_liability_waiver(std::string_view error_msg = "");
 void incorrect_mnemonic_text(void);
-char render_config_menu(const Config &cfg);
-void print_wallet_ui(const Wallet &wallet);
+char render_config_menu(const Config &cfg, std::string_view error_msg = "");
+void print_wallet_ui(const Wallet &wallet, std::string_view error_msg = "");
 char handle_wallet_ui_input(void);
 } // namespace cli

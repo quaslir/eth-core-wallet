@@ -2,6 +2,7 @@
 #include "Keccak256.hpp"
 #include "utils.hpp"
 #include <stdexcept>
+#include <ranges>
 extern "C" {
 #include <arpa/inet.h>
 #include <openssl/bn.h>
@@ -106,4 +107,29 @@ bytes_data Key_Derive::generate_address(const bytes_data &private_key) {
   bytes_data eth_address(full_hash + 12, full_hash + 32);
 
   return eth_address;
+}
+
+
+const std::vector<uint32_t> Key_Derive::parse_derive_path(const std::string& path) {
+auto paths = path | std::views::split('/');
+std::vector<uint32_t> derivation_indexes;
+bool start = true;
+for(auto index : paths) {
+  std::string index_to_string{index.begin(), index.end()};
+  
+  tech_utils::trim(index_to_string);
+  if(start && index_to_string == "m") {
+    start = false;
+    continue;
+  }
+
+  bool hardened_derivation = index_to_string.back() == '\'';
+  if(hardened_derivation) index_to_string.pop_back();
+  uint32_t i = tech_utils::parse_uint32(index_to_string);
+  if(hardened_derivation) i |= 0x80000000;
+
+  derivation_indexes.push_back(i);
+}
+
+return derivation_indexes;
 }
