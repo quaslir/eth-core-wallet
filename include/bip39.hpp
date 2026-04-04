@@ -349,12 +349,12 @@ constexpr std::array<std::string_view, 2048> bip_39_words = {
 };
 
 int getIndex(std::string_view word) {
-    auto it = std::lower_bound(bip_39_words.begin(), bip_39_words.end(), word);
+  auto it = std::lower_bound(bip_39_words.begin(), bip_39_words.end(), word);
 
-    if(it != bip_39_words.end() && *it == word) {
-        return std::distance(bip_39_words.begin(), it);
-    }
+  if (it != bip_39_words.end() && *it == word) {
+    return std::distance(bip_39_words.begin(), it);
+  }
 
-    return -1;
+  return -1;
 }
-}
+} // namespace bip_39
