@@ -197,7 +197,10 @@ void print_wallet_ui(const Wallet &wallet, std::string_view error_msg) {
     std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
     std::cout << "--------------------------------------------\n";
   }
-
+  std::cout << "  [STATUS]   \033[1;32mOnline\033[0m (Syncing...)\n";
+    std::cout << "  [BALANCE]  \033[1;36m0.0000 ETH\033[0m (~0.00 USD)\n";
+    std::cout << "\033[1;32m----------------------------------------------------\033[0m\n";
+    
   std::cout << "  [ADDRESS]  \033[1;33m";
   tech_utils::print_hex(wallet.get_eth_address());
   std::cout << "\033[0m";
