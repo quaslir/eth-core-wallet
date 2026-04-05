@@ -16,6 +16,8 @@ src/cli.cpp
 src/config.cpp
 )
 
+include(FetchContent)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SECP256K1 REQUIRED libsecp256k1)
 
@@ -78,3 +80,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto ${SECP256K1_LDFLAG
 
 add_subdirectory(external)
 target_link_libraries(${PROJECT_NAME} PRIVATE tools)
+
+FetchContent_Declare(
+    json
+    URL  https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+
+FetchContent_MakeAvailable(json)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)

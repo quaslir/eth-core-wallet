@@ -1,11 +1,43 @@
 #include "security.hpp"
-
+#include <iomanip>
+#include "wallet.hpp"
+#include "cli.hpp"
+using json = nlohmann::json;
 namespace security_manager {
-void save_to_file(bytes_data &data) {
-  std::ofstream target_file("data.bin");
+bool first_time_save(const Wallet& wallet, const std::string& filename) {
+bytes_data password = cli::read_and_confirm_password();
+json j;
+j["current_address"] = wallet.get_eth_address();
+j["current_private_key"] = wallet.get_private_key();
+j["master_node"] = wallet.get_master_node();
 
-  target_file.write(reinterpret_cast<const char *>(data.data()), data.size());
+std::ofstream file(filename);
 
-  target_file.close();
+if(file.is_open()) {
+  file << std::setw(4) << j << std::endl;
+  return true;
+}
+
+return false;
+}
+
+bool load_wallet(Wallet& wallet,const  std::string&filename) {
+  std::ifstream file(filename);
+
+  if(!file.is_open()) {
+    return false;
+  }
+  try {
+  json j;
+  file >> j;
+
+  wallet.set_eth_address(j["current_address"]);
+  wallet.set_private_key(j["current_private_key"]);
+  wallet.set_master_node(j["master_node"]);
+  } catch(const std::exception& err) {
+    std::cerr << err.what() << std::endl;
+
+  }
+  return true;
 }
 } // namespace security_manager

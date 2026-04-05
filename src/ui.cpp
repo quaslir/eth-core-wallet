@@ -3,7 +3,11 @@
 #include "config.hpp"
 #include <iostream>
 void UserInterface::load(void) {
+  if(security_manager::load_wallet(wallet)) {
+      state = WALLET_UI;
+    }
   while (state != EXIT) {
+
     if (state == MAIN_MENU) {
       cli::print_welcome_message();
       int choice = cli::make_choice_from_welcome_message();

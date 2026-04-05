@@ -1,5 +1,11 @@
+#pragma once
 #include <fstream>
+#include <vector>
+#include <nlohmann/json.hpp>
+#include <string>
+class Wallet;
 using bytes_data = std::vector<uint8_t>;
 namespace security_manager {
-void save_to_file(bytes_data &data);
+bool first_time_save(const Wallet& wallet, const std::string& filename = "session.json");
+bool load_wallet(Wallet& wallet,const  std::string&filename = "session.json");
 }

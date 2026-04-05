@@ -237,4 +237,60 @@ char handle_wallet_ui_input(void) {
 
   return choice.front();
 }
-} // namespace cli
+
+
+void print_password_setup_ui() {
+    std::cout << "\033[2J\033[1;1H";
+  std::cout << "\n--------------------------------------------------\n";
+  std::cout << "CREATE PASSWORD\n";
+  std::cout << "--------------------------------------------------\n";
+  std::cout << "This password will encrypt your wallet on disk.\n";
+  std::cout << "INPUT IS HIDDEN: No characters will be displayed.\n";
+  std::cout << "WARNING: If you forget it, your funds are LOST FOREVER.\n";
+  std::cout << "Enter new password:\n";
+  std::cout << "> ";
+}
+
+void print_confirm_password_setup(void) {
+   std::cout << "\033[2J\033[1;1H";
+  std::cout << "\n--------------------------------------------------\n";
+  std::cout << "CONFIRM MASTER PASSWORD\n";
+  std::cout << "--------------------------------------------------\n";
+  std::cout << "Please re-enter your password to verify.\n";
+  std::cout << "If it doesn't match, you will have to restart.\n";
+  std::cout << "Enter password again:\n";
+  std::cout << "> ";
+}
+
+void print_invalid_password_setup(void) {
+  std::cout << "\033[2J\033[1;1H";
+  std::cout << "\n--------------------------------------------------\n";
+  std::cout << "\033[1;31m[!] ERROR: PASSWORDS DO NOT MATCH\033[0m\n";
+  std::cout << "--------------------------------------------------\n";
+  std::cout << "The passwords you entered are different.\n";
+  std::cout << "Please try again to ensure your funds are safe.\n";
+  std::cout << "Enter password again:\n";
+  std::cout << "> ";
+}
+
+const bytes_data read_and_confirm_password(void) {
+print_password_setup_ui();
+std::string pass_str, confirm_str;
+std::getline(std::cin, pass_str);
+
+print_confirm_password_setup();
+
+std::getline(std::cin, confirm_str);
+
+while(pass_str != confirm_str) {
+print_invalid_password_setup();
+std::getline(std::cin, confirm_str);
+}
+
+bytes_data password_in_bytes(pass_str.begin(), pass_str.end());
+OPENSSL_cleanse(pass_str.data(), pass_str.size());
+OPENSSL_cleanse(confirm_str.data(), confirm_str.size());
+
+return password_in_bytes;
+}
+}

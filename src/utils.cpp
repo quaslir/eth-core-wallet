@@ -35,16 +35,17 @@ bytes_data Hashes::sha256(const bytes_data &msg) {
 
   return hash;
 }
-bytes_data Hashes::PBKDF2_HMAC_SHA512(bytes_data &data, bytes_data &salt,
+bytes_data Hashes::PBKDF2_HMAC_SHA512(const bytes_data &data, const bytes_data &salt,
                                       int iter) {
   bytes_data out(64);
-  int res = PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(data.data()),
+  int res = PKCS5_PBKDF2_HMAC(reinterpret_cast<const char *>(data.data()),
                               static_cast<int>(data.size()),
-                              reinterpret_cast<unsigned char *>(salt.data()),
+                              reinterpret_cast<const unsigned char *>(salt.data()),
                               static_cast<int>(salt.size()), iter, EVP_sha512(),
                               static_cast<int>(out.size()),
                               reinterpret_cast<unsigned char *>(out.data()));
   if (res == 0) {
+    OPENSSL_cleanse(out.data(), out.size());
     throw std::runtime_error("OpenSSL: PBKDF2_HMAC_SHA512 failed");
   }
   return out;
@@ -122,6 +123,17 @@ void print_hex(const bytes_data &data) {
     std::cout << std::format("{:02x}", byte);
   }
   std::cout << std::endl;
+}
+
+std::string to_hex(const bytes_data& data) {
+  std::string hex_format;
+  hex_format.reserve(data.size());
+
+  for(const auto &byte : data) {
+    hex_format.append(std::format("{:02x}", byte));
+  }
+
+  return hex_format;
 }
 
 bytes_data toBits(const std::vector<uint16_t> &data) {

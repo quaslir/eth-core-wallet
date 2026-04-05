@@ -15,4 +15,6 @@ void incorrect_mnemonic_text(void);
 char render_config_menu(const Config &cfg, std::string_view error_msg = "");
 void print_wallet_ui(const Wallet &wallet, std::string_view error_msg = "");
 char handle_wallet_ui_input(void);
+
+const bytes_data read_and_confirm_password(void);
 } // namespace cli

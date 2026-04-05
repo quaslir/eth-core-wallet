@@ -34,7 +34,7 @@ private:
 public:
   Hashes();
   bytes_data sha256(const bytes_data &msg);
-  static bytes_data PBKDF2_HMAC_SHA512(bytes_data &data, bytes_data &salt,
+  static bytes_data PBKDF2_HMAC_SHA512(const bytes_data &data, const bytes_data &salt,
                                        int iter);
 };
 bytes_data HMAC_SHA512(std::string_view key, const bytes_data &data);
@@ -53,6 +53,7 @@ namespace tech_utils {
 void clear_stdin(void);
 std::string read_stdin(void);
 void print_hex(const bytes_data &data);
+std::string to_hex(const bytes_data& data);
 bytes_data toBits(const std::vector<uint16_t> &data);
 bytes_data to_bytes_from_bits(const bytes_data &data);
 uint32_t parse_uint32(const std::string&data);
