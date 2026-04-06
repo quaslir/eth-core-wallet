@@ -10,12 +10,10 @@ void UserInterface::load(void) {
   while (state != EXIT) {
 
     if (state == MAIN_MENU) {
-      cli::print_welcome_message();
       int choice = cli::make_choice_from_welcome_message();
       apply_choice_from_welcome_message(choice);
     } else if (state == WALLET_UI) {
-      cli::print_wallet_ui(wallet);
-      int ch = cli::handle_wallet_ui_input();
+      int ch = cli::handle_wallet_ui_input(wallet);
       apply_choice_from_wallet_ui(ch);
     }
   }

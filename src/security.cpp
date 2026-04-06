@@ -45,7 +45,7 @@ bool auth_failed = false;
 size_t count = 0;
 
 do {
-const bytes_data password = cli::request_unlock_password(auth_failed);
+const bytes_data password = cli::request_unlock_password(count, 3);
 
 bytes_data hash_key = crypto_utils::PBKDF2_HMAC_SHA512(password, encrp.salt, encrp.iter);
 
@@ -80,8 +80,9 @@ OPENSSL_cleanse(hash_key.data(), hash_key.size());
 return true;
 } while(auth_failed && count < 3);
 
-
-
+cli::show_self_destruct();
+tech_utils::rm_file(filename);
+std::exit(1);
 return false;
 }
 } // namespace security_manager

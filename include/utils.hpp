@@ -70,4 +70,5 @@ bytes_data toBits(const std::vector<uint16_t> &data);
 bytes_data to_bytes_from_bits(const bytes_data &data);
 uint32_t parse_uint32(const std::string&data);
 void trim(std::string& data);
+void rm_file(const std::string& filename);
 } // namespace tech_utils

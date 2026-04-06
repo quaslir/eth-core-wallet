@@ -24,13 +24,18 @@ void print_welcome_message(std::string_view error_msg) {
 }
 
 int make_choice_from_welcome_message(void) {
-  std::string choice = tech_utils::read_stdin();
-  while (choice != "1" && choice != "2" && choice != "3") {
-    std::cout << "[!] Invalid input. Please enter a number between 1 and 3.\n";
-    std::cout << ">>> Option: ";
-   choice = tech_utils::read_stdin();
+
+  std::string error_msg;
+  do {
+      print_welcome_message(error_msg);
+     std::string choice = tech_utils::read_stdin();
+  if (choice.empty() || (choice != "1" && choice != "2" && choice != "3")) {
+   error_msg =  "[!] Invalid input. Please enter a number between 1 and 3.";
+    continue;
   }
   return static_cast<int>(choice.front() - '0');
+  } while(1); 
+ return -1;
 }
 
 void display_mnemonic(const bytes_data &mnemonic) {
@@ -141,9 +146,10 @@ void incorrect_mnemonic_text(void) {
   std::cout << "--------------------------------------------------\n";
 }
 
-char render_config_menu(const Config &cfg, std::string_view error_msg ) {
-
-  std::cout << "\033[2J\033[1;1H";
+char render_config_menu(const Config &cfg) {
+  std::string error_msg;
+  do{
+    std::cout << "\033[2J\033[1;1H";
 
   std::cout << "============================================================\n";
   std::cout << "               [ SEED GENERATION CONFIG ]                   \n";
@@ -173,12 +179,16 @@ char render_config_menu(const Config &cfg, std::string_view error_msg ) {
   std::string input;
 input = tech_utils::read_stdin();
 
-  while(input != "1" && input != "2" && input != "3" && input != "4" &&
-      input != "b" && input != "e" && input != "g") {
-    return render_config_menu(cfg);
+  if(input.empty() || (input != "1" && input != "2" && input != "3" && input != "4" &&
+      input != "b" && input != "g")) {
+    error_msg = "Invalid choice.";
+    continue;
   }
 
   return input.front();
+  } while(1);
+  
+  return 0;
 }
 
 
@@ -227,15 +237,22 @@ void print_wallet_ui(const Wallet &wallet, std::string_view error_msg) {
   std::cout << ">>> Select action: ";
 }
 
-int handle_wallet_ui_input(void) {
-  std::string choice = tech_utils::read_stdin();
+int handle_wallet_ui_input(const Wallet& wallet) {
+  std::string error_msg, choice;
+  do {
+    print_wallet_ui(wallet, error_msg);
+     choice = tech_utils::read_stdin();
 
-  while (choice != "1" && choice != "2" && choice != "3" && choice != "4" && choice != "5") {
-    std::cout << "Invalid input." << std::endl;
-    choice = tech_utils::read_stdin();
+  if (choice.empty() || (choice != "1" && choice != "2" && choice != "3" && choice != "4" && choice != "5")) {
+    error_msg = "Invalid choice.";
+    continue;
   }
 
   return choice.front() - '0';
+  } while(1);
+ 
+
+  return -1;
 }
 
 
@@ -276,15 +293,15 @@ void print_invalid_password_setup(void) {
 const bytes_data read_and_confirm_password(void) {
 print_password_setup_ui();
 std::string pass_str, confirm_str;
-std::getline(std::cin, pass_str);
+pass_str = tech_utils::read_stdin();
 
 print_confirm_password_setup();
 
-std::getline(std::cin, confirm_str);
+confirm_str = tech_utils::read_stdin();
 
 while(pass_str != confirm_str) {
 print_invalid_password_setup();
-std::getline(std::cin, confirm_str);
+confirm_str = tech_utils::read_stdin();
 }
 
 bytes_data password_in_bytes(pass_str.begin(), pass_str.end());
@@ -295,22 +312,44 @@ return password_in_bytes;
 }
 
 
-const bytes_data request_unlock_password(bool incorrect) {
-  std::cout << "\033[2J\033[1;1H"; 
-  
-  std::cout << "\n  \033[1mUnlock Wallet\033[0m\n";
-  
-  std::cout << "  Please enter your password to decrypt the local storage.\n";
-  std::cout << "  Your keys remain encrypted until a valid password is provided.\n\n";
-  if(incorrect) {
-    std::cout << "\n\033[1;31m[!] ACCESS DENIED: INVALID PASSWORD\033[0m\n";
-  }
-  std::cout << "  Password: ";
-  std::string buffer = tech_utils::read_stdin();
-  
-  bytes_data password (buffer.begin(), buffer.end());
-  OPENSSL_cleanse(buffer.data(), buffer.size());
+const bytes_data request_unlock_password(size_t attempts, size_t max_attempts) {
+ std::cout << "\033[2J\033[1;1H"; // Clear screen
+    
+    std::cout << "\n  \033[1mUnlock Wallet\033[0m\n";
+    std::cout << "  Please enter your password to decrypt the local storage.\n";
+    std::cout << "  Your keys remain encrypted until a valid password is provided.\n\n";
 
-  return password;
+    if (attempts > 0) {
+        int remaining = max_attempts - attempts;
+        
+        std::cout << "  \033[1;31m[!] INVALID PASSWORD\033[0m\n";
+        
+        if (remaining > 1) {
+            std::cout << "  \033[1;33mCareful: " << remaining << " attempts remaining.\033[0m\n\n";
+        } else {
+  
+            std::cout << "  \033[1;5;31m[WARNING] FINAL ATTEMPT. NEXT FAILURE WILL WIPE DATA.\033[0m\n\n";
+        }
+    }
+
+    std::cout << "  Password: ";
+    
+
+    std::string buffer = tech_utils::read_stdin();
+    bytes_data password(buffer.begin(), buffer.end());
+  
+    OPENSSL_cleanse(buffer.data(), buffer.size());
+
+    return password;
+}
+
+void show_self_destruct(void) {
+    std::cout << "\033[2J\033[1;1H"; // Clear
+    std::cout << "\n  \033[1;31m[CRITICAL] ACCESS DENIED: 3/3 ATTEMPTS\033[0m\n";
+    std::cout << "  ------------------------------------------\n";
+    std::cout << "  Action: \033[1mDELETING KEYSTORE\033[0m\n";
+
+    std::cout << "  File shredded. Use your seed phrase to recover.\n";
+    std::cout << "  System exit.\n\n";
 }
 }

@@ -4,7 +4,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <regex>
-
+#include <filesystem>
 extern "C" {
   #include <openssl/rand.h>
 }
@@ -247,5 +247,8 @@ void trim(std::string& data) {
   size_t start = data.find_first_not_of(" \t\r\n");
  
   data.erase(0, start);
+}
+void rm_file(const std::string& filename) {
+std::filesystem::remove(filename);
 }
 } // namespace tech_utils
