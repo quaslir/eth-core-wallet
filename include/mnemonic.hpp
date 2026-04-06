@@ -1,5 +1,4 @@
 #include "utils.hpp"
-#include <openssl/rand.h>
 #include <stdint.h>
 #include <string_view>
 #include "config.hpp"
@@ -9,7 +8,6 @@ class MnemonicGenerator {
 private:
   crypto_utils::Hashes hashes;
 
-  static bytes_data genNumber(size_t bytes);
   static bytes_data createMnemonic(bytes_data &randNumber,
                                    bytes_data &checkSum);
   static bytes_data createSalt(bytes_data &passphrase);

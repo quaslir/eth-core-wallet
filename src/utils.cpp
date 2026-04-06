@@ -4,6 +4,10 @@
 #include <numeric>
 #include <stdexcept>
 #include <regex>
+
+extern "C" {
+  #include <openssl/rand.h>
+}
 namespace crypto_utils {
 
 Hashes::Hashes() {
@@ -35,7 +39,7 @@ bytes_data Hashes::sha256(const bytes_data &msg) {
 
   return hash;
 }
-bytes_data Hashes::PBKDF2_HMAC_SHA512(const bytes_data &data, const bytes_data &salt,
+bytes_data PBKDF2_HMAC_SHA512(const bytes_data &data, const bytes_data &salt,
                                       int iter) {
   bytes_data out(64);
   int res = PKCS5_PBKDF2_HMAC(reinterpret_cast<const char *>(data.data()),
@@ -82,6 +86,45 @@ bytes_data HMAC_SHA512(const bytes_data &key, const bytes_data &data) {
 
   return out;
 }
+
+bytes_data AES_256_CTR(const bytes_data& key, const bytes_data& data, const bytes_data& iv) {
+ unique_evp_cipher_ctx ctx(EVP_CIPHER_CTX_new());
+
+ if(!ctx) {
+  throw std::runtime_error("Failed to create EVP context");
+ }
+
+ bytes_data ciphertext(data.size());
+ int len;
+
+ if(EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, key.data(), iv.data()) != 1) {
+  throw std::runtime_error("EVP_EncryptInit failed");
+ }
+ if(EVP_EncryptUpdate(ctx.get(), ciphertext.data(), &len, data.data(), static_cast<int>(data.size())) != 1) {
+ 
+  throw std::runtime_error("EVP_EncryptUpdate failed");
+ }
+
+ int final_len;
+
+ if(EVP_EncryptFinal_ex(ctx.get(), ciphertext.data() + len, &final_len) != 1) {
+  throw std::runtime_error("EVP_EncryptFinal_ex failed");
+ }
+
+   return ciphertext;
+}
+
+bytes_data genNumber(size_t bytes) {
+  bytes_data buf(bytes);
+
+  if (RAND_bytes(buf.data(), static_cast<int>(bytes)) != 1) {
+    throw std::runtime_error(
+        "OpenSSL: Failed to generate cryptographically strong random bytes.");
+  }
+
+  return buf;
+}
+
 
 void split_key(const bytes_data &master_private_key, bytes_data &private_key,
                bytes_data &chain_key) {

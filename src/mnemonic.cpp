@@ -51,7 +51,7 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
 bytes_data MnemonicGenerator::generateMnemonic(Config& conf) {
   size_t bytes = conf.bit_length / 8;
   int checkSumBits = conf.bit_length / 32;
-  bytes_data randNumber = genNumber(bytes);
+  bytes_data randNumber = crypto_utils::genNumber(bytes);
   if(!conf.extra_entropy.empty()) {
     randNumber = handle_extra_entropy_from_user(randNumber, conf.extra_entropy, conf.bit_length);
   }
@@ -67,22 +67,11 @@ bytes_data MnemonicGenerator::generateSeed(bytes_data &mnemonic,
                                            bytes_data &passphrase) {
   bytes_data salt = createSalt(passphrase);
 
-  bytes_data masterseed = hashes.PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
+  bytes_data masterseed = crypto_utils::PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
   OPENSSL_cleanse(salt.data(), salt.size());  
   return masterseed;
-}
-
-bytes_data MnemonicGenerator::genNumber(size_t bytes) {
-  bytes_data buf(bytes);
-
-  if (RAND_bytes(buf.data(), static_cast<int>(bytes)) != 1) {
-    throw std::runtime_error(
-        "OpenSSL: Failed to generate cryptographically strong random bytes.");
-  }
-
-  return buf;
 }
 
 bytes_data MnemonicGenerator::createSalt(bytes_data &passphrase) {
