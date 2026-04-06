@@ -15,24 +15,10 @@ bytes_data Wallet::prepare_mnemonic(Config& conf) {
   return mem.generateMnemonic(conf);
 }
 
-void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
-                                    bytes_data &passphrase, const std::vector<uint32_t>& path_deriv) {
-  bytes_data seed = mem.generateSeed(mnemonic, passphrase);
-
-  OPENSSL_cleanse(passphrase.data(), passphrase.size());
-  OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
-
-     std::string_view key = "Bitcoin seed";
-  bytes_data masterNode = crypto_utils::HMAC_SHA512(key, seed);     
-    OPENSSL_cleanse(seed.data(), seed.size());                              
-  bytes_data private_key(32), chain_key(32);
-
-  KEY_PAIR keys;
-  crypto_utils::split_key(masterNode, keys.parent_key, keys.chain_key);
-  master_node = masterNode;
-  OPENSSL_cleanse(masterNode.data(), masterNode.size());
+void Wallet::derive(const std::vector<uint32_t>& path_deriv) {
+    KEY_PAIR keys;
+  crypto_utils::split_key(master_node, keys.parent_key, keys.chain_key);
   Key_Derive devk;
-
   for (size_t i = 0; i < path_deriv.size(); i++) {
     devk.derive_child(keys, path_deriv[i]);
   }
@@ -42,7 +28,21 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   priv_key = keys.parent_key;
   OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
   OPENSSL_cleanse(keys.chain_key.data(), keys.chain_key.size());
+}
 
+
+void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
+                                    bytes_data &passphrase, const std::vector<uint32_t>& path_deriv) {
+  bytes_data seed = mem.generateSeed(mnemonic, passphrase);
+
+  OPENSSL_cleanse(passphrase.data(), passphrase.size());
+  OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
+
+     std::string_view key = "Bitcoin seed";
+  master_node = crypto_utils::HMAC_SHA512(key, seed);     
+    OPENSSL_cleanse(seed.data(), seed.size());                              
+            
+  derive(path_deriv);
   security_manager::first_time_save(*this);
 }
 

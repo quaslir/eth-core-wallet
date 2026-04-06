@@ -15,5 +15,6 @@ private:
   void handle_wallet_creation(void);
   void handle_wallet_import(void);
   void apply_choice_from_welcome_message(int choice);
+  void apply_choice_from_wallet_ui(int choice);
   bool handle_seed_generation_config(void);
 };

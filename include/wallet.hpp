@@ -29,6 +29,7 @@ public:
   void set_eth_address(const bytes_data& addr);
   void set_private_key(const bytes_data& private_key) ;
   void set_master_node(const bytes_data& master_n) ;
+  void derive(const std::vector<uint32_t>& path_deriv);
   bool correct_mnemonic(std::string &mnemonic);
   void import_wallet(std::string &mnemonic, std::string &passphrase);
   const long long& getIndex(void) const;

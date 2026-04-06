@@ -227,7 +227,7 @@ void print_wallet_ui(const Wallet &wallet, std::string_view error_msg) {
   std::cout << ">>> Select action: ";
 }
 
-char handle_wallet_ui_input(void) {
+int handle_wallet_ui_input(void) {
   std::string choice = tech_utils::read_stdin();
 
   while (choice != "1" && choice != "2" && choice != "3" && choice != "4" && choice != "5") {
@@ -235,7 +235,7 @@ char handle_wallet_ui_input(void) {
     choice = tech_utils::read_stdin();
   }
 
-  return choice.front();
+  return choice.front() - '0';
 }
 
 

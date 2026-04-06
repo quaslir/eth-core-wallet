@@ -8,7 +8,6 @@ bool first_time_save(const Wallet& wallet, const std::string& filename) {
 bytes_data password = cli::read_and_confirm_password();
 json j;
 j["current_address"] = wallet.get_eth_address();
-j["current_private_key"] = wallet.get_private_key();
 j["master_node"] = wallet.get_master_node();
 
 std::ofstream file(filename);
@@ -32,7 +31,6 @@ bool load_wallet(Wallet& wallet,const  std::string&filename) {
   file >> j;
 
   wallet.set_eth_address(j["current_address"]);
-  wallet.set_private_key(j["current_private_key"]);
   wallet.set_master_node(j["master_node"]);
   } catch(const std::exception& err) {
     std::cerr << err.what() << std::endl;

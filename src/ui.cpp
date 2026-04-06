@@ -4,6 +4,7 @@
 #include <iostream>
 void UserInterface::load(void) {
   if(security_manager::load_wallet(wallet)) {
+    wallet.derive(crypto_utils::path_deriv);
       state = WALLET_UI;
     }
   while (state != EXIT) {
@@ -14,8 +15,8 @@ void UserInterface::load(void) {
       apply_choice_from_welcome_message(choice);
     } else if (state == WALLET_UI) {
       cli::print_wallet_ui(wallet);
-      char ch = cli::handle_wallet_ui_input();
-      (void)ch;
+      int ch = cli::handle_wallet_ui_input();
+      apply_choice_from_wallet_ui(ch);
     }
   }
 }
@@ -58,7 +59,7 @@ void UserInterface::handle_wallet_import(void) {
   }
 
   std::string passphrase = cli::request_input_optional_passphrase();
-  wallet.import_wallet(mnemonic, passphrase);
+  wallet.import_wallet(mnemonic, passphrase); // clears mnemonic and passphrase
   state = WALLET_UI;
 }
 
@@ -81,4 +82,20 @@ bool UserInterface::handle_seed_generation_config(void) {
   }
 
   return choice == 'g';
+}
+
+void UserInterface::apply_choice_from_wallet_ui(int choice) {
+switch(choice) {
+  case 1:
+  break; //send transaction
+  case 2: //derive next address
+  break;
+  case 3: // prev address
+  break;
+  case 4: // show private_key
+  break;
+  case 5: //exit
+  state = EXIT;
+  break;
+}
 }

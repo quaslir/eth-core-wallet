@@ -70,6 +70,7 @@ bytes_data MnemonicGenerator::generateSeed(bytes_data &mnemonic,
   bytes_data masterseed = hashes.PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
+  OPENSSL_cleanse(salt.data(), salt.size());  
   return masterseed;
 }
 
@@ -117,8 +118,8 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
   bytes_data check_sum_from_mnemonic(checkSum);
 
   check_sum_from_mnemonic.assign(
-      std::make_move_iterator(mnemonic_in_binary.end() - checkSum),
-      std::make_move_iterator(mnemonic_in_binary.end()));
+  mnemonic_in_binary.end() - checkSum, mnemonic_in_binary.end());
+
 
   mnemonic_in_binary.erase(mnemonic_in_binary.end() - checkSum,
                            mnemonic_in_binary.end());
