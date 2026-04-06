@@ -14,4 +14,5 @@ uint32_t iter;
 
 json to_json(void) const;
 bool save(const std::string& filename);
+bool load(const std::string& filename);
 };

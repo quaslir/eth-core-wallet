@@ -179,6 +179,25 @@ std::string to_hex(const bytes_data& data) {
   return hex_format;
 }
 
+bytes_data from_hex_to_bytes(const std::string& hex) {
+  if(hex.length() % 2 != 0) {
+    throw std::runtime_error("Invalid hex string");
+  }
+
+  bytes_data bytes;
+  bytes.reserve(hex.length() / 2);
+
+  for(size_t i = 0; i < hex.length(); i+=2) {
+    std::string bytesStr = hex.substr(i, 2);
+
+    uint8_t byte = static_cast<uint8_t>(std::stoul(bytesStr, nullptr, 16));
+
+    bytes.push_back(byte);
+  }
+
+  return bytes;
+}
+
 bytes_data toBits(const std::vector<uint16_t> &data) {
   bytes_data binaryData;
   binaryData.reserve(data.size() * 11);

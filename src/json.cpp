@@ -22,3 +22,23 @@ json j = to_json();
 file << j << std::endl;
 return true;
 }
+
+bool EncryptedKeystore::load(const std::string& filename) {
+std::ifstream file(filename);
+
+if(!file.is_open()) return false;
+try {
+json j;
+
+file >> j;
+ciphertext = tech_utils::from_hex_to_bytes(j["ciphertext"]);
+mac = tech_utils::from_hex_to_bytes(j["mac"]);
+iv = tech_utils::from_hex_to_bytes(j["iv"]);
+salt = tech_utils::from_hex_to_bytes(j["salt"]);
+iter = j["iter"];
+} catch(...) {
+    return false;
+}
+
+return true;
+}

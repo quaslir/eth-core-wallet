@@ -293,4 +293,24 @@ OPENSSL_cleanse(confirm_str.data(), confirm_str.size());
 
 return password_in_bytes;
 }
+
+
+const bytes_data request_unlock_password(bool incorrect) {
+  std::cout << "\033[2J\033[1;1H"; 
+  
+  std::cout << "\n  \033[1mUnlock Wallet\033[0m\n";
+  
+  std::cout << "  Please enter your password to decrypt the local storage.\n";
+  std::cout << "  Your keys remain encrypted until a valid password is provided.\n\n";
+  if(incorrect) {
+    std::cout << "\n\033[1;31m[!] ACCESS DENIED: INVALID PASSWORD\033[0m\n";
+  }
+  std::cout << "  Password: ";
+  std::string buffer = tech_utils::read_stdin();
+  
+  bytes_data password (buffer.begin(), buffer.end());
+  OPENSSL_cleanse(buffer.data(), buffer.size());
+
+  return password;
+}
 }

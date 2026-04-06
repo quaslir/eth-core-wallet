@@ -17,4 +17,5 @@ void print_wallet_ui(const Wallet &wallet, std::string_view error_msg = "");
 int handle_wallet_ui_input(void);
 
 const bytes_data read_and_confirm_password(void);
+const bytes_data request_unlock_password(bool incorrect = false);
 } // namespace cli
