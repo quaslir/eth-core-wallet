@@ -1,6 +1,6 @@
 #include "cli.hpp"
 #include "config.hpp"
-#include "utils.hpp"
+#include "tech_utils.hpp"
 #include <iomanip>
 namespace cli {
 void print_welcome_message(std::string_view error_msg) {
@@ -92,40 +92,50 @@ void confirm_liability_waiver(std::string_view error_msg) {
   }
 }
 
-
 void request_input_mnemonic_prompt(std::string_view error_msg) {
-std::cout << "\033[2J\033[1;1H";
+  std::cout << "\033[2J\033[1;1H";
   std::cout << "\n==================================================\n";
-    std::cout << "                [ WALLET IMPORT ]                 \n";
-    std::cout << "==================================================\n\n";
-   if (!error_msg.empty()) {
+  std::cout << "                [ WALLET IMPORT ]                 \n";
+  std::cout << "==================================================\n\n";
+  if (!error_msg.empty()) {
     std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
     std::cout << "--------------------------------------------\n";
   }
-    std::cout << "STEP 1: ENTER MNEMONIC PHRASE\n";
-    std::cout << "Input 12, 15, 18, 21, or 24 words separated by space.\n";
-    std::cout << "\033[1;30m(Type 'back' or 'exit' to return to main menu)\033[0m\n";
-    std::cout << "--------------------------------------------------\n";
-    std::cout << "> ";
+  std::cout << "STEP 1: ENTER MNEMONIC PHRASE\n";
+  std::cout << "Input 12, 15, 18, 21, or 24 words separated by space.\n";
+  std::cout
+      << "\033[1;30m(Type 'back' or 'exit' to return to main menu)\033[0m\n";
+  std::cout << "--------------------------------------------------\n";
+  std::cout << "> ";
 }
 
+bytes_data request_input_mnemonic(void) {
+  std::string error_msg;
+  bytes_data mnemonic;
 
-std::string request_input_mnemonic(void) {
-  std::string mnemonic, error_msg;
-  
   do {
+    OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
     request_input_mnemonic_prompt(error_msg);
-     mnemonic = tech_utils::read_stdin();
-     error_msg = "Mnemonic must not be empty";
-  } while(mnemonic.empty());
+    char c;
 
-  if(mnemonic == "back" || mnemonic == "exit") return "";
+    while (std::cin.get(c) && c != '\n') {
+      mnemonic.push_back(c);
+    }
+
+    error_msg = "Mnemonic must not be empty";
+  } while (mnemonic.empty());
+
+  std::string_view mnemonic_view(
+      reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size());
+
+  if (mnemonic_view == "back" || mnemonic_view == "exit")
+    return {};
 
   return mnemonic;
 }
 
-std::string request_input_optional_passphrase(void) {
-  std::string passprase;
+bytes_data request_input_optional_passphrase(void) {
+  bytes_data passphrase;
   std::cout << "\033[2J\033[1;1H";
   std::cout << "\n--------------------------------------------------\n";
   std::cout << "STEP 2: ENTER PASSPHRASE (OPTIONAL)\n";
@@ -136,9 +146,12 @@ std::string request_input_optional_passphrase(void) {
   std::cout << "Enter passphrase : \n";
   std::cout << "> ";
 
-  passprase = tech_utils::read_stdin();
+  char c;
+  while (std::cin.get(c) && c != '\n') {
+    passphrase.push_back(c);
+  }
 
-  return passprase;
+  return passphrase;
 }
 
 void incorrect_mnemonic_text(void) {
@@ -369,36 +382,39 @@ void show_self_destruct(void) {
 }
 
 bool confirm_danger_action(void) {
-    std::cout << "\033[2J\033[1;1H";
-    std::cout << "\n  \033[1;41m  !!! SECURITY WARNING !!!  \033[0m\n";
-    std::cout << "  ------------------------------------------\n";
-    
-    std::cout << "  1. Anyone with this key has \033[1;31mFULL ACCESS\033[0m to your funds.\n";
-    std::cout << "  2. Never share this with anyone, including support.\n";
-    std::cout << "  3. Ensure no one is looking at your screen right now.\n";
-    std::cout << "  4. Do not take screenshots or copy to clipboard.\n";
-    std::cout << "  ------------------------------------------\n";
-    std::cout << "  Are you absolutely sure? (type \033[1;32m'CONFIRM'\033[0m to proceed): ";
-    
-    std::string input = tech_utils::read_stdin();
-    
-    return (input == "CONFIRM");
+  std::cout << "\033[2J\033[1;1H";
+  std::cout << "\n  \033[1;41m  !!! SECURITY WARNING !!!  \033[0m\n";
+  std::cout << "  ------------------------------------------\n";
+
+  std::cout << "  1. Anyone with this key has \033[1;31mFULL ACCESS\033[0m to "
+               "your funds.\n";
+  std::cout << "  2. Never share this with anyone, including support.\n";
+  std::cout << "  3. Ensure no one is looking at your screen right now.\n";
+  std::cout << "  4. Do not take screenshots or copy to clipboard.\n";
+  std::cout << "  ------------------------------------------\n";
+  std::cout << "  Are you absolutely sure? (type \033[1;32m'CONFIRM'\033[0m to "
+               "proceed): ";
+
+  std::string input = tech_utils::read_stdin();
+
+  return (input == "CONFIRM");
 }
 
-void display_private_key(const bytes_data& priv_key) {
-    std::cout << "\n  \033[1;33m[ YOUR PRIVATE KEY (HEX) ]\033[0m\n";
-    std::cout << "  ------------------------------------------------------------\n";
-    
-    tech_utils::print_hex(priv_key);
-    
-    std::cout << "  ------------------------------------------------------------\n";
-    std::cout << "  \033[3mWrite it down on paper and keep it offline.\033[0m\n";
-    std::cout << "  \033[1;31mPress ENTER immediately to hide this key and continue...\033[0m";
-    std::string buffer;
-    if(std::getline(std::cin, buffer))  {
-          std::cout << "\033[2J\033[1;1H";
-    }
-    
+void display_private_key(const bytes_data &priv_key) {
+  std::cout << "\n  \033[1;33m[ YOUR PRIVATE KEY (HEX) ]\033[0m\n";
+  std::cout
+      << "  ------------------------------------------------------------\n";
 
+  tech_utils::print_hex(priv_key);
+
+  std::cout
+      << "  ------------------------------------------------------------\n";
+  std::cout << "  \033[3mWrite it down on paper and keep it offline.\033[0m\n";
+  std::cout << "  \033[1;31mPress ENTER immediately to hide this key and "
+               "continue...\033[0m";
+  std::string buffer;
+  if (std::getline(std::cin, buffer)) {
+    std::cout << "\033[2J\033[1;1H";
+  }
 }
 } // namespace cli

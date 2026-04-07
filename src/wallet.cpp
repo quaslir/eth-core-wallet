@@ -10,7 +10,7 @@ Wallet::~Wallet() {
 
 int Wallet::get_number_of_bits(void) const { return 0; }
 
-bytes_data Wallet::prepare_mnemonic(Config &conf) {
+bytes_data Wallet::prepare_mnemonic(Config &conf) const {
   return mem.generateMnemonic(conf);
 }
 
@@ -25,7 +25,7 @@ bool Wallet::save() const {
 }
 void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
   KEY_PAIR keys;
-  crypto_utils::split_key(master_node, keys.parent_key, keys.chain_key);
+  crypto_utils::split_key_64(master_node, keys.parent_key, keys.chain_key);
   Key_Derive devk;
   for (size_t i = 0; i < path_deriv.size(); i++) {
     devk.derive_child(keys, path_deriv[i]);
@@ -112,18 +112,14 @@ void Wallet::set_master_node(const bytes_data &master_n) {
 }
 void Wallet::set_index(const int i) { this->index = i; }
 
-bool Wallet::correct_mnemonic(std::string &mnemonic) {
+bool Wallet::correct_mnemonic(std::string_view mnemonic) const {
   if (mnemonic.empty())
     return false;
   return mem.mnemonic_is_correct(mnemonic);
 }
 
-void Wallet::import_wallet(std::string &mnemonic, std::string &passphrase) {
-  bytes_data bytes_mnemonic(mnemonic.begin(), mnemonic.end());
-  bytes_data bytes_passphrase(passphrase.begin(), passphrase.end());
-
-  finalize_from_mnemonic(bytes_mnemonic, bytes_passphrase,
-                         crypto_utils::path_deriv);
+void Wallet::import_wallet(bytes_data &mnemonic, bytes_data &passphrase) {
+  finalize_from_mnemonic(mnemonic, passphrase, crypto_utils::path_deriv);
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
 }

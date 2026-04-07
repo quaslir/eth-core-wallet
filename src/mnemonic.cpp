@@ -48,10 +48,10 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
   return mnemonic;
 }
 
-bytes_data MnemonicGenerator::generateMnemonic(Config &conf) {
+bytes_data MnemonicGenerator::generateMnemonic(Config &conf) const {
   size_t bytes = conf.bit_length / 8;
   int checkSumBits = conf.bit_length / 32;
-  bytes_data randNumber = crypto_utils::genNumber(bytes);
+  bytes_data randNumber = crypto_utils::gen_number(bytes);
   if (!conf.extra_entropy.empty()) {
     randNumber = handle_extra_entropy_from_user(randNumber, conf.extra_entropy,
                                                 conf.bit_length);
@@ -65,7 +65,7 @@ bytes_data MnemonicGenerator::generateMnemonic(Config &conf) {
 }
 
 bytes_data MnemonicGenerator::generateSeed(bytes_data &mnemonic,
-                                           bytes_data &passphrase) {
+                                           bytes_data &passphrase) const {
   bytes_data salt = createSalt(passphrase);
 
   bytes_data masterseed =
@@ -87,7 +87,7 @@ bytes_data MnemonicGenerator::createSalt(bytes_data &passphrase) {
   return salt;
 }
 
-bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
+bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
   std::vector<uint16_t> mnemonic_indexes;
 
   int checkSum = 0;
@@ -103,7 +103,7 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
 
   checkSum = static_cast<int>(mnemonic_indexes.size() / 3);
 
-  bytes_data mnemonic_in_binary = tech_utils::toBits(mnemonic_indexes);
+  bytes_data mnemonic_in_binary = tech_utils::to_bits(mnemonic_indexes);
   OPENSSL_cleanse(mnemonic_indexes.data(),
                   mnemonic_indexes.size() * sizeof(uint16_t));
   bytes_data check_sum_from_mnemonic(checkSum);
@@ -130,7 +130,7 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
 }
 
 bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
-    bytes_data &entropy, bytes_data &extra_entropy, int target_bits) {
+    bytes_data &entropy, bytes_data &extra_entropy, int target_bits) const {
   entropy.insert(entropy.end(), extra_entropy.begin(), extra_entropy.end());
 
   bytes_data new_entropy = hashes.sha256(entropy);

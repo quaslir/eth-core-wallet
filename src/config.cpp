@@ -1,8 +1,10 @@
 #include "config.hpp"
-#include "utils.hpp"
+#include "crypto_utils.hpp"
+#include "tech_utils.hpp"
 #include <iostream>
+
 #define ERROR_MSG "\033[1;31m[!] Invalid choice.\033[0m\n\n"
-void Config::handle_user_entropy(void) {}
+
 void Config::handle_bit_length(void) {
   std::string choice, error_msg;
   do {
@@ -18,7 +20,7 @@ void Config::handle_bit_length(void) {
     bit_length = 256;
 }
 
-void render_passphrase_menu(std::string_view error_msg) {
+void Config::render_passphrase_menu(std::string_view error_msg) const {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << "             [ BIP-39 PASSPHRASE SETUP ]                    \n"
@@ -37,7 +39,7 @@ void render_passphrase_menu(std::string_view error_msg) {
             << " > ";
 }
 
-void render_passphrase_input_screen() {
+void Config::render_passphrase_input_screen() const {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << "             [ ENTER SECRET PASSPHRASE ]                    \n"
@@ -71,7 +73,7 @@ void Config::handle_use_passphrase(void) {
   }
 }
 
-void Config::render_bit_length_menu(std::string_view error_msg) {
+void Config::render_bit_length_menu(std::string_view error_msg) const {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << "             [        SELECT ENTROPY LENGTH ]              \n"
@@ -89,7 +91,7 @@ void Config::render_bit_length_menu(std::string_view error_msg) {
             << " > ";
 }
 
-void render_extra_entropy_menu(std::string_view error_msg) {
+void Config::render_extra_entropy_menu(std::string_view error_msg) const {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << (!error_msg.empty() ? error_msg : "")
@@ -105,7 +107,7 @@ void render_extra_entropy_menu(std::string_view error_msg) {
             << " > ";
 }
 
-void render_input_extra_entropy_menu(void) {
+void Config::render_input_extra_entropy_menu(void) const {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << "             [ INJECT CUSTOM ENTROPY ]                      \n"
@@ -145,7 +147,7 @@ void Config::handle_extra_entropy(void) {
   }
 }
 
-void render_derivation_menu(std::string_view error_msg) {
+void Config::render_derivation_menu(std::string_view error_msg) const {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << (!error_msg.empty() ? error_msg : "")
@@ -163,7 +165,7 @@ void render_derivation_menu(std::string_view error_msg) {
             << " > ";
 }
 
-void render_custom_path_input(std::string_view error_msg) {
+void Config::render_custom_path_input(std::string_view error_msg) const {
   std::cout << "\033[2J\033[1;1H";
   std::cout
       << "============================================================\n"

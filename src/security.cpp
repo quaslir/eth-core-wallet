@@ -10,15 +10,15 @@ namespace security_manager {
 bool first_time_save(const Wallet &wallet, const std::string &filename) {
   bytes_data password = cli::read_and_confirm_password();
 
-  bytes_data salt = crypto_utils::genNumber(16);
+  bytes_data salt = crypto_utils::gen_number(16);
   bytes_data hash_key =
       crypto_utils::PBKDF2_HMAC_SHA512(password, salt, ITERATIONS);
 
   bytes_data encryption_key, mac_key;
-  crypto_utils::split_key(hash_key, encryption_key, mac_key);
+  crypto_utils::split_key_64(hash_key, encryption_key, mac_key);
 
   const bytes_data &masternode = wallet.get_master_node();
-  bytes_data iv = crypto_utils::genNumber(16);
+  bytes_data iv = crypto_utils::gen_number(16);
   bytes_data encrypted_masternode =
       crypto_utils::AES_256_CTR(encryption_key, masternode, iv);
   bytes_data mac_input, mac(32);
@@ -68,7 +68,7 @@ bool load_wallet(Wallet &wallet, const std::string &filename) {
         crypto_utils::PBKDF2_HMAC_SHA512(password, encrp.salt, encrp.iter);
 
     bytes_data mac_key, encryption_key, mac(32), mac_input;
-    crypto_utils::split_key(hash_key, encryption_key, mac_key);
+    crypto_utils::split_key_64(hash_key, encryption_key, mac_key);
 
     mac_input.insert(mac_input.end(), mac_key.begin() + 16, mac_key.end());
     mac_input.insert(mac_input.end(), encrp.ciphertext.begin(),

@@ -3,7 +3,7 @@
 #include "derive.hpp"
 #include "mnemonic.hpp"
 #include "security.hpp"
-#include "utils.hpp"
+#include "tech_utils.hpp"
 #include <string>
 using bytes_data = std::vector<uint8_t>;
 class Wallet {
@@ -19,7 +19,7 @@ private:
 public:
   ~Wallet();
 
-  bytes_data prepare_mnemonic(Config &conf);
+  bytes_data prepare_mnemonic(Config &conf) const;
   void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase,
                               const std::vector<uint32_t> &path_deriv);
   const bytes_data &get_eth_address(void) const;
@@ -34,8 +34,8 @@ public:
   bool derive_next(void);
   bool derive_prev(void);
   void derive(const std::vector<uint32_t> &path_deriv);
-  bool correct_mnemonic(std::string &mnemonic);
-  void import_wallet(std::string &mnemonic, std::string &passphrase);
+  bool correct_mnemonic(std::string_view mnemonic) const;
+  void import_wallet(bytes_data &mnemonic, bytes_data &passphrase);
   const long long &getIndex(void) const;
 
   bool save(void) const;

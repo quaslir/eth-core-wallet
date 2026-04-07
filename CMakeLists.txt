@@ -7,7 +7,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
 src/main.cpp
 src/mnemonic.cpp
-src/utils.cpp
+src/crypto_utils.cpp
+src/tech_utils.cpp
 src/derive.cpp
 src/ui.cpp
 src/security.cpp
@@ -82,11 +83,35 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto ${SECP256K1_LDFLAG
 add_subdirectory(external)
 target_link_libraries(${PROJECT_NAME} PRIVATE tools)
 
+set(HTTP_ONLY ON CACHE INTERNAL "")
+set(CURL_DISABLE_FTP ON CACHE INTERNAL "")
+set(CURL_DISABLE_TFTP ON CACHE INTERNAL "")
+set(CURL_DISABLE_PROXY ON CACHE INTERNAL "")
+set(CURL_DISABLE_DICT ON CACHE INTERNAL "")
+set(CURL_DISABLE_FILE ON CACHE INTERNAL "")
+set(CURL_DISABLE_GOPHER ON CACHE INTERNAL "")
+set(CURL_DISABLE_SMTP ON CACHE INTERNAL "")
+set(CURL_DISABLE_POP3 ON CACHE INTERNAL "")
+set(CURL_DISABLE_IMAP ON CACHE INTERNAL "")
+set(CURL_DISABLE_RTSP ON CACHE INTERNAL "")
+set(CURL_DISABLE_TELNET ON CACHE INTERNAL "")
+set(CURL_DISABLE_MQTT ON CACHE INTERNAL "")
+set(ENABLE_THREADED_RESOLVER OFF CACHE INTERNAL "")
+set(BUILD_TESTING OFF CACHE INTERNAL "")
+
+
 FetchContent_Declare(
     json
     URL  https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 
-FetchContent_MakeAvailable(json)
+FetchContent_Declare(
+    curl
+    GIT_REPOSITORY https://github.com/curl/curl.git
+    GIT_TAG        curl-8_7_1
+)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+FetchContent_MakeAvailable(json)
+FetchContent_MakeAvailable(curl)
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json libcurl)
+

@@ -37,7 +37,7 @@ void UserInterface::apply_choice_from_welcome_message(int choice) {
     handle_wallet_import();
     break;
   case 3:
-    exit(0);  
+    exit(0);
   }
 }
 
@@ -57,22 +57,24 @@ void UserInterface::handle_wallet_creation(void) {
 }
 
 void UserInterface::handle_wallet_import(void) {
-  std::string mnemonic = cli::request_input_mnemonic();
-  if(mnemonic.empty()) {
+  bytes_data mnemonic = cli::request_input_mnemonic();
+  std::string_view mnemonic_view(
+      reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size());
+  if (mnemonic.empty()) {
     state = MAIN_MENU;
     return;
   }
-  while (!wallet.correct_mnemonic(mnemonic)) {
+  while (!wallet.correct_mnemonic(mnemonic_view)) {
     cli::incorrect_mnemonic_text();
     mnemonic = cli::request_input_mnemonic();
 
-    if(mnemonic.empty()) {
-    state = MAIN_MENU;
-    return;
-  }
+    if (mnemonic.empty()) {
+      state = MAIN_MENU;
+      return;
+    }
   }
 
-  std::string passphrase = cli::request_input_optional_passphrase();
+  bytes_data passphrase = cli::request_input_optional_passphrase();
   wallet.import_wallet(mnemonic, passphrase); // clears mnemonic and passphrase
   state = WALLET_UI;
 }
@@ -110,9 +112,9 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     wallet.derive_prev();
     break;
   case 4: // show private_key
-  if(cli::confirm_danger_action()) {
-    cli::display_private_key(wallet.get_private_key());
-  }
+    if (cli::confirm_danger_action()) {
+      cli::display_private_key(wallet.get_private_key());
+    }
     break;
   case 5: // exit
     wallet.save();

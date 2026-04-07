@@ -1,6 +1,7 @@
 #include "derive.hpp"
 #include "Keccak256.hpp"
-#include "utils.hpp"
+#include "crypto_utils.hpp"
+#include "tech_utils.hpp"
 #include <ranges>
 #include <stdexcept>
 extern "C" {
@@ -26,7 +27,7 @@ Key_Derive::~Key_Derive() {
   secp256k1_context_destroy(context);
 }
 
-bytes_data Key_Derive::derive_public_key(bytes_data &private_key) {
+bytes_data Key_Derive::derive_public_key(bytes_data &private_key) const {
   secp256k1_pubkey public_key;
   bytes_data compressed_public_key(33);
   size_t len = 33;
@@ -64,7 +65,7 @@ void Key_Derive::derive_child(KEY_PAIR &keys, uint32_t index) {
 }
 
 std::vector<uint8_t> Key_Derive::add_mod_n(const bytes_data &IL,
-                                           const bytes_data &k_parent) {
+                                           const bytes_data &k_parent) const {
 
   BN_CTX *bn_ctx = BN_CTX_new();
 
@@ -90,7 +91,7 @@ std::vector<uint8_t> Key_Derive::add_mod_n(const bytes_data &IL,
   return child_priv;
 }
 
-bytes_data Key_Derive::generate_address(const bytes_data &private_key) {
+bytes_data Key_Derive::generate_address(const bytes_data &private_key) const {
   secp256k1_pubkey public_key;
   bytes_data uncompressed_public_key(65);
   size_t len = 65;

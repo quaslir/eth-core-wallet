@@ -1,5 +1,6 @@
 #include "config.hpp"
-#include "utils.hpp"
+#include "crypto_utils.hpp"
+#include "tech_utils.hpp"
 #include <stdint.h>
 #include <string_view>
 #include <vector>
@@ -14,10 +15,10 @@ private:
 
 public:
   MnemonicGenerator();
-  bytes_data generateSeed(bytes_data &mnemonic, bytes_data &passphrase);
-  bytes_data generateMnemonic(Config &conf);
-  bool mnemonic_is_correct(std::string_view mnemonic);
+  bytes_data generateSeed(bytes_data &mnemonic, bytes_data &passphrase) const;
+  bytes_data generateMnemonic(Config &conf) const;
+  bool mnemonic_is_correct(std::string_view mnemonic) const;
   bytes_data handle_extra_entropy_from_user(bytes_data &entropy,
                                             bytes_data &extra_entropy,
-                                            int target_bits);
+                                            int target_bits) const;
 };
