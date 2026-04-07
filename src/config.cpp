@@ -1,16 +1,15 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include <iostream>
-
+#define ERROR_MSG  "\033[1;31m[!] Invalid choice.\033[0m\n\n"
 void Config::handle_user_entropy(void) {}
 void Config::handle_bit_length(void) {
-  render_bit_length_menu();
-  std::string choice = tech_utils::read_stdin();
-  while (choice != "b" && choice != "1" && choice != "2") {
-    std::cout << "Invalid choice." << std::endl;
-    choice = tech_utils::read_stdin();
-  }
-
+  std::string choice, error_msg;
+  do {
+  render_bit_length_menu(error_msg);
+  choice = tech_utils::read_stdin();
+  error_msg = ERROR_MSG;
+} while (choice.empty() || (choice != "b" && choice != "1" && choice != "2"));
   if (choice == "b")
     return;
   if (choice == "1")
@@ -19,11 +18,12 @@ void Config::handle_bit_length(void) {
     bit_length = 256;
 }
 
-void render_passphrase_menu() {
+void render_passphrase_menu(std::string_view error_msg) {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << "             [ BIP-39 PASSPHRASE SETUP ]                    \n"
             << "============================================================\n"
+            << (!error_msg.empty() ? error_msg : "")
             << " [1] DISABLED (Standard Mode)\n"
             << "     Wallet depends ONLY on your 12/24 words.\n\n"
             << " [2] ENABLED (Advanced / 25th Word)\n"
@@ -49,12 +49,12 @@ void render_passphrase_input_screen() {
 }
 
 void Config::handle_use_passphrase(void) {
-  render_passphrase_menu();
-  std::string choice = tech_utils::read_stdin();
-  while (choice != "b" && choice != "1" && choice != "2") {
-    std::cout << "Invalid choice." << std::endl;
+  std::string choice, error_msg;
+  do {
+    render_passphrase_menu(error_msg);
     choice = tech_utils::read_stdin();
-  }
+    error_msg = ERROR_MSG;
+  } while (choice.empty() ||( choice != "b" && choice != "1" && choice != "2"));
 
   if (choice == "b")
     return;
@@ -71,11 +71,12 @@ void Config::handle_use_passphrase(void) {
   }
 }
 
-void Config::render_bit_length_menu(void) {
+void Config::render_bit_length_menu(std::string_view error_msg) {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "============================================================\n"
             << "             [        SELECT ENTROPY LENGTH ]              \n"
             << "============================================================\n"
+            << (!error_msg.empty() ? error_msg : "")
             << " [1] 128 BITS (12 WORDS)\n"
             << "     Standard security. Ideal for \"Hot\" wallets and\n"
             << "     frequent transactions. Easy to write and store.\n\n"
@@ -88,9 +89,10 @@ void Config::render_bit_length_menu(void) {
             << " > ";
 }
 
-void render_extra_entropy_menu(void) {
+void render_extra_entropy_menu(std::string_view error_msg) {
       std::cout << "\033[2J\033[1;1H";
     std::cout << "============================================================\n"
+    << (!error_msg.empty() ? error_msg : "")
               << " [1] SYSTEM ONLY (OS CSPRNG)\n"
               << "     Standard mode. Uses /dev/urandom or BCryptGenRandom.\n"
               << "     Reliable and tested by millions of users.\n\n"
@@ -119,18 +121,12 @@ void render_input_extra_entropy_menu(void) {
 }
 
 void Config::handle_extra_entropy(void) {
-render_extra_entropy_menu();
-
-std::string choice = tech_utils::read_stdin();
-  while (choice != "b" && choice != "1" && choice != "2") {
-    std::cout << "Invalid choice." << std::endl;
-    choice = tech_utils::read_stdin();
-  }
-
-while(choice != "1" && choice != "2" &&choice != "b") {
-    std::cout << "Incorrect choice" << '\n' << " > ";
-    choice = tech_utils::read_stdin();
-}
+  std::string choice, error_msg;
+  do {
+render_extra_entropy_menu(error_msg);
+choice = tech_utils::read_stdin();
+error_msg = ERROR_MSG;
+  } while((choice.empty() || (choice != "b" && choice != "1" && choice != "2")));
 
 if(choice == "b") return;
 else if(choice == "1") {
@@ -149,9 +145,10 @@ OPENSSL_cleanse(input.data(), input.size());
 }
 
 
-void render_derivation_menu() {
+void render_derivation_menu(std::string_view error_msg) {
   std::cout << "\033[2J\033[1;1H";
     std::cout << "============================================================\n"
+    << (!error_msg.empty() ? error_msg : "")
               << " [1] ETHEREUM STANDARD (BIP-44)\n"
               << "     m/44'/60'/0'/0/0\n"
               << "     Recommended for MetaMask, MyEtherWallet, and Ledger.\n\n"
@@ -166,11 +163,12 @@ void render_derivation_menu() {
               << " > ";
 }
 
-void render_custom_path_input() {
+void render_custom_path_input(std::string_view error_msg) {
    std::cout << "\033[2J\033[1;1H";
     std::cout << "============================================================\n"
               << "             [ ENTER CUSTOM DERIVATION PATH ]               \n"
               << "============================================================\n"
+              << (!error_msg.empty() ? error_msg : "")
               << " Format follows BIP-44 standard:\n"
               << " m / purpose' / coin_type' / account' / change / address_index\n"
               << " \n"
@@ -184,13 +182,13 @@ void render_custom_path_input() {
 }
 
 void Config::handle_derivation_path(void) {
-render_derivation_menu();
-std::string choice = tech_utils::read_stdin();
+std::string choice, error_msg;
+do {
+render_derivation_menu(error_msg);
+choice = tech_utils::read_stdin();
+error_msg = ERROR_MSG;
+}while(choice.empty() || (choice != "1" && choice != "2" && choice != "b"));
 
-while(choice != "1" && choice != "2" && choice != "b") {
-  std::cout << "Invalid choice.\n" << " > ";
-  choice = tech_utils::read_stdin();
-}
 
 if(choice == "b") return;
 if(choice == "1") {
@@ -198,15 +196,16 @@ if(choice == "1") {
 }
 
 if(choice == "2") {
-render_custom_path_input();
-
+error_msg.clear();
+render_custom_path_input(error_msg);
 std::string path = tech_utils::read_stdin();
 
-if(!crypto_utils::is_valid_derive_path(path)) {
-  std::cout << "Incorrect path\n";
-  std::cout << " > ";
-  path = tech_utils::read_stdin();
+while(!crypto_utils::is_valid_derive_path(path)) {
+error_msg = "Invalid path.";
+render_custom_path_input(error_msg);
+path = tech_utils::read_stdin();
 }
+
 
 derivation_path = path;
 path.clear();
