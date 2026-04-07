@@ -48,12 +48,13 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
   return mnemonic;
 }
 
-bytes_data MnemonicGenerator::generateMnemonic(Config& conf) {
+bytes_data MnemonicGenerator::generateMnemonic(Config &conf) {
   size_t bytes = conf.bit_length / 8;
   int checkSumBits = conf.bit_length / 32;
   bytes_data randNumber = crypto_utils::genNumber(bytes);
-  if(!conf.extra_entropy.empty()) {
-    randNumber = handle_extra_entropy_from_user(randNumber, conf.extra_entropy, conf.bit_length);
+  if (!conf.extra_entropy.empty()) {
+    randNumber = handle_extra_entropy_from_user(randNumber, conf.extra_entropy,
+                                                conf.bit_length);
   }
   bytes_data hash = hashes.sha256(randNumber);
 
@@ -67,10 +68,11 @@ bytes_data MnemonicGenerator::generateSeed(bytes_data &mnemonic,
                                            bytes_data &passphrase) {
   bytes_data salt = createSalt(passphrase);
 
-  bytes_data masterseed = crypto_utils::PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
+  bytes_data masterseed =
+      crypto_utils::PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
-  OPENSSL_cleanse(salt.data(), salt.size());  
+  OPENSSL_cleanse(salt.data(), salt.size());
   return masterseed;
 }
 
@@ -106,9 +108,8 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
                   mnemonic_indexes.size() * sizeof(uint16_t));
   bytes_data check_sum_from_mnemonic(checkSum);
 
-  check_sum_from_mnemonic.assign(
-  mnemonic_in_binary.end() - checkSum, mnemonic_in_binary.end());
-
+  check_sum_from_mnemonic.assign(mnemonic_in_binary.end() - checkSum,
+                                 mnemonic_in_binary.end());
 
   mnemonic_in_binary.erase(mnemonic_in_binary.end() - checkSum,
                            mnemonic_in_binary.end());
@@ -128,20 +129,21 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) {
   return result;
 }
 
-bytes_data MnemonicGenerator::handle_extra_entropy_from_user(bytes_data& entropy, bytes_data& extra_entropy, int target_bits) {
-entropy.insert(entropy.end(), extra_entropy.begin(), extra_entropy.end());
+bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
+    bytes_data &entropy, bytes_data &extra_entropy, int target_bits) {
+  entropy.insert(entropy.end(), extra_entropy.begin(), extra_entropy.end());
 
+  bytes_data new_entropy = hashes.sha256(entropy);
 
-bytes_data new_entropy = hashes.sha256(entropy);
+  OPENSSL_cleanse(extra_entropy.data(), extra_entropy.size());
+  OPENSSL_cleanse(entropy.data(), entropy.size());
 
-OPENSSL_cleanse(extra_entropy.data(), extra_entropy.size());
-OPENSSL_cleanse(entropy.data(), entropy.size());
+  int target_bytes = target_bits / 8;
 
-int target_bytes = target_bits / 8;
+  bytes_data final_entropy(new_entropy.begin(),
+                           new_entropy.begin() + target_bytes);
 
-bytes_data final_entropy(new_entropy.begin(), new_entropy.begin() + target_bytes);
+  OPENSSL_cleanse(new_entropy.data(), new_entropy.size());
 
-OPENSSL_cleanse(new_entropy.data(), new_entropy.size());
-
-return final_entropy;
+  return final_entropy;
 }

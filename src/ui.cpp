@@ -3,10 +3,7 @@
 #include "config.hpp"
 #include <iostream>
 void UserInterface::load(void) {
-  if(security_manager::load_wallet(wallet)) {
-    wallet.derive(crypto_utils::path_deriv);
-      state = WALLET_UI;
-    }
+  handle_wallet_loading();
   while (state != EXIT) {
 
     if (state == MAIN_MENU) {
@@ -16,6 +13,16 @@ void UserInterface::load(void) {
       int ch = cli::handle_wallet_ui_input(wallet);
       apply_choice_from_wallet_ui(ch);
     }
+  }
+}
+
+void UserInterface::handle_wallet_loading(void) {
+  if (security_manager::load_wallet(wallet)) {
+    std::vector<uint32_t> current_path =
+        crypto_utils::change_derive_path(wallet.getIndex());
+    wallet.sync_derive_path(current_path);
+    wallet.derive(current_path);
+    state = WALLET_UI;
   }
 }
 
@@ -30,7 +37,7 @@ void UserInterface::apply_choice_from_welcome_message(int choice) {
     handle_wallet_import();
     break;
   case 3:
-    break;
+    exit(0);  
   }
 }
 
@@ -43,17 +50,26 @@ void UserInterface::handle_wallet_creation(void) {
   cli::display_mnemonic(mnemonic);
   cli::confirm_liability_waiver();
 
-  const std::vector<uint32_t> PATH_DERIVE = Key_Derive::parse_derive_path(config.derivation_path);
+  const std::vector<uint32_t> PATH_DERIVE =
+      Key_Derive::parse_derive_path(config.derivation_path);
   wallet.finalize_from_mnemonic(mnemonic, config.passphrase, PATH_DERIVE);
   state = WALLET_UI;
 }
 
 void UserInterface::handle_wallet_import(void) {
   std::string mnemonic = cli::request_input_mnemonic();
-
+  if(mnemonic.empty()) {
+    state = MAIN_MENU;
+    return;
+  }
   while (!wallet.correct_mnemonic(mnemonic)) {
     cli::incorrect_mnemonic_text();
     mnemonic = cli::request_input_mnemonic();
+
+    if(mnemonic.empty()) {
+    state = MAIN_MENU;
+    return;
+  }
   }
 
   std::string passphrase = cli::request_input_optional_passphrase();
@@ -83,17 +99,24 @@ bool UserInterface::handle_seed_generation_config(void) {
 }
 
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
-switch(choice) {
+  switch (choice) {
   case 1:
-  break; //send transaction
-  case 2: //derive next address
-  break;
-  case 3: // prev address
-  break;
+    break; // send transaction
+  case 2:
+    wallet.derive_next();
+    break;
+
+  case 3:
+    wallet.derive_prev();
+    break;
   case 4: // show private_key
-  break;
-  case 5: //exit
-  state = EXIT;
-  break;
-}
+  if(cli::confirm_danger_action()) {
+    cli::display_private_key(wallet.get_private_key());
+  }
+    break;
+  case 5: // exit
+    wallet.save();
+    state = EXIT;
+    break;
+  }
 }

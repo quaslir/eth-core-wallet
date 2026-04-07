@@ -25,7 +25,7 @@ public:
   void derive_child(KEY_PAIR &keys, uint32_t index);
   bytes_data generate_address(const bytes_data &private_key);
 
-  static const std::vector<uint32_t> parse_derive_path(const std::string& path);
+  static const std::vector<uint32_t> parse_derive_path(const std::string &path);
 
 private:
   bytes_data add_mod_n(const bytes_data &IL, const bytes_data &k_parent);
