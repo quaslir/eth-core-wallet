@@ -1,3 +1,4 @@
+#pragma once
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdint.h>
@@ -15,4 +16,17 @@ struct EncryptedKeystore {
   json to_json(void) const;
   bool save(const std::string &filename);
   bool load(const std::string &filename);
+};
+
+struct AlchemyJSON {
+  json j;
+  
+
+  AlchemyJSON(const std::string& jsonrpc,
+  const std::string& method,
+  const std::vector<std::string>& params,
+  int id);
+  std::string to_string(void) const;
+  void parse(const std::string& data);
+  std::string get_result(void) const;
 };

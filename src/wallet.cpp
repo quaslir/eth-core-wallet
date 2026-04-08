@@ -63,6 +63,9 @@ const bytes_data &Wallet::get_master_node(void) const {
   return this->master_node;
 }
 
+std::string Wallet::get_balance(void) const {return this->current_balance;}
+void Wallet::set_balance(const std::string& balance) {this->current_balance = balance;}
+
 bool Wallet::derive_next(void) {
   if (index >= 0x7FFFFFF)
     return false;

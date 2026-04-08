@@ -2,26 +2,26 @@
 #include <stdexcept>
 namespace http {
 
-        size_t http_callback(void * contents, size_t size, size_t number, bytes_data* result) {
+        size_t http_callback(void * contents, size_t size, size_t number, std::string* result) {
             size_t total_size = size * number;
-            result->insert(result->end(), static_cast<uint8_t*>(contents), static_cast<uint8_t*>(contents) + total_size);
+            result->append(static_cast<const char *>(contents), total_size);
             return total_size;
         }
-    bytes_data post_request(const std::string& url, const bytes_data& data) {
+    std::string post_request(const std::string& url, const std::string& data) {
         CURL * curl = curl_easy_init();
 
         if(!curl) {
             throw std::runtime_error("curl_easy_init failed");
         }
 
-        bytes_data buffer;
+        std::string buffer;
         struct curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_callback);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.data());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.size());
         
         //TLS
@@ -42,14 +42,14 @@ namespace http {
 
     }
 
-    bytes_data get_request(const std::string& url) {
+    std::string get_request(const std::string& url) {
              CURL * curl = curl_easy_init();
 
         if(!curl) {
             throw std::runtime_error("curl_easy_init failed");
         }
 
-        bytes_data buffer;
+        std::string buffer;
 
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_callback);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());

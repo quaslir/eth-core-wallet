@@ -44,3 +44,21 @@ bool EncryptedKeystore::load(const std::string &filename) {
 
   return true;
 }
+
+AlchemyJSON::AlchemyJSON(const std::string& jsonrpc,
+  const std::string& method,
+  const std::vector<std::string>& params,
+  int id) {
+    j["jsonrpc"] = jsonrpc;
+    j["method"] = method;
+    j["params"] = params;
+    j["id"] = id;
+  }
+
+std::string AlchemyJSON::to_string(void) const {
+return j.dump();
+}
+
+void AlchemyJSON::parse(const std::string& data) { j = json::parse(data);}
+
+std::string AlchemyJSON::get_result(void) const {return j["result"];}

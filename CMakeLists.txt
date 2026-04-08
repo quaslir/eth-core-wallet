@@ -18,6 +18,7 @@ src/config.cpp
 src/json.cpp
 src/http.cpp
 src/uint256.cpp
+src/blockchain_client.cpp
 )
 
 include(FetchContent)

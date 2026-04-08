@@ -11,6 +11,7 @@ private:
   bytes_data priv_key;
   bytes_data eth_address;
   bytes_data master_node;
+  std::string current_balance;
   MnemonicGenerator mem;
   long long index = 0;
 
@@ -26,10 +27,12 @@ public:
   const bytes_data &get_private_key(void) const;
   const bytes_data &get_master_node(void) const;
 
+  std::string get_balance(void) const;
   void sync_derive_path(std::vector<uint32_t> &derive_path) const;
   void set_eth_address(const bytes_data &addr);
   void set_private_key(const bytes_data &private_key);
   void set_master_node(const bytes_data &master_n);
+        void set_balance(const std::string& balance);
   void set_index(const int i);
   bool derive_next(void);
   bool derive_prev(void);

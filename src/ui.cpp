@@ -13,6 +13,8 @@ void UserInterface::load(void) {
       int ch = cli::handle_wallet_ui_input(wallet);
       apply_choice_from_wallet_ui(ch);
     }
+
+    wallet.set_balance(block_client.get_balance("0x" + tech_utils::to_hex(wallet.get_eth_address())));
   }
 }
 

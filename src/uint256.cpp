@@ -85,6 +85,9 @@ bool Uint256::operator==(const Uint256& num) const {
 
 std::string Uint256::from_wei_to_eth(void) const {
 BN_CTX * ctx = BN_CTX_new();
+if(!ctx) {
+    throw std::runtime_error("OpenSSL: BN_CTX_new failed");
+}
 BIGNUM * raw_divisor = nullptr;
 
 
