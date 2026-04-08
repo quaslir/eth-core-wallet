@@ -17,6 +17,7 @@ src/cli.cpp
 src/config.cpp
 src/json.cpp
 src/http.cpp
+src/uint256.cpp
 )
 
 include(FetchContent)
