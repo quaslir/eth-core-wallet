@@ -16,6 +16,7 @@ src/wallet.cpp
 src/cli.cpp
 src/config.cpp
 src/json.cpp
+src/http.cpp
 )
 
 include(FetchContent)
