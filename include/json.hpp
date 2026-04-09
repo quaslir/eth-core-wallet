@@ -20,13 +20,10 @@ struct EncryptedKeystore {
 
 struct AlchemyJSON {
   json j;
-  
 
-  AlchemyJSON(const std::string& jsonrpc,
-  const std::string& method,
-  const std::vector<std::string>& params,
-  int id);
+  AlchemyJSON(const std::string &jsonrpc, const std::string &method,
+              const std::vector<std::string> &params, int id);
   std::string to_string(void) const;
-  void parse(const std::string& data);
+  void parse(const std::string &data);
   std::string get_result(void) const;
 };

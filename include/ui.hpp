@@ -1,10 +1,8 @@
+#include "async_manager.hpp"
 #include "config.hpp"
 #include "wallet.hpp"
 #include <string>
-#include "async_manager.hpp"
 enum State_t { MAIN_MENU, SEED_GENERATION, SEED_IMPORT, EXIT, WALLET_UI };
-
-
 
 class UserInterface {
 public:

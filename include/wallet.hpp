@@ -32,7 +32,7 @@ public:
   void set_eth_address(const bytes_data &addr);
   void set_private_key(const bytes_data &private_key);
   void set_master_node(const bytes_data &master_n);
-        void set_balance(const std::string& balance);
+  void set_balance(const std::string &balance);
   void set_index(const int i);
   bool derive_next(void);
   bool derive_prev(void);

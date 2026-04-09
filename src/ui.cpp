@@ -1,7 +1,7 @@
 #include "ui.hpp"
+#include "async_manager.hpp"
 #include "cli.hpp"
 #include "config.hpp"
-#include "async_manager.hpp"
 
 void UserInterface::load(void) {
   handle_wallet_loading();
@@ -10,13 +10,14 @@ void UserInterface::load(void) {
   int selected_choice = 0;
   auto main_menu = cli::createMainMenu(&selected_choice);
   auto component = ftxui::CatchEvent(main_menu, [&](ftxui::Event event) {
-    if(event == ftxui::Event::Character('q') || event == ftxui::Event::Character('Q')) {
+    if (event == ftxui::Event::Character('q') ||
+        event == ftxui::Event::Character('Q')) {
       screen.Exit();
       state = EXIT;
       return true;
     }
 
-    if(event == ftxui::Event::Return) {
+    if (event == ftxui::Event::Return) {
       int choice = selected_choice + 1;
       apply_choice_from_welcome_message(choice);
       return true;
@@ -25,8 +26,8 @@ void UserInterface::load(void) {
   });
 
   /*
-    balance_manager.request_balance(std::string{"0x" + tech_utils::to_hex(wallet.get_eth_address())});
-    balance_manager.update();
+    balance_manager.request_balance(std::string{"0x" +
+    tech_utils::to_hex(wallet.get_eth_address())}); balance_manager.update();
 
     if (state == MAIN_MENU) {
       int choice = cli::make_choice_from_welcome_message();
@@ -39,7 +40,7 @@ void UserInterface::load(void) {
     wallet.set_balance(balance_manager.get_balance());
 
   */
-   screen.Loop(component);
+  screen.Loop(component);
 }
 
 void UserInterface::handle_wallet_loading(void) {
@@ -65,7 +66,6 @@ void UserInterface::apply_choice_from_welcome_message(int choice) {
   case 3:
     exit(0);
   }
-
 }
 
 void UserInterface::handle_wallet_creation(void) {
@@ -74,8 +74,9 @@ void UserInterface::handle_wallet_creation(void) {
     return;
   }
   bytes_data mnemonic = wallet.prepare_mnemonic(config);
-  
-  cli::display_mnemonic(std::string_view(reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size()));
+
+  cli::display_mnemonic(std::string_view(
+      reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size()));
   cli::confirm_liability_waiver();
 
   const std::vector<uint32_t> PATH_DERIVE =
@@ -109,38 +110,37 @@ void UserInterface::handle_wallet_import(void) {
 
 bool UserInterface::handle_seed_generation_config(void) {
 
-auto screen = ftxui::ScreenInteractive::TerminalOutput();
+  auto screen = ftxui::ScreenInteractive::TerminalOutput();
   int selected_choice = 0;
   bool proceed = false;
   auto config_menu = cli::render_config_menu(config, &selected_choice);
   auto component = ftxui::CatchEvent(config_menu, [&](ftxui::Event event) {
-
-    if(event == ftxui::Event::Return) {
+    if (event == ftxui::Event::Return) {
       int choice = selected_choice + 1;
 
-     if(choice == 1) {
-      config.handle_extra_entropy();
-     } else if(choice == 2) {
-      config.handle_bit_length();
-     } else if(choice == 3) {
-      config.handle_use_passphrase();
-     } else if(choice == 4) {
+      if (choice == 1) {
+        config.handle_extra_entropy();
+      } else if (choice == 2) {
+        config.handle_bit_length();
+      } else if (choice == 3) {
+        config.handle_use_passphrase();
+      } else if (choice == 4) {
         config.handle_derivation_path();
-     }
-     else if(choice == 5) {
-      proceed = false;
-      screen.Exit();
-     }
+      } else if (choice == 5) {
+        proceed = false;
+        screen.Exit();
+      }
 
-     else if(choice == 6) {
-      proceed = true;
-      screen.Exit();
-     }
+      else if (choice == 6) {
+        proceed = true;
+        screen.Exit();
+      }
 
-     return true;
+      return true;
     }
 
-    if(event == ftxui::Event::Character('q') || event == ftxui::Event::Character('Q')) {
+    if (event == ftxui::Event::Character('q') ||
+        event == ftxui::Event::Character('Q')) {
       proceed = false;
       screen.Exit();
       return true;

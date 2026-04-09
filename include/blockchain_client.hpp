@@ -3,6 +3,6 @@
 #include <string>
 
 class BlockchainClient {
-    public:
-    std::string get_balance(const std::string& eth_addr) const;
+public:
+  std::string get_balance(const std::string &eth_addr) const;
 };
