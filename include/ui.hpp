@@ -1,8 +1,10 @@
 #include "config.hpp"
 #include "wallet.hpp"
 #include <string>
-#include "blockchain_client.hpp"
+#include "async_manager.hpp"
 enum State_t { MAIN_MENU, SEED_GENERATION, SEED_IMPORT, EXIT, WALLET_UI };
+
+
 
 class UserInterface {
 public:
@@ -11,7 +13,7 @@ public:
 private:
   Wallet wallet;
   Config config;
-  BlockchainClient block_client;
+  AsyncBalanceManager balance_manager;
   State_t state = MAIN_MENU;
   void handle_wallet_creation(void);
   void handle_wallet_import(void);

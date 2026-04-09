@@ -1,10 +1,13 @@
 #include "ui.hpp"
 #include "cli.hpp"
 #include "config.hpp"
+#include "async_manager.hpp"
 #include <iostream>
 void UserInterface::load(void) {
   handle_wallet_loading();
   while (state != EXIT) {
+    balance_manager.request_balance(std::string{"0x" + tech_utils::to_hex(wallet.get_eth_address())});
+    balance_manager.update();
 
     if (state == MAIN_MENU) {
       int choice = cli::make_choice_from_welcome_message();
@@ -14,7 +17,7 @@ void UserInterface::load(void) {
       apply_choice_from_wallet_ui(ch);
     }
 
-    wallet.set_balance(block_client.get_balance("0x" + tech_utils::to_hex(wallet.get_eth_address())));
+    wallet.set_balance(balance_manager.get_balance());
   }
 }
 

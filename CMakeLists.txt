@@ -19,6 +19,7 @@ src/json.cpp
 src/http.cpp
 src/uint256.cpp
 src/blockchain_client.cpp
+src/async_manager.cpp
 )
 
 include(FetchContent)
