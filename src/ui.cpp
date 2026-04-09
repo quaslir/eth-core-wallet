@@ -3,9 +3,39 @@
 #include "config.hpp"
 #include "async_manager.hpp"
 #include <iostream>
+
+#include <atomic>
 void UserInterface::load(void) {
   handle_wallet_loading();
-  while (state != EXIT) {
+
+  auto screen = ftxui::ScreenInteractive::TerminalOutput();
+  int selected_choice = 0;
+  auto main_menu = cli::createMainMenu(&selected_choice);
+  auto component = ftxui::CatchEvent(main_menu, [&](ftxui::Event event) {
+    if(event == ftxui::Event::Character('q') || event == ftxui::Event::Character('Q')) {
+      screen.Exit();
+      state = EXIT;
+      return true;
+    }
+
+    if(event == ftxui::Event::Return) {
+      int choice = selected_choice + 1;
+
+      if(choice == 3) {
+        screen.Exit();
+        state = EXIT;
+
+      } else {
+        screen.Exit();
+
+      }
+
+      return true;
+    }
+    return false;
+  });
+
+  /*while (state != EXIT) {
     balance_manager.request_balance(std::string{"0x" + tech_utils::to_hex(wallet.get_eth_address())});
     balance_manager.update();
 
@@ -19,6 +49,10 @@ void UserInterface::load(void) {
 
     wallet.set_balance(balance_manager.get_balance());
   }
+  refresh = false;
+
+  */
+   screen.Loop(component);
 }
 
 void UserInterface::handle_wallet_loading(void) {
@@ -44,6 +78,7 @@ void UserInterface::apply_choice_from_welcome_message(int choice) {
   case 3:
     exit(0);
   }
+
 }
 
 void UserInterface::handle_wallet_creation(void) {
@@ -52,7 +87,7 @@ void UserInterface::handle_wallet_creation(void) {
     return;
   }
   bytes_data mnemonic = wallet.prepare_mnemonic(config);
-  cli::display_mnemonic(mnemonic);
+  cli::display_mnemonic(std::string_view(reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size()));
   cli::confirm_liability_waiver();
 
   const std::vector<uint32_t> PATH_DERIVE =

@@ -1,33 +1,54 @@
 #include "cli.hpp"
 #include "config.hpp"
 #include "tech_utils.hpp"
+
+#include <ftxui/dom/elements.hpp>
 #include <iomanip>
 namespace cli {
-void print_welcome_message(std::string_view error_msg) {
-  std::cout << "\033[2J\033[1;1H";
-  std::cout << "============================================" << std::endl;
-  std::cout << "       ETH CORE WALLET v1.0 (Dev Alpha)     " << std::endl;
-  std::cout << "============================================" << std::endl;
-  if (!error_msg.empty()) {
-    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
-    std::cout << "--------------------------------------------\n";
-  }
-  std::cout << "[INFO] System initialized." << std::endl;
-  std::cout << "[INFO] Cryptography: secp256k1 + Keccak-256" << std::endl;
-  std::cout << "--------------------------------------------" << std::endl;
-  std::cout << "Please select an operation:" << std::endl;
-  std::cout << "  1. Generate New Wallet" << std::endl;
-  std::cout << "  2. Import Wallet" << std::endl;
-  std::cout << "  3. Exit" << std::endl;
-  std::cout << "--------------------------------------------" << std::endl;
-  std::cout << ">>> Option: ";
+Component createMainMenu(int * selected, std::string_view error_msg) {
+
+  static std::vector<std::string> entries = {
+     "  1. Generate New Wallet",
+     "  2. Import Wallet",
+     "  3. Exit"
+  };
+  auto menu = Menu(&entries, selected);
+
+  return Renderer(menu, [=, error_msg = std::string(error_msg)] {
+    Elements header = {
+      text("============================================") | hcenter,
+          text("       ETH CORE WALLET v1.0 (Dev Alpha)     ") | bold | hcenter,
+          text("============================================") | hcenter,
+    };
+
+
+    Elements info = {
+      text("[INFO] System initialized.") | dim,
+            separator(),
+            text("Please select an operation:"),
+    };
+
+    Element error_box = error_msg.empty() ? emptyElement() : vbox({
+      separator(),
+      text("[!] " + error_msg) | color(Color::Red),
+      separator(),
+    });
+
+    return vbox({
+      vbox(std::move(header)),
+      vbox(std::move(info)),
+      menu->Render() | border | color(Color::Blue),
+      error_box,
+      separator(),
+      text(">>> Use Arrows to navigate, Enter to select") | dim | hcenter
+    }) | border | center;
+  });
 }
 
 int make_choice_from_welcome_message(void) {
 
   std::string error_msg;
   do {
-    print_welcome_message(error_msg);
     std::string choice = tech_utils::read_stdin();
     if (choice.empty() || (choice != "1" && choice != "2" && choice != "3")) {
       error_msg = "[!] Invalid input. Please enter a number between 1 and 3.";
@@ -38,33 +59,29 @@ int make_choice_from_welcome_message(void) {
   return -1;
 }
 
-void display_mnemonic(const bytes_data &mnemonic) {
-  std::cout << "\033[2J\033[1;1H";
-  std::cout << "\n\033[1;33m"
-            << "####################################################"
-            << "\033[0m" << std::endl;
-  std::cout << "\033[1;33m"
-            << "#           YOUR RECOVERY PHRASE (SEED)            #"
-            << "\033[0m" << std::endl;
-  std::cout << "\033[1;33m"
-            << "####################################################"
-            << "\033[0m" << std::endl;
-  std::cout << "  \033[1;37m";
+Element display_mnemonic(std::string_view mnemonic) {
 
-  for (const auto &byte : mnemonic) {
-    std::cout << static_cast<char>(byte);
-  }
+  return vbox({
+    vbox({
+      text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
 
-  std::cout << std::endl;
-  std::cout << "\033[1;33m"
-            << "####################################################"
-            << "\033[0m" << std::endl;
-  std::cout << "\033[1;31m"
-            << "  WARNING: DO NOT SCREENSHOT! WRITE IT DOWN NOW!    "
-            << "\033[0m" << std::endl;
-  std::cout << "\033[1;33m"
-            << "####################################################"
-            << "\033[0m" << std::endl;
+    }) | borderDouble | color(Color::Yellow),
+
+    separator(),
+
+    paragraph(mnemonic.data()) | hcenter | color(Color::White) | bold,
+
+    separator(),
+
+    vbox({
+      text(" WARNING: DO NOT SCREENSHOT! ") | center,
+            text(" WRITE IT DOWN ON PAPER NOW! ") | center,
+    }) | border | color(Color::Red),
+
+    text(" Press [ENTER] to continue ") | dim | hcenter
+
+  }) | border | center | size(WIDTH, LESS_THAN, 60);
+  
 }
 
 void confirm_liability_waiver(std::string_view error_msg) {
