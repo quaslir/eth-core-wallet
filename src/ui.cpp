@@ -2,9 +2,7 @@
 #include "cli.hpp"
 #include "config.hpp"
 #include "async_manager.hpp"
-#include <iostream>
 
-#include <atomic>
 void UserInterface::load(void) {
   handle_wallet_loading();
 
@@ -20,22 +18,13 @@ void UserInterface::load(void) {
 
     if(event == ftxui::Event::Return) {
       int choice = selected_choice + 1;
-
-      if(choice == 3) {
-        screen.Exit();
-        state = EXIT;
-
-      } else {
-        screen.Exit();
-
-      }
-
+      apply_choice_from_welcome_message(choice);
       return true;
     }
     return false;
   });
 
-  /*while (state != EXIT) {
+  /*
     balance_manager.request_balance(std::string{"0x" + tech_utils::to_hex(wallet.get_eth_address())});
     balance_manager.update();
 
@@ -48,8 +37,6 @@ void UserInterface::load(void) {
     }
 
     wallet.set_balance(balance_manager.get_balance());
-  }
-  refresh = false;
 
   */
    screen.Loop(component);
@@ -87,6 +74,7 @@ void UserInterface::handle_wallet_creation(void) {
     return;
   }
   bytes_data mnemonic = wallet.prepare_mnemonic(config);
+  
   cli::display_mnemonic(std::string_view(reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size()));
   cli::confirm_liability_waiver();
 
@@ -120,24 +108,49 @@ void UserInterface::handle_wallet_import(void) {
 }
 
 bool UserInterface::handle_seed_generation_config(void) {
-  char choice = cli::render_config_menu(config);
 
-  while (choice != 'b' && choice != 'g') {
+auto screen = ftxui::ScreenInteractive::TerminalOutput();
+  int selected_choice = 0;
+  bool proceed = false;
+  auto config_menu = cli::render_config_menu(config, &selected_choice);
+  auto component = ftxui::CatchEvent(config_menu, [&](ftxui::Event event) {
 
-    if (choice == '1') {
+    if(event == ftxui::Event::Return) {
+      int choice = selected_choice + 1;
+
+     if(choice == 1) {
       config.handle_extra_entropy();
-    } else if (choice == '2') {
+     } else if(choice == 2) {
       config.handle_bit_length();
-    } else if (choice == '3') {
+     } else if(choice == 3) {
       config.handle_use_passphrase();
-    } else if (choice == '4') {
-      config.handle_derivation_path();
+     } else if(choice == 4) {
+        config.handle_derivation_path();
+     }
+     else if(choice == 5) {
+      proceed = false;
+      screen.Exit();
+     }
+
+     else if(choice == 6) {
+      proceed = true;
+      screen.Exit();
+     }
+
+     return true;
     }
 
-    choice = cli::render_config_menu(config);
-  }
+    if(event == ftxui::Event::Character('q') || event == ftxui::Event::Character('Q')) {
+      proceed = false;
+      screen.Exit();
+      return true;
+    }
 
-  return choice == 'g';
+    return false;
+  });
+  screen.Loop(component);
+
+  return proceed;
 }
 
 void UserInterface::apply_choice_from_wallet_ui(int choice) {

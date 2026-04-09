@@ -2,8 +2,11 @@
 #include "config.hpp"
 #include "tech_utils.hpp"
 
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <iomanip>
+#include <string_view>
 namespace cli {
 Component createMainMenu(int * selected, std::string_view error_msg) {
 
@@ -45,21 +48,17 @@ Component createMainMenu(int * selected, std::string_view error_msg) {
   });
 }
 
-int make_choice_from_welcome_message(void) {
 
-  std::string error_msg;
-  do {
-    std::string choice = tech_utils::read_stdin();
-    if (choice.empty() || (choice != "1" && choice != "2" && choice != "3")) {
-      error_msg = "[!] Invalid input. Please enter a number between 1 and 3.";
-      continue;
-    }
-    return static_cast<int>(choice.front() - '0');
-  } while (1);
-  return -1;
+void display_mnemonic(std::string_view mnemonic) {
+  auto screen = ScreenInteractive::TerminalOutput();
+
+  auto component = Renderer([&] {
+    return render_mnemonic_element(mnemonic);
+  });
+
 }
 
-Element display_mnemonic(std::string_view mnemonic) {
+Element render_mnemonic_element(std::string_view mnemonic) {
 
   return vbox({
     vbox({
@@ -69,7 +68,7 @@ Element display_mnemonic(std::string_view mnemonic) {
 
     separator(),
 
-    paragraph(mnemonic.data()) | hcenter | color(Color::White) | bold,
+    paragraph(std::string{mnemonic}) | hcenter | color(Color::White) | bold, // fix in the future
 
     separator(),
 
@@ -84,29 +83,75 @@ Element display_mnemonic(std::string_view mnemonic) {
   
 }
 
-void confirm_liability_waiver(std::string_view error_msg) {
-  std::cout << "\n\033[1;31m[!!!] FINAL LEGAL & SECURITY WARNING [!!!]\033[0m"
-            << std::endl;
-  std::cout << "1. This app will NOW WIPE the mnemonic from memory."
-            << std::endl;
-  std::cout << "2. We have ZERO copies. No database, no logs, no backups."
-            << std::endl;
-  std::cout << "3. If you didn't write it down, your funds are ALREADY LOST."
-            << std::endl;
-  std::cout << "\nTo proceed, type exactly: \033[1;37mI AM RESPONSIBLE\033[0m"
-            << std::endl;
-  if (!error_msg.empty()) {
-    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
-    std::cout << "--------------------------------------------\n";
-  }
-  std::cout << ">>> ";
-  std::string input = tech_utils::read_stdin();
+bool confirm_liability_waiver(void) {
+auto screen = ScreenInteractive::TerminalOutput();
+std::string error_msg = "";
+auto user_input = std::make_shared<std::string>("");
+auto confirmation_ui = render_mnemonic_wiping(user_input, error_msg);
 
-  while (input != "I AM RESPONSIBLE") {
-    std::cout << "\033[1;31m[!] Incorrect. Type 'I AM RESPONSIBLE' to wipe "
-                 "memory: \033[0m";
-    input = tech_utils::read_stdin();
+auto component = CatchEvent(confirmation_ui, [&](Event event) {
+  if(event == Event::Return) {
+    if(*user_input == "I AM RESPONSIBLE") {
+      screen.Exit();
+      return true;
+    } 
+    return true;
   }
+
+return false;
+});
+
+screen.Loop(component);
+return true;
+}
+
+
+Component render_mnemonic_wiping(std::shared_ptr<std::string> user_input, std::string_view error_msg) {
+  auto input_option = InputOption();
+  input_option.multiline = false;
+
+  input_option.transform = [user_input](InputState state) {
+    bool is_correct = (*user_input == "I AM RESPONSIBLE");
+    state.element |= is_correct ? color(Color::Green) : color(Color::Red);
+    return state.element;
+  };
+
+  auto field = Input(user_input.get(), "Type here...", input_option);
+
+  return Renderer(field, [=,error_msg = std::string{error_msg}] {
+    bool is_correct = (*user_input == "I AM RESPONSIBLE");
+    auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
+
+
+    return vbox({
+      vbox({
+        text(" [!!!] FINAL LEGAL & SECURITY WARNING [!!!] ") | bold | center
+      }) | borderDouble | color(Color::Red),
+
+      separator(),
+
+      text(" 1. This app will NOW WIPE the mnemonic from memory."),
+      text(" 2. We have ZERO copies. No database, no logs, no backups."),
+      text(" 3. If you didn't write it down, your funds are ALREADY LOST."),
+
+      separator(),
+
+      text(" To proceed, type exactly: ") | hcenter,
+      text(" I AM RESPONSIBLE ") | bold | hcenter | inverted,
+
+      separator(),
+
+      hbox({
+        text(" >>> "),
+        field->Render() | input_style | border,
+      }) | hcenter,
+
+      error_msg.empty() ? emptyElement() : text("[!] " + error_msg) | color(Color::Red) | hcenter,
+      separator(),
+
+    text(is_correct ? " [ PRESS ENTER TO WIPE MEMORY ] " : " [ WAITING FOR CORRECT INPUT ] ") | bold | hcenter | blink
+    }) | border | center | size(WIDTH, LESS_THAN, 70);
+  });
 }
 
 void request_input_mnemonic_prompt(std::string_view error_msg) {
@@ -184,57 +229,55 @@ void incorrect_mnemonic_text(void) {
   std::cout << "--------------------------------------------------\n";
 }
 
-char render_config_menu(const Config &cfg) {
-  std::string error_msg;
-  do {
-    std::cout << "\033[2J\033[1;1H";
+Component render_config_menu(const Config &cfg, int * selected) {
 
-    std::cout
-        << "============================================================\n";
-    std::cout
-        << "               [ SEED GENERATION CONFIG ]                   \n";
-    std::cout
-        << "============================================================\n";
-    if (!error_msg.empty()) {
-      std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
-      std::cout << "--------------------------------------------\n";
-    }
-    std::cout << " 1. ENTROPY SOURCE : [ "
-              << (!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX"
-                                             : "OS CSPRNG ONLY")
-              << " ]\n";
-    std::cout << " 2. BIT-LENGTH     : [ " << cfg.bit_length << " bits ("
-              << (cfg.bit_length / 32 * 3) << " words) ]\n";
-    std::cout << " 3. PASSPHRASE     : [ "
-              << (!cfg.passphrase.empty() ? "ENABLED (BIP-39 SALT)"
-                                          : "DISABLED")
-              << " ]\n";
-    std::cout << " 4. DERIVATION     : [ " << cfg.derivation_path << " ]\n";
+  static std::vector<std::string> entries;
 
-    std::cout
-        << "------------------------------------------------------------\n";
+  auto menu = Menu(&entries, selected);
 
-    std::cout << " [\033[1;32mG\033[0m] GENERATE NOW      "
-              << "[\033[1;31mB\033[0m] BACK\n";
 
-    std::cout
-        << "============================================================\n";
-    std::cout << " > ";
-    std::cout.flush();
-    std::string input;
-    input = tech_utils::read_stdin();
+return Renderer(menu, [&cfg, selected, menu] {
+  entries = {
+     " 1. ENTROPY SOURCE : [ " + std::string{(!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX"
+                                             : "OS CSPRNG ONLY")},
+     " 2. BIT-LENGTH     : [ " + std::string{std::to_string(cfg.bit_length) + " bits ("
+              + std::to_string(cfg.bit_length / 32 * 3) + " words) ]"},
+     " 3. PASSPHRASE     : [ " + std::string{(!cfg.passphrase.empty() ? "ENABLED (BIP-39 SALT)"
+                                          : "DISABLED")},
+    " 4. DERIVATION     : [ " + cfg.derivation_path      , 
+    " [B] Back to Main Menu",
+            " [G] Generate Wallet"                                
+  };
 
-    if (input.empty() || (input != "1" && input != "2" && input != "3" &&
-                          input != "4" && input != "b" && input != "g")) {
-      error_msg = "Invalid choice.";
-      continue;
-    }
+  return vbox({
+    text(" CONFIGURATION SETTINGS ") | bold | hcenter | color(Color::Cyan),
+    separator(),
+    vbox({
+      [&]() {
+        Elements items;
 
-    return input.front();
-  } while (1);
+        for(size_t i = 0; i < entries.size(); i++) {
+          auto item = text(entries[i]);
 
-  return 0;
+          if(static_cast<int>(i) == *selected) {
+            item = item | inverted | color(Color::Yellow);
+          }
+
+          items.push_back(item);
+        }
+
+        return vbox(std::move(items));
+      }()
+    }) | border,
+
+    separator(),
+    text(" Use Arrows to navigate, Enter to toggle/select") | dim | hcenter
+    
+  }) | center;
+});
 }
+
+
 
 void print_wallet_ui(const Wallet &wallet, std::string_view error_msg) {
   std::cout << "\033[2J\033[1;1H";
