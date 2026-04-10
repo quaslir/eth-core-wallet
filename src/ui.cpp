@@ -6,41 +6,19 @@
 void UserInterface::load(void) {
   handle_wallet_loading();
 
-  auto screen = ftxui::ScreenInteractive::TerminalOutput();
-  int selected_choice = 0;
-  auto main_menu = cli::createMainMenu(&selected_choice);
-  auto component = ftxui::CatchEvent(main_menu, [&](ftxui::Event event) {
-    if (event == ftxui::Event::Character('q') ||
-        event == ftxui::Event::Character('Q')) {
-      screen.Exit();
-      state = EXIT;
-      return true;
-    }
+  // balance_manager.request_balance(std::string{"0x" +
+  // tech_utils::to_hex(wallet.get_eth_address())}); balance_manager.update();
+  while(state != EXIT) {
+  if (state == MAIN_MENU) {
+    int choice = cli::handle_main_menu();
+    apply_choice_from_welcome_message(choice);
+  } else if (state == WALLET_UI) {
+    int ch = cli::handle_wallet_ui_input(wallet);
+    apply_choice_from_wallet_ui(ch);
+  }
 
-    if (event == ftxui::Event::Return) {
-      int choice = selected_choice + 1;
-      apply_choice_from_welcome_message(choice);
-      return true;
-    }
-    return false;
-  });
-
-  /*
-    balance_manager.request_balance(std::string{"0x" +
-    tech_utils::to_hex(wallet.get_eth_address())}); balance_manager.update();
-
-    if (state == MAIN_MENU) {
-      int choice = cli::make_choice_from_welcome_message();
-      apply_choice_from_welcome_message(choice);
-    } else if (state == WALLET_UI) {
-      int ch = cli::handle_wallet_ui_input(wallet);
-      apply_choice_from_wallet_ui(ch);
-    }
-
-    wallet.set_balance(balance_manager.get_balance());
-
-  */
-  screen.Loop(component);
+  // wallet.set_balance(balance_manager.get_balance());
+}
 }
 
 void UserInterface::handle_wallet_loading(void) {

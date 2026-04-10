@@ -2,10 +2,16 @@
 #include "config.hpp"
 #include "tech_utils.hpp"
 
+#include <cstddef>
 #include <ftxui/component/component.hpp>
+#include <ftxui/component/component_base.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
+#include <ftxui/screen/color.hpp>
+#include <memory>
+#include <openssl/err.h>
+#include <string>
 #include <string_view>
 namespace cli {
 Component createMainMenu(int *selected, std::string_view error_msg) {
@@ -42,6 +48,30 @@ Component createMainMenu(int *selected, std::string_view error_msg) {
                      hcenter}) |
            border | center;
   });
+}
+
+int handle_main_menu(void) {
+
+  auto screen = ftxui::ScreenInteractive::TerminalOutput();
+  int selected_choice = 0;
+  auto main_menu = createMainMenu(&selected_choice);
+  auto component = ftxui::CatchEvent(main_menu, [&](ftxui::Event event) {
+    if (event == ftxui::Event::Character('q') ||
+        event == ftxui::Event::Character('Q')) {
+      screen.Exit();
+      selected_choice = 2;
+      return true;
+    }
+
+    if (event == ftxui::Event::Return) {
+      screen.Exit();
+      return true;
+    }
+    return false;
+  });
+
+  screen.Loop(component);
+  return selected_choice + 1;
 }
 
 void display_mnemonic(std::string_view mnemonic) {
@@ -287,70 +317,70 @@ Component render_config_menu(const Config &cfg, int *selected) {
   });
 }
 
-void print_wallet_ui(const Wallet &wallet, std::string_view error_msg) {
-  std::cout << "\033[2J\033[1;1H";
+Component print_wallet_ui(const Wallet &wallet, int *selected) {
 
-  std::cout << "\033[1;32m"
-            << "===================================================="
-            << "\033[0m" << std::endl;
-  std::cout << "          \033[1;37mETH CORE WALLET - SESSION ACTIVE\033[0m"
-            << std::endl;
-  std::cout << "\033[1;32m"
-            << "===================================================="
-            << "\033[0m" << std::endl;
-  if (!error_msg.empty()) {
-    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
-    std::cout << "--------------------------------------------\n";
-  }
-  std::cout << "  [STATUS]   \033[1;32mOnline\033[0m (Syncing...)\n";
-  std::cout << "  [BALANCE]  \033[1;36m"
-            << (wallet.get_balance().empty() ? "0" : wallet.get_balance())
-            << " ETH" << "\033[0m (~0.00 USD)\n";
-  std::cout << "\033[1;32m----------------------------------------------------"
-               "\033[0m\n";
+  static std::vector<std::string> entries;
+  auto menu = Menu(&entries, selected);
+  entries = {" 1. Send Transaction ", " 2. Next Address      ",
+             " 3. Previous Address  ", " 4. Export Key        ",
+             " 5. Lock & Exit       "};
+  return Renderer(menu, [&wallet, menu] {
+    std::string balance =
+        wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
+    std::string address = tech_utils::to_hex(wallet.get_eth_address());
+    return vbox({
 
-  std::cout << "  [ADDRESS]  \033[1;33m";
-  tech_utils::print_hex(wallet.get_eth_address());
-  std::cout << "\033[0m";
-  std::cout << "  [PATH]     m/44'/60'/0'/0/" << wallet.getIndex() << std::endl;
-  std::cout << "  [NETWORK]  Ethereum Mainnet (Offline Mode)" << std::endl;
-  std::cout << "\033[1;32m"
-            << "----------------------------------------------------"
-            << "\033[0m" << std::endl;
+               vbox({
+                   text("ETH CORE WALLET ") | bold | hcenter,
+                   text("SESSION ACTIVE ") | dim | hcenter,
+               }) | borderDouble |
+                   color(Color::Cyan),
 
-  std::cout << "  1. \033[1;37mSend Transaction\033[0m (Requires RPC)"
-            << std::endl;
-  std::cout << "  2. \033[1;37mNext Address\033[0m    (Derive Index "
-            << wallet.getIndex() + 1 << ")" << std::endl;
-  std::cout << "  3. \033[1;37mPrevious address\033[0m  (Derive Index "
-            << wallet.getIndex() - 1 << ")" << std::endl;
-  std::cout << "  4. \033[1;37mExport Key\033[0m      (Show Private Hex)"
-            << std::endl;
-  std::cout << "  5. \033[1;31mLock & Exit\033[0m     (Wipe Memory)"
-            << std::endl;
+               vbox({
+                   hbox({text(" STATUS: "),
+                         text("Online (Syncing...)") | color(Color::Green)}),
+                   hbox({text(" BALANCE: "),
+                         text(balance + " ETH") | color(Color::Yellow)}),
+                   hbox({text(" ADDRESS: "),
+                         text("0x" + address) | color(Color::GrayDark)}),
+                   hbox({text(" NETWORK: "),
+                         text("Ethereum Mainnet") | color(Color::Green)}),
+               }),
 
-  std::cout << "\033[1;32m"
-            << "===================================================="
-            << "\033[0m" << std::endl;
-  std::cout << ">>> Select action: ";
+               separator(),
+               vbox({
+                   text(" SELECT OPERATION: ") | bold,
+                   menu->Render() | color(Color::BlueLight),
+               }) | border,
+
+               text(">>> Use Arrows to navigate, Enter to select") | dim |
+                   hcenter,
+           }) |
+           border | center | size(WIDTH, LESS_THAN, 62);
+  });
 }
 
 int handle_wallet_ui_input(const Wallet &wallet) {
-  std::string error_msg, choice;
-  do {
-    print_wallet_ui(wallet, error_msg);
-    choice = tech_utils::read_stdin();
+  auto screen = ScreenInteractive::TerminalOutput();
+  int selected = 0;
+  auto main_ui = print_wallet_ui(wallet, &selected);
 
-    if (choice.empty() || (choice != "1" && choice != "2" && choice != "3" &&
-                           choice != "4" && choice != "5")) {
-      error_msg = "Invalid choice.";
-      continue;
+  auto component = CatchEvent(main_ui, [&](Event event) {
+    if (event == Event::Return) {
+      int choice = selected + 1;
+      if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
+          choice == 5) {
+        screen.Exit();
+        return true;
+      }
+      return true;
     }
 
-    return choice.front() - '0';
-  } while (1);
+    return false;
+  });
 
-  return -1;
+  screen.Loop(component);
+  return selected + 1;
 }
 
 Component render_password_setup(std::shared_ptr<std::string> user_input) {
@@ -359,145 +389,180 @@ Component render_password_setup(std::shared_ptr<std::string> user_input) {
   input_option.multiline = false;
 
   auto field = Input(user_input.get(), "Enter password...", input_option);
-  
+
   return Renderer(field, [=] {
-    return vbox({
-      text("CREATE PASSWORD") | bold | center,
-      separator(),
+    return vbox(
+        {text("CREATE PASSWORD") | bold | center, separator(),
 
-      text("This password will encrypt your wallet on disk."),
-      text("INPUT IS HIDDEN: No characters will be displayed."),
-        text("WARNING: If you forget it, your funds are LOST FOREVER.") | color(Color::Red),
+         text("This password will encrypt your wallet on disk."),
+         text("INPUT IS HIDDEN: No characters will be displayed."),
+         text("WARNING: If you forget it, your funds are LOST FOREVER.") |
+             color(Color::Red),
 
-        separator(),
-        hbox({
-          text(" >>> "),
-          field->Render() | border, 
-        }) | hcenter
-    });
+         separator(),
+         hbox({
+             text(" >>> "),
+             field->Render() | border,
+         }) | hcenter});
   });
 }
 
-
-Component render_confirm_password_setup(std::shared_ptr<std::string> user_input, bool incorrect) {
+Component render_confirm_password_setup(std::shared_ptr<std::string> user_input,
+                                        bool incorrect) {
   auto input_option = InputOption();
   input_option.multiline = false;
 
   auto field = Input(user_input.get(), "Enter password...", input_option);
 
   return Renderer(field, [=] {
-
-      std::vector<std::string> password_text = !incorrect ? std::vector<std::string>{
+    std::vector<std::string> password_text = !incorrect ? std::vector<std::string>{
     "CONFIRM MASTER PASSWORD",
     "Please re-enter your password to verify.",
     "If it doesn't match, you will have to restart.",
   } : std::vector<std::string> {
     "[!] ERROR: PASSWORDS DO NOT MATCH",
     "Please try again to ensure your funds are safe."
-  }; 
+  };
 
     Color text_color = !incorrect ? Color::Cyan : Color::Red;
-    
+
     Elements elements;
 
-    for(const auto& line: password_text) {
+    for (const auto &line : password_text) {
       elements.push_back(text(line) | hcenter);
     }
 
-    return vbox({
-      vbox(std::move(elements)) | color(text_color) | bold,
-      separator(),
-      hbox({
-        text(" >>> "), 
-        field->Render() | border
-      }),
-      separator(),
-      text("Press [ENTER] to confirm") | dim | hcenter
-    }) | border | center;
+    return vbox({vbox(std::move(elements)) | color(text_color) | bold,
+                 separator(), hbox({text(" >>> "), field->Render() | border}),
+                 separator(),
+                 text("Press [ENTER] to confirm") | dim | hcenter}) |
+           border | center;
   });
 }
 
-
 const bytes_data read_and_confirm_password(void) {
-auto screen = ScreenInteractive::TerminalOutput();
+  auto screen = ScreenInteractive::TerminalOutput();
 
-auto pass_str = std::make_shared<std::string>("");
-auto first_input_ui = cli::render_password_setup(pass_str);
+  auto pass_str = std::make_shared<std::string>("");
+  auto first_input_ui = cli::render_password_setup(pass_str);
 
-auto first_stage = CatchEvent(first_input_ui, [&](Event event) {
-  if(event == Event::Return && !pass_str->empty()) {
-    screen.Exit();
-    return true;
-  }
-
-  return false;
-});
-
-screen.Loop(first_stage);
-
-auto confirm_str = std::make_shared<std::string>("");
-bool is_incorrect = false;
-
-for(;;)  {
-  auto confirm_ui = cli::render_confirm_password_setup(confirm_str, is_incorrect);
-
-  auto second_stage = CatchEvent(confirm_ui, [&](Event event) {
-    if(event == Event::Return) {
-      if(*pass_str == *confirm_str) {
-        screen.Exit();
-      } else {
-        is_incorrect = true;
-        confirm_str->clear();
-      }
-
+  auto first_stage = CatchEvent(first_input_ui, [&](Event event) {
+    if (event == Event::Return && !pass_str->empty()) {
+      screen.Exit();
       return true;
     }
 
     return false;
   });
-  screen.Loop(second_stage);
-  if(*pass_str == *confirm_str) break;
-}
 
+  screen.Loop(first_stage);
+
+  auto confirm_str = std::make_shared<std::string>("");
+  bool is_incorrect = false;
+
+  for (;;) {
+    auto confirm_ui =
+        cli::render_confirm_password_setup(confirm_str, is_incorrect);
+
+    auto second_stage = CatchEvent(confirm_ui, [&](Event event) {
+      if (event == Event::Return) {
+        if (*pass_str == *confirm_str) {
+          screen.Exit();
+        } else {
+          is_incorrect = true;
+          confirm_str->clear();
+        }
+
+        return true;
+      }
+
+      return false;
+    });
+    screen.Loop(second_stage);
+    if (*pass_str == *confirm_str)
+      break;
+  }
 
   bytes_data password_in_bytes(pass_str->begin(), pass_str->end());
-  //OPENSSL_cleanse(pass_str.get(), pass_str.size());
-  //OPENSSL_cleanse(confirm_str.data(), confirm_str.size());
+  // OPENSSL_cleanse(pass_str.get(), pass_str.size());
+  // OPENSSL_cleanse(confirm_str.data(), confirm_str.size());
 
   return password_in_bytes;
 }
 
 const bytes_data request_unlock_password(size_t attempts, size_t max_attempts) {
-  std::cout << "\033[2J\033[1;1H"; // Clear screen
+  
+  auto screen = ScreenInteractive::TerminalOutput();
 
-  std::cout << "\n  \033[1mUnlock Wallet\033[0m\n";
-  std::cout << "  Please enter your password to decrypt the local storage.\n";
-  std::cout
-      << "  Your keys remain encrypted until a valid password is provided.\n\n";
+  auto pass_str = std::make_shared<std::string>("");
+  auto unlock_password_ui = cli::render_request_unlock_password(pass_str, attempts, max_attempts);
 
-  if (attempts > 0) {
-    int remaining = max_attempts - attempts;
-
-    std::cout << "  \033[1;31m[!] INVALID PASSWORD\033[0m\n";
-
-    if (remaining > 1) {
-      std::cout << "  \033[1;33mCareful: " << remaining
-                << " attempts remaining.\033[0m\n\n";
-    } else {
-
-      std::cout << "  \033[1;5;31m[WARNING] FINAL ATTEMPT. NEXT FAILURE WILL "
-                   "WIPE DATA.\033[0m\n\n";
+  auto component = CatchEvent(unlock_password_ui, [&](Event event) {
+    if (event == Event::Return && !pass_str->empty()) {
+      screen.Exit();
+      return true;
     }
-  }
 
-  std::cout << "  Password: ";
+    return false;
+  });
 
-  std::string buffer = tech_utils::read_stdin();
-  bytes_data password(buffer.begin(), buffer.end());
+  screen.Loop(component);
 
-  OPENSSL_cleanse(buffer.data(), buffer.size());
+
+
+  bytes_data password(pass_str->begin(), pass_str->end());
+
+  //OPENSSL_cleanse(buffer.data(), buffer.size());
 
   return password;
+}
+
+
+Component render_request_unlock_password(std::shared_ptr<std::string> user_input,size_t attempts, size_t max_attempts) {
+auto input_option = InputOption();
+input_option.multiline = false;
+input_option.password = true;
+  auto field = Input(user_input.get(), "Enter password...", input_option);
+
+  return Renderer(field, [=] {
+      int remaining = max_attempts - attempts;
+    Elements status_info;
+    if(attempts > 0) {
+      status_info.push_back(text("[!] INVALID PASSWORD") | bold | color(Color::Red) | hcenter);
+    }
+
+    if(remaining == 1) {
+      status_info.push_back(text("[WARNING] FINAL ATTEMPT. NEXT FAILURE WILL "
+                   "WIPE DATA.") | bold | color(Color::RedLight) | blink | hcenter);
+    }
+    else if(remaining > 0 && attempts > 0) {
+      status_info.push_back(text("Careful: " + std::to_string(remaining) +  " attempts remaining.") | dim | hcenter);
+    }
+    return vbox({vbox({text(" Unlock Wallet ") |
+                       bold | center}) |
+                     borderDouble | color(Color::Cyan),
+
+                 separator(),
+
+                 vbox({
+                  text(" Please enter your password to decrypt the local storage. ") | hcenter,
+            text(" Your keys remain encrypted until a valid password is provided. ") | hcenter | dim,
+                 }),
+
+                 vbox(std::move(status_info)),
+                  
+
+                 hbox({
+                     text(" >>> "),
+                     field->Render() | border | center | size(WIDTH, LESS_THAN, 70),
+                 }) | hcenter,
+
+                 separator(),
+
+                 text(" Press [ENTER] to unlock" ) | hcenter | dim
+                
+  }) | border | center | size(WIDTH, LESS_THAN, 70);
+});
 }
 
 void show_self_destruct(void) {
