@@ -1,4 +1,5 @@
 #include "async_manager.hpp"
+#include "cli.hpp"
 #include "config.hpp"
 #include "wallet.hpp"
 #include <string>
@@ -13,10 +14,11 @@ private:
   Config config;
   AsyncBalanceManager balance_manager;
   State_t state = MAIN_MENU;
+  CLI cli;
   void handle_wallet_creation(void);
   void handle_wallet_import(void);
   void handle_wallet_loading(void);
   void apply_choice_from_welcome_message(int choice);
   void apply_choice_from_wallet_ui(int choice);
-  bool handle_seed_generation_config(void);
+  void set_callbacks_for_cli(void);
 };

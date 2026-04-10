@@ -13,14 +13,48 @@
 #include <openssl/err.h>
 #include <string>
 #include <string_view>
-namespace cli {
-Component createMainMenu(int *selected, std::string_view error_msg) {
+
+
+void CLI::load(void) {
+  auto main_menu = create_main_menu();
+  auto mnemonic_display = render_mnemonic_element();
+  auto mnenonic_wiping_confirmation = render_mnemonic_wiping();
+  auto config_menu = render_config_menu();
+  auto password_unlock = render_request_unlock_password();
+  auto wallet_ui = print_wallet_ui();
+
+  auto root_container =
+      Container::Tab({main_menu, config_menu, mnenonic_wiping_confirmation,
+                      mnemonic_display, password_unlock, wallet_ui},
+                     &this->active_tab);
+
+  screen.Loop(root_container);
+}
+
+Component CLI::create_main_menu(void) {
 
   static std::vector<std::string> entries = {"  1. Generate New Wallet",
                                              "  2. Import Wallet", "  3. Exit"};
-  auto menu = Menu(&entries, selected);
+  static int selected = 0;
+  auto menu = Menu(&entries, &selected);
 
-  return Renderer(menu, [=, error_msg = std::string(error_msg)] {
+  auto component = ftxui::CatchEvent(menu, [&](ftxui::Event event) {
+
+    if (event == ftxui::Event::Character('q') ||
+        event == ftxui::Event::Character('Q')) {
+      selected = 2;
+      on_main_menu(selected);
+      return true;
+    }
+
+    if (event == ftxui::Event::Return) {
+      on_main_menu(selected + 1);
+      return true;
+    }
+    return false;
+  });
+
+  return Renderer(component, [=] {
     Elements header = {
         text("============================================") | hcenter,
         text("       ETH CORE WALLET v1.0 (Dev Alpha)     ") | bold | hcenter,
@@ -33,114 +67,60 @@ Component createMainMenu(int *selected, std::string_view error_msg) {
         text("Please select an operation:"),
     };
 
-    Element error_box = error_msg.empty()
-                            ? emptyElement()
-                            : vbox({
-                                  separator(),
-                                  text("[!] " + error_msg) | color(Color::Red),
-                                  separator(),
-                              });
-
     return vbox({vbox(std::move(header)), vbox(std::move(info)),
-                 menu->Render() | border | color(Color::Blue), error_box,
-                 separator(),
+                 menu->Render() | border | color(Color::Blue), separator(),
                  text(">>> Use Arrows to navigate, Enter to select") | dim |
                      hcenter}) |
            border | center;
   });
 }
 
-int handle_main_menu(void) {
+Component CLI::render_mnemonic_element(void) {
 
-  auto screen = ftxui::ScreenInteractive::TerminalOutput();
-  int selected_choice = 0;
-  auto main_menu = createMainMenu(&selected_choice);
-  auto component = ftxui::CatchEvent(main_menu, [&](ftxui::Event event) {
-    if (event == ftxui::Event::Character('q') ||
-        event == ftxui::Event::Character('Q')) {
-      screen.Exit();
-      selected_choice = 2;
-      return true;
-    }
+  auto renderer = Renderer([&] {
+    std::string mnemonic;
+    if(get_mnemonic) {
+      mnemonic = get_mnemonic();
+    } else
+      mnemonic = "";
+    return vbox({vbox({
+                     text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
 
-    if (event == ftxui::Event::Return) {
-      screen.Exit();
-      return true;
-    }
-    return false;
+                 }) | borderDouble |
+                     color(Color::Yellow),
+
+                 separator(),
+
+                 paragraph(std::string{mnemonic}) | hcenter |
+                     color(Color::White) | bold, // fix in the future
+
+                 separator(),
+
+                 vbox({
+                     text(" WARNING: DO NOT SCREENSHOT! ") | center,
+                     text(" WRITE IT DOWN ON PAPER NOW! ") | center,
+                 }) | border |
+                     color(Color::Red),
+
+                 text(" Press [ENTER] to continue ") | dim | hcenter
+
+           }) |
+           border | center | size(WIDTH, LESS_THAN, 60);
   });
 
-  screen.Loop(component);
-  return selected_choice + 1;
-}
-
-void display_mnemonic(std::string_view mnemonic) {
-  auto screen = ScreenInteractive::TerminalOutput();
-
-  auto component = Renderer([&] { return render_mnemonic_element(mnemonic); });
-  auto event = CatchEvent(component, [&](Event event) {
+  return CatchEvent(renderer, [=](Event event) {
     if (event == Event::Return) {
-      screen.Exit();
       return true;
     }
 
     return false;
   });
-
-  screen.Loop(event);
 }
 
-Element render_mnemonic_element(std::string_view mnemonic) {
+Component CLI::render_mnemonic_wiping(void) {
 
-  return vbox({vbox({
-                   text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
-
-               }) | borderDouble |
-                   color(Color::Yellow),
-
-               separator(),
-
-               paragraph(std::string{mnemonic}) | hcenter |
-                   color(Color::White) | bold, // fix in the future
-
-               separator(),
-
-               vbox({
-                   text(" WARNING: DO NOT SCREENSHOT! ") | center,
-                   text(" WRITE IT DOWN ON PAPER NOW! ") | center,
-               }) | border |
-                   color(Color::Red),
-
-               text(" Press [ENTER] to continue ") | dim | hcenter
-
-         }) |
-         border | center | size(WIDTH, LESS_THAN, 60);
-}
-
-bool confirm_liability_waiver(void) {
-  auto screen = ScreenInteractive::TerminalOutput();
-  std::string error_msg = "";
   auto user_input = std::make_shared<std::string>("");
-  auto confirmation_ui = render_mnemonic_wiping(user_input, error_msg);
 
-  auto component = CatchEvent(confirmation_ui, [&](Event event) {
-    if (event == Event::Return) {
-      if (*user_input == "I AM RESPONSIBLE") {
-        screen.Exit();
-        return true;
-      }
-      return true;
-    }
-
-    return false;
-  });
-
-  screen.Loop(component);
-  return true;
-}
-
-Component render_mnemonic_wiping(std::shared_ptr<std::string> user_input,
-                                 std::string_view error_msg) {
   auto input_option = InputOption();
   input_option.multiline = false;
 
@@ -152,7 +132,7 @@ Component render_mnemonic_wiping(std::shared_ptr<std::string> user_input,
 
   auto field = Input(user_input.get(), "Type here...", input_option);
 
-  return Renderer(field, [=, error_msg = std::string{error_msg}] {
+  auto confirmation_ui = Renderer(field, [=] {
     bool is_correct = (*user_input == "I AM RESPONSIBLE");
     auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
 
@@ -180,15 +160,23 @@ Component render_mnemonic_wiping(std::shared_ptr<std::string> user_input,
                      field->Render() | input_style | border,
                  }) | hcenter,
 
-                 error_msg.empty()
-                     ? emptyElement()
-                     : text("[!] " + error_msg) | color(Color::Red) | hcenter,
                  separator(),
 
                  text(is_correct ? " [ PRESS ENTER TO WIPE MEMORY ] "
                                  : " [ WAITING FOR CORRECT INPUT ] ") |
                      bold | hcenter | blink}) |
            border | center | size(WIDTH, LESS_THAN, 70);
+  });
+
+  return CatchEvent(confirmation_ui, [&](Event event) {
+    if (event == Event::Return) {
+      if (*user_input == "I AM RESPONSIBLE") {
+        return true;
+      }
+      return true;
+    }
+
+    return false;
   });
 }
 
@@ -209,7 +197,7 @@ void request_input_mnemonic_prompt(std::string_view error_msg) {
   std::cout << "> ";
 }
 
-bytes_data request_input_mnemonic(void) {
+bytes_data CLI::request_input_mnemonic(void) {
   std::string error_msg;
   bytes_data mnemonic;
 
@@ -234,7 +222,7 @@ bytes_data request_input_mnemonic(void) {
   return mnemonic;
 }
 
-bytes_data request_input_optional_passphrase(void) {
+bytes_data CLI::request_input_optional_passphrase(void) {
   bytes_data passphrase;
   std::cout << "\033[2J\033[1;1H";
   std::cout << "\n--------------------------------------------------\n";
@@ -254,7 +242,7 @@ bytes_data request_input_optional_passphrase(void) {
   return passphrase;
 }
 
-void incorrect_mnemonic_text(void) {
+void CLI::incorrect_mnemonic_text(void) {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "\n[ ERROR ] Invalid Mnemonic Phrase!\n";
   std::cout << "Possible reasons:\n";
@@ -267,13 +255,14 @@ void incorrect_mnemonic_text(void) {
   std::cout << "--------------------------------------------------\n";
 }
 
-Component render_config_menu(const Config &cfg, int *selected) {
+Component CLI::render_config_menu(void) {
 
+  const Config &cfg = get_config();
   static std::vector<std::string> entries;
+  int selected = 0;
+  auto menu = Menu(&entries, &selected);
 
-  auto menu = Menu(&entries, selected);
-
-  return Renderer(menu, [&cfg, selected, menu] {
+  auto component = Renderer(menu, [&cfg, selected, menu] {
     entries = {
         " 1. ENTROPY SOURCE : [ " +
             std::string{(!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX"
@@ -297,7 +286,7 @@ Component render_config_menu(const Config &cfg, int *selected) {
                    for (size_t i = 0; i < entries.size(); i++) {
                      auto item = text(entries[i]);
 
-                     if (static_cast<int>(i) == *selected) {
+                     if (static_cast<int>(i) == selected) {
                        item = item | inverted | color(Color::Yellow);
                      }
 
@@ -315,16 +304,28 @@ Component render_config_menu(const Config &cfg, int *selected) {
            }) |
            center;
   });
+  return CatchEvent(component, [&](ftxui::Event event) {
+    if (event == ftxui::Event::Return) {
+      int choice = selected + 1;
+
+      handle_config_menu(choice);
+
+      return true;
+    }
+    return false;
+  });
 }
 
-Component print_wallet_ui(const Wallet &wallet, int *selected) {
-
+Component CLI::print_wallet_ui(void) {
+  int selected;
   static std::vector<std::string> entries;
-  auto menu = Menu(&entries, selected);
+  auto menu = Menu(&entries, &selected);
   entries = {" 1. Send Transaction ", " 2. Next Address      ",
              " 3. Previous Address  ", " 4. Export Key        ",
              " 5. Lock & Exit       "};
-  return Renderer(menu, [&wallet, menu] {
+
+  auto walletUI = Renderer(menu, [&] {
+    const Wallet &wallet = get_wallet();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
     std::string address = tech_utils::to_hex(wallet.get_eth_address());
@@ -358,19 +359,12 @@ Component print_wallet_ui(const Wallet &wallet, int *selected) {
            }) |
            border | center | size(WIDTH, LESS_THAN, 62);
   });
-}
 
-int handle_wallet_ui_input(const Wallet &wallet) {
-  auto screen = ScreenInteractive::TerminalOutput();
-  int selected = 0;
-  auto main_ui = print_wallet_ui(wallet, &selected);
-
-  auto component = CatchEvent(main_ui, [&](Event event) {
+  return CatchEvent(walletUI, [&](Event event) {
     if (event == Event::Return) {
       int choice = selected + 1;
       if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
           choice == 5) {
-        screen.Exit();
         return true;
       }
       return true;
@@ -378,12 +372,9 @@ int handle_wallet_ui_input(const Wallet &wallet) {
 
     return false;
   });
-
-  screen.Loop(component);
-  return selected + 1;
 }
 
-Component render_password_setup(std::shared_ptr<std::string> user_input) {
+Component CLI::render_password_setup(std::shared_ptr<std::string> user_input) {
 
   auto input_option = InputOption();
   input_option.multiline = false;
@@ -407,8 +398,9 @@ Component render_password_setup(std::shared_ptr<std::string> user_input) {
   });
 }
 
-Component render_confirm_password_setup(std::shared_ptr<std::string> user_input,
-                                        bool incorrect) {
+Component
+CLI::render_confirm_password_setup(std::shared_ptr<std::string> user_input,
+                                   bool incorrect) {
   auto input_option = InputOption();
   input_option.multiline = false;
 
@@ -440,15 +432,13 @@ Component render_confirm_password_setup(std::shared_ptr<std::string> user_input,
   });
 }
 
-const bytes_data read_and_confirm_password(void) {
-  auto screen = ScreenInteractive::TerminalOutput();
+const bytes_data CLI::read_and_confirm_password(void) {
 
   auto pass_str = std::make_shared<std::string>("");
-  auto first_input_ui = cli::render_password_setup(pass_str);
+  auto first_input_ui = render_password_setup(pass_str);
 
   auto first_stage = CatchEvent(first_input_ui, [&](Event event) {
     if (event == Event::Return && !pass_str->empty()) {
-      screen.Exit();
       return true;
     }
 
@@ -461,13 +451,11 @@ const bytes_data read_and_confirm_password(void) {
   bool is_incorrect = false;
 
   for (;;) {
-    auto confirm_ui =
-        cli::render_confirm_password_setup(confirm_str, is_incorrect);
+    auto confirm_ui = render_confirm_password_setup(confirm_str, is_incorrect);
 
     auto second_stage = CatchEvent(confirm_ui, [&](Event event) {
       if (event == Event::Return) {
         if (*pass_str == *confirm_str) {
-          screen.Exit();
         } else {
           is_incorrect = true;
           confirm_str->clear();
@@ -490,79 +478,69 @@ const bytes_data read_and_confirm_password(void) {
   return password_in_bytes;
 }
 
-const bytes_data request_unlock_password(size_t attempts, size_t max_attempts) {
-  
-  auto screen = ScreenInteractive::TerminalOutput();
+Component CLI::render_request_unlock_password(void) {
+  auto input_option = InputOption();
+  size_t attempts = 0;//get_attempts();
+  size_t max_attempts = 3;//get_max_attempts();
+  std::shared_ptr<std::string> user_input = std::make_shared<std::string>("");
+  input_option.multiline = false;
+  input_option.password = true;
+  auto field = Input(user_input.get(), "Enter password...", input_option);
 
-  auto pass_str = std::make_shared<std::string>("");
-  auto unlock_password_ui = cli::render_request_unlock_password(pass_str, attempts, max_attempts);
-
-  auto component = CatchEvent(unlock_password_ui, [&](Event event) {
-    if (event == Event::Return && !pass_str->empty()) {
-      screen.Exit();
+  auto component = CatchEvent(field, [&](Event event) {
+    if (event == Event::Return && !user_input->empty()) {
       return true;
     }
 
     return false;
   });
 
-  screen.Loop(component);
-
-
-
-  bytes_data password(pass_str->begin(), pass_str->end());
-
-  //OPENSSL_cleanse(buffer.data(), buffer.size());
-
-  return password;
-}
-
-
-Component render_request_unlock_password(std::shared_ptr<std::string> user_input,size_t attempts, size_t max_attempts) {
-auto input_option = InputOption();
-input_option.multiline = false;
-input_option.password = true;
-  auto field = Input(user_input.get(), "Enter password...", input_option);
-
-  return Renderer(field, [=] {
-      int remaining = max_attempts - attempts;
+  return Renderer(component, [=] {
+    int remaining = max_attempts - attempts;
     Elements status_info;
-    if(attempts > 0) {
-      status_info.push_back(text("[!] INVALID PASSWORD") | bold | color(Color::Red) | hcenter);
+    if (attempts > 0) {
+      status_info.push_back(text("[!] INVALID PASSWORD") | bold |
+                            color(Color::Red) | hcenter);
     }
 
-    if(remaining == 1) {
+    if (remaining == 1) {
       status_info.push_back(text("[WARNING] FINAL ATTEMPT. NEXT FAILURE WILL "
-                   "WIPE DATA.") | bold | color(Color::RedLight) | blink | hcenter);
+                                 "WIPE DATA.") |
+                            bold | color(Color::RedLight) | blink | hcenter);
+    } else if (remaining > 0 && attempts > 0) {
+      status_info.push_back(text("Careful: " + std::to_string(remaining) +
+                                 " attempts remaining.") |
+                            dim | hcenter);
     }
-    else if(remaining > 0 && attempts > 0) {
-      status_info.push_back(text("Careful: " + std::to_string(remaining) +  " attempts remaining.") | dim | hcenter);
-    }
-    return vbox({vbox({text(" Unlock Wallet ") |
-                       bold | center}) |
+    return vbox({vbox({text(" Unlock Wallet ") | bold | center}) |
                      borderDouble | color(Color::Cyan),
 
                  separator(),
 
                  vbox({
-                  text(" Please enter your password to decrypt the local storage. ") | hcenter,
-            text(" Your keys remain encrypted until a valid password is provided. ") | hcenter | dim,
+                     text(" Please enter your password to decrypt the local "
+                          "storage. ") |
+                         hcenter,
+                     text(" Your keys remain encrypted until a valid password "
+                          "is provided. ") |
+                         hcenter | dim,
                  }),
 
                  vbox(std::move(status_info)),
-                  
 
                  hbox({
                      text(" >>> "),
-                     field->Render() | border | center | size(WIDTH, LESS_THAN, 70),
+                     field->Render() | border | center |
+                         size(WIDTH, LESS_THAN, 70),
                  }) | hcenter,
 
                  separator(),
 
-                 text(" Press [ENTER] to unlock" ) | hcenter | dim
-                
-  }) | border | center | size(WIDTH, LESS_THAN, 70);
-});
+                 text(" Press [ENTER] to unlock") | hcenter | dim
+
+           }) |
+           border | center | size(WIDTH, LESS_THAN, 70);
+  });
 }
 
 void show_self_destruct(void) {
@@ -575,7 +553,7 @@ void show_self_destruct(void) {
   std::cout << "  System exit.\n\n";
 }
 
-bool confirm_danger_action(void) {
+bool CLI::confirm_danger_action(void) {
   std::cout << "\033[2J\033[1;1H";
   std::cout << "\n  \033[1;41m  !!! SECURITY WARNING !!!  \033[0m\n";
   std::cout << "  ------------------------------------------\n";
@@ -594,7 +572,7 @@ bool confirm_danger_action(void) {
   return (input == "CONFIRM");
 }
 
-void display_private_key(const bytes_data &priv_key) {
+void CLI::display_private_key(const bytes_data &priv_key) {
   std::cout << "\n  \033[1;33m[ YOUR PRIVATE KEY (HEX) ]\033[0m\n";
   std::cout
       << "  ------------------------------------------------------------\n";
@@ -611,4 +589,8 @@ void display_private_key(const bytes_data &priv_key) {
     std::cout << "\033[2J\033[1;1H";
   }
 }
-} // namespace cli
+
+void CLI::set_active_tab(int tab) {
+active_tab = tab;
+screen.Post(Event::Custom);
+}

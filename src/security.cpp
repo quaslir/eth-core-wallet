@@ -8,7 +8,7 @@
 using json = nlohmann::json;
 namespace security_manager {
 bool first_time_save(const Wallet &wallet, const std::string &filename) {
-  bytes_data password = cli::read_and_confirm_password();
+  bytes_data password = {}; //read_and_confirm_password();
 
   bytes_data salt = crypto_utils::gen_number(16);
   bytes_data hash_key =
@@ -62,7 +62,7 @@ bool load_wallet(Wallet &wallet, const std::string &filename) {
   size_t count = 0;
 
   do {
-    const bytes_data password = cli::request_unlock_password(count, 3);
+    const bytes_data password =  {};//cli::request_unlock_password(count, 3);
 
     bytes_data hash_key =
         crypto_utils::PBKDF2_HMAC_SHA512(password, encrp.salt, encrp.iter);
@@ -100,7 +100,7 @@ bool load_wallet(Wallet &wallet, const std::string &filename) {
     return true;
   } while (auth_failed && count < 3);
 
-  cli::show_self_destruct();
+  //cli::show_self_destruct();
   tech_utils::rm_file(filename);
   std::exit(1);
   return false;
