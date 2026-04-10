@@ -28,17 +28,6 @@ void UserInterface::handle_wallet_creation(void) {
     state = MAIN_MENU;
     return;
   }
-  bytes_data mnemonic = wallet.prepare_mnemonic(config);
-  std::string view_mnemonic(reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size());
-cli.get_mnemonic = [view_mnemonic](void) -> std::string {
-return view_mnemonic;
-};
-cli.set_active_tab(3);
-
-  const std::vector<uint32_t> PATH_DERIVE =
-      Key_Derive::parse_derive_path(config.derivation_path);
-  wallet.finalize_from_mnemonic(mnemonic, config.passphrase, PATH_DERIVE);
-  state = WALLET_UI;
 }
 
 void UserInterface::handle_wallet_import(void) {
@@ -101,10 +90,21 @@ if (choice == 1) {
       } else if (choice == 4) {
         config.handle_derivation_path();
       } else if (choice == 5) {
+        cli.set_active_tab(0);
       }
 
       else if (choice == 6) {
+        bytes_data mnemonic = wallet.prepare_mnemonic(config);
+  std::string view_mnemonic(reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size());
+cli.get_mnemonic = [view_mnemonic](void) -> std::string {
+return view_mnemonic;
+};
+cli.set_active_tab(3);
 
+  const std::vector<uint32_t> PATH_DERIVE =
+      Key_Derive::parse_derive_path(config.derivation_path);
+  wallet.finalize_from_mnemonic(mnemonic, config.passphrase, PATH_DERIVE);
+  state = WALLET_UI;
       }
 };
 
@@ -128,4 +128,7 @@ switch (choice) {
   }
 };
 
+cli.handle_wallet_creation = [&](void) -> void {
+  
+};
 }

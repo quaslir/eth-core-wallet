@@ -33,6 +33,7 @@ public:
   std::function<void(int)> handle_config_menu;
   std::function<const Wallet &(void)> get_wallet;
   std::function<void(int)> on_main_menu;
+  std::function<void(void)> handle_wallet_creation;
   void load(void);
   bytes_data request_input_mnemonic(void);
   bytes_data request_input_optional_passphrase(void);

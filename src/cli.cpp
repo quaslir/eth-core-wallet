@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
@@ -77,7 +78,12 @@ Component CLI::create_main_menu(void) {
 
 Component CLI::render_mnemonic_element(void) {
 
-  auto renderer = Renderer([&] {
+ auto button = Button(" [ PRESS ENTER TO CONTINUE ] ", [&] {
+  this->set_active_tab(2);
+ }, ButtonOption::Ascii());
+
+
+  return Renderer(button, [&, button] {
     std::string mnemonic;
     if(get_mnemonic) {
       mnemonic = get_mnemonic();
@@ -102,19 +108,14 @@ Component CLI::render_mnemonic_element(void) {
                  }) | border |
                      color(Color::Red),
 
-                 text(" Press [ENTER] to continue ") | dim | hcenter
+            separator(),
+            button->Render() | hcenter | bold | focus
 
            }) |
            border | center | size(WIDTH, LESS_THAN, 60);
   });
 
-  return CatchEvent(renderer, [=](Event event) {
-    if (event == Event::Return) {
-      return true;
-    }
 
-    return false;
-  });
 }
 
 Component CLI::render_mnemonic_wiping(void) {
@@ -259,10 +260,10 @@ Component CLI::render_config_menu(void) {
 
   const Config &cfg = get_config();
   static std::vector<std::string> entries;
-  int selected = 0;
+  static int selected = 0;
   auto menu = Menu(&entries, &selected);
 
-  auto component = Renderer(menu, [&cfg, selected, menu] {
+  auto component = Renderer(menu, [&cfg, menu] {
     entries = {
         " 1. ENTROPY SOURCE : [ " +
             std::string{(!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX"
