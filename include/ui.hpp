@@ -3,7 +3,11 @@
 #include "config.hpp"
 #include "wallet.hpp"
 #include <string>
-enum State_t { MAIN_MENU, SEED_GENERATION, SEED_IMPORT, EXIT, WALLET_UI };
+
+
+struct TEMP_DATA {
+  bytes_data password_for_wallet_unlocking;
+};
 
 class UserInterface {
 public:
@@ -13,7 +17,7 @@ private:
   Wallet wallet;
   Config config;
   AsyncBalanceManager balance_manager;
-  State_t state = MAIN_MENU;
+  TEMP_DATA temp;
   CLI cli;
   void handle_wallet_creation(void);
   void handle_wallet_import(void);

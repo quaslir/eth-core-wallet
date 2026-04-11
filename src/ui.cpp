@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include <string>
 #include <string_view>
+#include <utility>
 
 void UserInterface::load(void) {
   //handle_wallet_loading();
@@ -17,15 +18,15 @@ void UserInterface::handle_wallet_loading(void) {
         crypto_utils::change_derive_path(wallet.getIndex());
     wallet.sync_derive_path(current_path);
     wallet.derive(current_path);
-    state = WALLET_UI;
+
   }
 }
 
 
 void UserInterface::handle_wallet_creation(void) {
-  cli.set_active_tab(1);
+  cli.set_active_tab(CONFIG_MENU);
   if (0) { // FIX
-    state = MAIN_MENU;
+
     return;
   }
 }
@@ -35,7 +36,7 @@ void UserInterface::handle_wallet_import(void) {
   std::string_view mnemonic_view(
       reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size());
   if (mnemonic.empty()) {
-    state = MAIN_MENU;
+
     return;
   }
   while (!wallet.correct_mnemonic(mnemonic_view)) {
@@ -43,14 +44,14 @@ void UserInterface::handle_wallet_import(void) {
     mnemonic = cli.request_input_mnemonic();
 
     if (mnemonic.empty()) {
-      state = MAIN_MENU;
+
       return;
     }
   }
 
   bytes_data passphrase = cli.request_input_optional_passphrase();
   wallet.import_wallet(mnemonic, passphrase); // clears mnemonic and passphrase
-  state = WALLET_UI;
+
 }
 
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
@@ -71,7 +72,7 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     break;
   case 5: // exit
     wallet.save();
-    state = EXIT;
+
     break;
   }
 }
@@ -90,7 +91,7 @@ if (choice == 1) {
       } else if (choice == 4) {
         config.handle_derivation_path();
       } else if (choice == 5) {
-        cli.set_active_tab(0);
+        cli.set_active_tab(MAIN_MENU);
       }
 
       else if (choice == 6) {
@@ -99,12 +100,12 @@ if (choice == 1) {
 cli.get_mnemonic = [view_mnemonic](void) -> std::string {
 return view_mnemonic;
 };
-cli.set_active_tab(3);
+cli.set_active_tab(MNEMONIC_DISPLAY);
 
   const std::vector<uint32_t> PATH_DERIVE =
       Key_Derive::parse_derive_path(config.derivation_path);
   wallet.finalize_from_mnemonic(mnemonic, config.passphrase, PATH_DERIVE);
-  state = WALLET_UI;
+
       }
 };
 
@@ -120,7 +121,7 @@ switch (choice) {
     handle_wallet_creation();
     break;
   case 2:
-    state = SEED_IMPORT;
+
     //handle_wallet_import();
     break;
   case 3:
@@ -128,7 +129,11 @@ switch (choice) {
   }
 };
 
-cli.handle_wallet_creation = [&](void) -> void {
-  
+cli.get_password_for_wallet = [&](void) ->bytes_data {
+return this->temp.password_for_wallet_unlocking;
+};
+
+cli.set_password_for_wallet = [&](bytes_data &pass) {
+  this->temp.password_for_wallet_unlocking = pass;
 };
 }

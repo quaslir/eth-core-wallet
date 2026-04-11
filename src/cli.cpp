@@ -3,6 +3,7 @@
 #include "tech_utils.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -11,6 +12,7 @@
 
 #include <ftxui/screen/color.hpp>
 #include <memory>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <string>
 #include <string_view>
@@ -20,13 +22,16 @@ void CLI::load(void) {
   auto main_menu = create_main_menu();
   auto mnemonic_display = render_mnemonic_element();
   auto mnenonic_wiping_confirmation = render_mnemonic_wiping();
+  auto import_wallet = create_main_menu();
   auto config_menu = render_config_menu();
+  auto set_password_component = render_password_setup();
+  auto confirm_password_component = render_confirm_password_setup();
   auto password_unlock = render_request_unlock_password();
   auto wallet_ui = print_wallet_ui();
 
   auto root_container =
-      Container::Tab({main_menu, config_menu, mnenonic_wiping_confirmation,
-                      mnemonic_display, password_unlock, wallet_ui},
+      Container::Tab({main_menu, config_menu, import_wallet, //IMPORT
+                      mnemonic_display, mnenonic_wiping_confirmation, set_password_component, confirm_password_component,  wallet_ui, password_unlock},
                      &this->active_tab);
 
   screen.Loop(root_container);
@@ -79,7 +84,7 @@ Component CLI::create_main_menu(void) {
 Component CLI::render_mnemonic_element(void) {
 
  auto button = Button(" [ PRESS ENTER TO CONTINUE ] ", [&] {
-  this->set_active_tab(2);
+  this->set_active_tab(MNEMONIC_WIPING);
  }, ButtonOption::Ascii());
 
 
@@ -131,9 +136,16 @@ Component CLI::render_mnemonic_wiping(void) {
     return state.element;
   };
 
-  auto field = Input(user_input.get(), "Type here...", input_option);
+  input_option.on_enter = [=, this] {
+      if(*user_input == "I AM RESPONSIBLE") {
+          set_active_tab(SET_PASSWORD);
+      }
+  };
 
-  auto confirmation_ui = Renderer(field, [=] {
+  auto field = Input(user_input.get(), "Type here...", input_option);
+  field->TakeFocus();
+
+  return Renderer(field, [=] {
     bool is_correct = (*user_input == "I AM RESPONSIBLE");
     auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
 
@@ -169,16 +181,6 @@ Component CLI::render_mnemonic_wiping(void) {
            border | center | size(WIDTH, LESS_THAN, 70);
   });
 
-  return CatchEvent(confirmation_ui, [&](Event event) {
-    if (event == Event::Return) {
-      if (*user_input == "I AM RESPONSIBLE") {
-        return true;
-      }
-      return true;
-    }
-
-    return false;
-  });
 }
 
 void request_input_mnemonic_prompt(std::string_view error_msg) {
@@ -318,14 +320,14 @@ Component CLI::render_config_menu(void) {
 }
 
 Component CLI::print_wallet_ui(void) {
-  int selected;
+  static int selected = 0;
   static std::vector<std::string> entries;
   auto menu = Menu(&entries, &selected);
   entries = {" 1. Send Transaction ", " 2. Next Address      ",
              " 3. Previous Address  ", " 4. Export Key        ",
              " 5. Lock & Exit       "};
 
-  auto walletUI = Renderer(menu, [&] {
+  auto walletUI = Renderer(menu, [=, this] {
     const Wallet &wallet = get_wallet();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
@@ -361,7 +363,7 @@ Component CLI::print_wallet_ui(void) {
            border | center | size(WIDTH, LESS_THAN, 62);
   });
 
-  return CatchEvent(walletUI, [&](Event event) {
+  return CatchEvent(walletUI, [=](Event event) {
     if (event == Event::Return) {
       int choice = selected + 1;
       if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
@@ -375,14 +377,32 @@ Component CLI::print_wallet_ui(void) {
   });
 }
 
-Component CLI::render_password_setup(std::shared_ptr<std::string> user_input) {
+Component CLI::render_password_setup(void) {
 
   auto input_option = InputOption();
   input_option.multiline = false;
+  input_option.password = true;
+    auto pass_str = std::make_shared<std::string>(""); // FIX
+  auto field = Input(pass_str.get(), "Enter password...", input_option);
 
-  auto field = Input(user_input.get(), "Enter password...", input_option);
 
-  return Renderer(field, [=] {
+  auto first_stage = CatchEvent(field, [=, this](Event event) {
+    if (event == Event::Return && !pass_str->empty()) {
+      if(set_password_for_wallet) {
+        bytes_data pass_str_in_bytes(pass_str->begin(), pass_str->end());
+        set_password_for_wallet(pass_str_in_bytes);
+
+        //OPENSSL_cleanse(pass_str->data()), pass_str->size());
+        OPENSSL_cleanse(pass_str_in_bytes.data(), pass_str_in_bytes.size());
+        set_active_tab(CONFIRM_PASSWORD);
+      } else; // FIX
+      return true;
+    }
+
+    return false;
+  });
+
+  return Renderer(first_stage, [=] {
     return vbox(
         {text("CREATE PASSWORD") | bold | center, separator(),
 
@@ -400,15 +420,41 @@ Component CLI::render_password_setup(std::shared_ptr<std::string> user_input) {
 }
 
 Component
-CLI::render_confirm_password_setup(std::shared_ptr<std::string> user_input,
-                                   bool incorrect) {
+CLI::render_confirm_password_setup(void) {
   auto input_option = InputOption();
   input_option.multiline = false;
+  input_option.password = true;
+    auto second_pass = std::make_shared<std::string>("");
+  auto field = Input(second_pass.get(), "Enter password...", input_option);
 
-  auto field = Input(user_input.get(), "Enter password...", input_option);
 
-  return Renderer(field, [=] {
-    std::vector<std::string> password_text = !incorrect ? std::vector<std::string>{
+
+
+  auto is_incorrect = std::make_shared<bool>(0);
+  auto second_stage = CatchEvent(field, [=, this](Event event) {
+      if (event == Event::Return) {
+          bytes_data first_pass_in_bytes = get_password_for_wallet();
+          std::string first_pass(first_pass_in_bytes.begin(), first_pass_in_bytes.end());
+
+          OPENSSL_cleanse(first_pass_in_bytes.data(), first_pass_in_bytes.size());
+        if (first_pass == *second_pass) {
+          //OPENSSL_cleanse(first_pass.data(), first_pass.size());
+          //OPENSSL_cleanse(second_pass.data(), second_pass.size());
+
+          set_active_tab(WALLET_UI);
+          // NEXT STEP
+        } else {
+          *is_incorrect = true;
+          second_pass->clear();
+        }
+
+        return true;
+      }
+
+      return false;
+    });
+  return Renderer(second_stage, [=] {
+    std::vector<std::string> password_text = !*is_incorrect ? std::vector<std::string>{
     "CONFIRM MASTER PASSWORD",
     "Please re-enter your password to verify.",
     "If it doesn't match, you will have to restart.",
@@ -417,7 +463,7 @@ CLI::render_confirm_password_setup(std::shared_ptr<std::string> user_input,
     "Please try again to ensure your funds are safe."
   };
 
-    Color text_color = !incorrect ? Color::Cyan : Color::Red;
+    Color text_color = !*is_incorrect ? Color::Cyan : Color::Red;
 
     Elements elements;
 
@@ -431,52 +477,6 @@ CLI::render_confirm_password_setup(std::shared_ptr<std::string> user_input,
                  text("Press [ENTER] to confirm") | dim | hcenter}) |
            border | center;
   });
-}
-
-const bytes_data CLI::read_and_confirm_password(void) {
-
-  auto pass_str = std::make_shared<std::string>("");
-  auto first_input_ui = render_password_setup(pass_str);
-
-  auto first_stage = CatchEvent(first_input_ui, [&](Event event) {
-    if (event == Event::Return && !pass_str->empty()) {
-      return true;
-    }
-
-    return false;
-  });
-
-  screen.Loop(first_stage);
-
-  auto confirm_str = std::make_shared<std::string>("");
-  bool is_incorrect = false;
-
-  for (;;) {
-    auto confirm_ui = render_confirm_password_setup(confirm_str, is_incorrect);
-
-    auto second_stage = CatchEvent(confirm_ui, [&](Event event) {
-      if (event == Event::Return) {
-        if (*pass_str == *confirm_str) {
-        } else {
-          is_incorrect = true;
-          confirm_str->clear();
-        }
-
-        return true;
-      }
-
-      return false;
-    });
-    screen.Loop(second_stage);
-    if (*pass_str == *confirm_str)
-      break;
-  }
-
-  bytes_data password_in_bytes(pass_str->begin(), pass_str->end());
-  // OPENSSL_cleanse(pass_str.get(), pass_str.size());
-  // OPENSSL_cleanse(confirm_str.data(), confirm_str.size());
-
-  return password_in_bytes;
 }
 
 Component CLI::render_request_unlock_password(void) {
