@@ -2,9 +2,9 @@
 #include "config.hpp"
 #include "tech_utils.hpp"
 
-#include <cmath>
+
 #include <cstddef>
-#include <cstdint>
+
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -13,7 +13,7 @@
 
 #include <ftxui/screen/color.hpp>
 #include <iostream>
-#include <iterator>
+
 #include <memory>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -373,11 +373,17 @@ Component CLI::print_wallet_ui(void) {
 
   auto walletUI = Renderer(menu, [=, this] {
     const Wallet &wallet = get_wallet();
-    bytes_data password = get_password_for_wallet();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
-    std::string address = tech_utils::to_hex(wallet.get_eth_address());
-    return vbox({
+    std::string address = tech_utils::to_hex(wallet.get_eth_address()); // NEEDS TO BE CACHED
+
+    auto info_line = [](const std::string& label, const std::string& value, Color color_) {
+        return hbox({
+            text(label) | size(WIDTH, EQUAL, 12),
+            text(value) | color(color_)
+        });
+    };
+    auto box =  vbox({
 
                vbox({
                    text("ETH CORE WALLET ") | bold | hcenter,
@@ -386,26 +392,33 @@ Component CLI::print_wallet_ui(void) {
                    color(Color::Cyan),
 
                vbox({
-                   hbox({text(" STATUS: "),
-                         text("Online (Syncing...)") | color(Color::Green)}),
-                   hbox({text(" BALANCE: "),
-                         text(balance + " ETH") | color(Color::Yellow)}),
-                   hbox({text(" ADDRESS: "),
-                         text("0x" + address) | color(Color::GrayDark)}),
-                   hbox({text(" NETWORK: "),
-                         text("Ethereum Mainnet") | color(Color::Green)}),
+                   info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
+                   info_line(" BALANCE: ", balance + " ETH", Color::Yellow),
+                   info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
+                   info_line(" NETWORK: ", "Ethereum Mainnet", Color::Green),
+
                }),
 
                separator(),
                vbox({
-                   text(" SELECT OPERATION: ") | bold,
+                   text(" SELECT OPERATION: ") | bold | color(Color::CyanLight),
                    menu->Render() | color(Color::BlueLight),
                }) | border,
-
+               filler(),
                text(">>> Use Arrows to navigate, Enter to select") | dim |
                    hcenter,
            }) |
-           border | center | size(WIDTH, LESS_THAN, 62);
+           border | center | size(WIDTH, EQUAL, 62);
+
+    return vbox({
+        filler(),
+        hbox({
+            filler(),
+            box,
+            filler()
+        }),
+        filler(),
+    });
   });
 
   return CatchEvent(walletUI, [=](Event event) {
@@ -554,7 +567,7 @@ Component CLI::render_request_unlock_password(void) {
   return Renderer(component, [=] {
     int remaining = max_attempts - *attempts;
     Elements status_info;
-    if (attempts > 0) {
+    if (*attempts > 0) {
       status_info.push_back(text("[!] INVALID PASSWORD") | bold |
                             color(Color::Red) | hcenter);
     }
@@ -568,7 +581,8 @@ Component CLI::render_request_unlock_password(void) {
                                  " attempts remaining.") |
                             dim | hcenter);
     }
-    return vbox({vbox({text(" Unlock Wallet ") | bold | center}) |
+   auto box = vbox({
+            text(" Unlock Wallet ") | bold | hcenter |
                      borderDouble | color(Color::Cyan),
 
                  separator(),
@@ -582,20 +596,32 @@ Component CLI::render_request_unlock_password(void) {
                          hcenter | dim,
                  }),
 
-                 vbox(std::move(status_info)),
+                 separator() | color(Color::DarkSlateGray1),
+
+                 vbox(std::move(status_info)) |hcenter,
 
                  hbox({
-                     text(" >>> "),
-                     field->Render() | border | center |
+                     text(" >>> ") | color(Color::Cyan),
+                     field->Render() | border | flex |
                          size(WIDTH, LESS_THAN, 70),
-                 }) | hcenter,
+                 }) | hcenter | size(WIDTH, EQUAL, 60),
 
                  separator(),
 
                  text(" Press [ENTER] to unlock") | hcenter | dim
 
            }) |
-           border | center | size(WIDTH, LESS_THAN, 70);
+           border | size(WIDTH, LESS_THAN, 70);
+
+   return vbox({
+       filler(),
+       hbox({
+           filler(),
+           box,
+           filler(),
+       }),
+       filler(),
+   });
   });
 }
 
