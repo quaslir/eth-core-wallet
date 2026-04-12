@@ -7,19 +7,24 @@
 #include <utility>
 
 void UserInterface::load(void) {
-  //handle_wallet_loading();
   set_callbacks_for_cli();
+  if(handle_wallet_loading()) {
+      //cli.set_active_tab(int tab)
+  }
+
   cli.load();
 }
 
-void UserInterface::handle_wallet_loading(void) {
+bool UserInterface::handle_wallet_loading(void) {
   if (security_manager::load_wallet(wallet)) {
     std::vector<uint32_t> current_path =
         crypto_utils::change_derive_path(wallet.getIndex());
     wallet.sync_derive_path(current_path);
     wallet.derive(current_path);
-
+    return true;
   }
+
+  return false;
 }
 
 
@@ -32,7 +37,7 @@ void UserInterface::handle_wallet_creation(void) {
 }
 
 void UserInterface::handle_wallet_import(void) {
-  bytes_data mnemonic = {}; // TO FIX
+  /*bytes_data mnemonic = {}; // TO FIX
   std::string_view mnemonic_view(
       reinterpret_cast<const char *>(mnemonic.data()), mnemonic.size());
   if (mnemonic.empty()) {
@@ -51,7 +56,7 @@ void UserInterface::handle_wallet_import(void) {
 
   bytes_data passphrase = cli.request_input_optional_passphrase();
   wallet.import_wallet(mnemonic, passphrase); // clears mnemonic and passphrase
-
+*/
 }
 
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
@@ -121,7 +126,7 @@ switch (choice) {
     handle_wallet_creation();
     break;
   case 2:
-
+        cli.set_active_tab(IMPORT_MENU);
     //handle_wallet_import();
     break;
   case 3:
@@ -135,5 +140,21 @@ return this->temp.password_for_wallet_unlocking;
 
 cli.set_password_for_wallet = [&](bytes_data &pass) {
   this->temp.password_for_wallet_unlocking = pass;
+};
+
+cli.check_mnemonic = [&](std::string_view mnemonic) -> bool {
+    return wallet.correct_mnemonic(mnemonic);
+};
+
+cli.import_wallet = [&](void) -> void {
+wallet.import_wallet(temp.mnemonic, temp.passphrase);
+};
+
+cli.set_mnemonic = [&](std::string_view mnemonic) -> void {
+    temp.mnemonic = bytes_data(mnemonic.begin(), mnemonic.end());
+};
+
+cli.set_passphrase = [&](std::string_view passphrase) -> void {
+    temp.passphrase = bytes_data(passphrase.begin(), passphrase.end());
 };
 }

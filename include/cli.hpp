@@ -6,7 +6,6 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <functional>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -18,12 +17,13 @@ enum state_t {
   MAIN_MENU = 0,
   CONFIG_MENU = 1,
   IMPORT_MENU = 2,
-  MNEMONIC_DISPLAY = 3,
-  MNEMONIC_WIPING = 4,
-  SET_PASSWORD = 5,
-  CONFIRM_PASSWORD = 6,
-  WALLET_UI = 7,
-  UNLOCK_PASSWORD = 8
+  ENTER_OPTIONAL_PASSPHRASE_MENU = 3,
+  MNEMONIC_DISPLAY = 4,
+  MNEMONIC_WIPING = 5,
+  SET_PASSWORD = 6,
+  CONFIRM_PASSWORD = 7,
+  WALLET_UI = 8,
+  UNLOCK_PASSWORD = 9
 };
 
 
@@ -42,7 +42,8 @@ private:
   Component render_config_menu(void);
   Component render_request_unlock_password(void);
   Component print_wallet_ui(void);
-
+  Component render_import_mnemonic_component(void);
+  Component render_input_optional_passphrase_component(void);
 public:
   std::function<std::string(void)> get_mnemonic;
   std::function<const Config &(void)> get_config;
@@ -52,6 +53,10 @@ public:
   std::function<void(void)> handle_wallet_creation;
   std::function<void(bytes_data& pass)> set_password_for_wallet;
   std::function<bytes_data(void)> get_password_for_wallet;
+  std::function<bool(std::string_view)> check_mnemonic;
+  std::function<void(std::string_view)> set_mnemonic;
+  std::function<void(std::string_view)> set_passphrase;
+  std::function<void(void)> import_wallet;
   void load(void);
   bytes_data request_input_mnemonic(void);
   bytes_data request_input_optional_passphrase(void);

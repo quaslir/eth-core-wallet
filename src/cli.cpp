@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "tech_utils.hpp"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <ftxui/component/component.hpp>
@@ -11,6 +12,7 @@
 #include <ftxui/dom/elements.hpp>
 
 #include <ftxui/screen/color.hpp>
+#include <iterator>
 #include <memory>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -22,7 +24,8 @@ void CLI::load(void) {
   auto main_menu = create_main_menu();
   auto mnemonic_display = render_mnemonic_element();
   auto mnenonic_wiping_confirmation = render_mnemonic_wiping();
-  auto import_wallet = create_main_menu();
+  auto import_wallet_ui = render_import_mnemonic_component();
+  auto optional_passphrase = render_input_optional_passphrase_component();
   auto config_menu = render_config_menu();
   auto set_password_component = render_password_setup();
   auto confirm_password_component = render_confirm_password_setup();
@@ -30,7 +33,7 @@ void CLI::load(void) {
   auto wallet_ui = print_wallet_ui();
 
   auto root_container =
-      Container::Tab({main_menu, config_menu, import_wallet, //IMPORT
+      Container::Tab({main_menu, config_menu, import_wallet_ui, optional_passphrase,
                       mnemonic_display, mnenonic_wiping_confirmation, set_password_component, confirm_password_component,  wallet_ui, password_unlock},
                      &this->active_tab);
 
@@ -183,21 +186,82 @@ Component CLI::render_mnemonic_wiping(void) {
 
 }
 
-void request_input_mnemonic_prompt(std::string_view error_msg) {
-  std::cout << "\033[2J\033[1;1H";
-  std::cout << "\n==================================================\n";
-  std::cout << "                [ WALLET IMPORT ]                 \n";
-  std::cout << "==================================================\n\n";
-  if (!error_msg.empty()) {
-    std::cout << "\033[1;31m[!] " << error_msg << "\033[0m\n";
-    std::cout << "--------------------------------------------\n";
-  }
-  std::cout << "STEP 1: ENTER MNEMONIC PHRASE\n";
-  std::cout << "Input 12, 15, 18, 21, or 24 words separated by space.\n";
-  std::cout
-      << "\033[1;30m(Type 'back' or 'exit' to return to main menu)\033[0m\n";
-  std::cout << "--------------------------------------------------\n";
-  std::cout << "> ";
+Component CLI::render_import_mnemonic_component(void) {
+    auto is_incorrect = std::make_shared<bool>(0);
+    auto user_input = std::make_shared<std::string>("");
+
+    auto input_option = InputOption();
+    input_option.multiline = false;
+
+
+    auto field = Input(user_input.get(), "Enter mnemonic....", input_option);
+    field->TakeFocus();
+
+
+    auto component = CatchEvent(field, [=, this] (Event event){
+        if(event == Event::Return) {
+            if(!user_input->empty()) {
+                if(check_mnemonic(std::string_view(*user_input))) {
+                    set_mnemonic(*user_input); // fix
+                    OPENSSL_cleanse(user_input->data(), user_input->size());
+                    set_active_tab(ENTER_OPTIONAL_PASSPHRASE_MENU);
+                } else *is_incorrect = true;
+                return true;
+            } else *is_incorrect = true;
+
+            return true;
+        }
+
+        return false;
+    });
+
+    return Renderer(component, [=] {
+        Element error_box = emptyElement();
+        if(*is_incorrect) {
+            error_box =
+                vbox({
+
+                vbox({
+                text(" ⚠  ERROR ") | bgcolor(Color::Red) | color(Color::White) | bold,
+                text("[!] Invalid Mnemonic Phrase") | color(Color::Red) | bold,
+                }),
+            separatorLight() | color(Color::Red),
+            vbox({
+
+                text("Your phrase could not be verified. Check for:"),
+                text("1. One or more words are not from the BIP-39 dictionary."),
+                text("2. Checksum verification failed (typo in words or wrong order)."),
+                text("3. Incorrect number of words (must be 12, 15, 18, 21, or 24)."),
+                separatorDouble() | color(Color::Red),
+            }) | border | color(Color::Red),
+                });
+        }
+
+        return vbox({
+            vbox({
+                text(" [ WALLET IMPORT ] ") | bold | center,
+            }) | borderDouble,
+
+            error_box,
+
+            vbox({
+                text(" STEP 1: ENTER MNEMONIC PHRASE ") | color(Color::Cyan),
+                text("Input 12, 15, 18, 21, or 24 words separated by space.") | dim,
+                text("(Type 'back' or 'exit' to return to main menu)") | color(Color::DarkSlateGray1),
+            }),
+
+            separator(),
+
+            hbox({
+                text(" > ") | bold | color(Color::Yellow),
+                field->Render() | flex,
+            }),
+
+            separator(),
+            text(" [ WAITING FOR INPUT ] ") | dim | center,
+        }) | border | center | size(WIDTH, LESS_THAN, 70);
+    });
+
 }
 
 bytes_data CLI::request_input_mnemonic(void) {
@@ -206,7 +270,7 @@ bytes_data CLI::request_input_mnemonic(void) {
 
   do {
     OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
-    request_input_mnemonic_prompt(error_msg);
+    //request_input_mnemonic_prompt(error_msg);
     char c;
 
     while (std::cin.get(c) && c != '\n') {
@@ -225,38 +289,45 @@ bytes_data CLI::request_input_mnemonic(void) {
   return mnemonic;
 }
 
-bytes_data CLI::request_input_optional_passphrase(void) {
-  bytes_data passphrase;
-  std::cout << "\033[2J\033[1;1H";
-  std::cout << "\n--------------------------------------------------\n";
-  std::cout << "STEP 2: ENTER PASSPHRASE (OPTIONAL)\n";
-  std::cout << "--------------------------------------------------\n";
-  std::cout << "This is an additional security layer\n";
-  std::cout << "If you didn't use a passphrase before, leave it empty.\n";
-  std::cout << "WARNING: If you forget it, your funds are LOST FOREVER.\n";
-  std::cout << "Enter passphrase : \n";
-  std::cout << "> ";
 
-  char c;
-  while (std::cin.get(c) && c != '\n') {
-    passphrase.push_back(c);
-  }
+Component CLI::render_input_optional_passphrase_component(void) {
+    auto user_input = std::make_shared<std::string>("");
 
-  return passphrase;
+    auto input_option = InputOption();
+    input_option.multiline = false;
+    input_option.password = true;
+
+    auto field = Input(user_input.get(), "Enter passphrase...", input_option);
+    field->TakeFocus();
+
+
+    auto component = CatchEvent(field, [=, this] (Event event){
+        if(event == Event::Return) {
+                set_passphrase(*user_input);
+                OPENSSL_cleanse(user_input->data(), user_input->size());
+                import_wallet();
+                set_active_tab(SET_PASSWORD);
+            return true;
+        }
+
+        return false;
+    });
+
+    return Renderer(component, [=] {
+        return vbox({
+            text("STEP 2: ENTER PASSPHRASE (OPTIONAL)") | color(Color::Cyan) | bold,
+            separator(),
+            text("This is an additional security layer"),
+            text("If you didn't use a passphrase before, leave it empty."),
+            text("WARNING: If you forget it, your funds are LOST FOREVER.") | color(Color::Red) | bold,
+            separator(),
+
+            component->Render() | border,
+        });
+    });
 }
 
-void CLI::incorrect_mnemonic_text(void) {
-  std::cout << "\033[2J\033[1;1H";
-  std::cout << "\n[ ERROR ] Invalid Mnemonic Phrase!\n";
-  std::cout << "Possible reasons:\n";
-  std::cout << "1. One or more words are not from the BIP-39 dictionary.\n";
-  std::cout
-      << "2. Checksum verification failed (typo in words or wrong order).\n";
-  std::cout
-      << "3. Incorrect number of words (must be 12, 15, 18, 21, or 24).\n";
-  std::cout << "Please try again.\n";
-  std::cout << "--------------------------------------------------\n";
-}
+
 
 Component CLI::render_config_menu(void) {
 
