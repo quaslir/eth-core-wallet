@@ -5,6 +5,7 @@
 #include "security.hpp"
 #include "tech_utils.hpp"
 #include <string>
+
 using bytes_data = std::vector<uint8_t>;
 class Wallet {
 private:
@@ -19,7 +20,6 @@ private:
 
 public:
   ~Wallet();
-
   bytes_data prepare_mnemonic(Config &conf) const;
   void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase,
                               const std::vector<uint32_t> &path_deriv);
@@ -41,5 +41,7 @@ public:
   void import_wallet(bytes_data &mnemonic, bytes_data &passphrase);
   const long long &getIndex(void) const;
 
-  bool save(void) const;
+  bool update_index(void) const;
+  void save(bytes_data &password,
+            const std::string &filename = "session.json") const;
 };

@@ -14,8 +14,8 @@ struct EncryptedKeystore {
   uint32_t iter;
   int index;
   json to_json(void) const;
-  bool save(const std::string &filename);
-  bool load(const std::string &filename);
+  bool save(const std::string &filename = "session.json");
+  bool load(const std::string &filename = "session.json");
 };
 
 struct AlchemyJSON {

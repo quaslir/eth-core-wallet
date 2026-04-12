@@ -1,5 +1,6 @@
 #include "wallet.hpp"
 #include "config.hpp"
+#include "security.hpp"
 #include <iostream>
 
 Wallet::~Wallet() {
@@ -17,11 +18,14 @@ bytes_data Wallet::prepare_mnemonic(Config &conf) const {
 void Wallet::sync_derive_path(std::vector<uint32_t> &derive_path) const {
   derive_path.back() = this->index;
 }
-bool Wallet::save() const {
+bool Wallet::update_index() const {
 
   if (!security_manager::update(*this))
     return false;
   return true;
+}
+void Wallet::save(bytes_data &password, const std::string &filename) const {
+  security_manager::first_time_save(*this, password, filename);
 }
 void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
   KEY_PAIR keys;
@@ -51,7 +55,6 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   OPENSSL_cleanse(seed.data(), seed.size());
 
   derive(path_deriv);
-  security_manager::first_time_save(*this);
 }
 
 const bytes_data &Wallet::get_eth_address(void) const {

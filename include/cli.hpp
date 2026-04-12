@@ -12,7 +12,6 @@
 using bytes_data = std::vector<uint8_t>;
 using namespace ftxui;
 
-
 enum state_t {
   MAIN_MENU = 0,
   CONFIG_MENU = 1,
@@ -26,8 +25,6 @@ enum state_t {
   UNLOCK_PASSWORD = 9
 };
 
-
-
 class CLI {
 private:
   ScreenInteractive screen = ScreenInteractive::Fullscreen();
@@ -37,13 +34,13 @@ private:
 
   Component render_password_setup(void);
   Component create_main_menu(void);
-  Component
-  render_confirm_password_setup(void);
+  Component render_confirm_password_setup(void);
   Component render_config_menu(void);
   Component render_request_unlock_password(void);
   Component print_wallet_ui(void);
   Component render_import_mnemonic_component(void);
   Component render_input_optional_passphrase_component(void);
+
 public:
   std::function<std::string(void)> get_mnemonic;
   std::function<const Config &(void)> get_config;
@@ -51,17 +48,20 @@ public:
   std::function<const Wallet &(void)> get_wallet;
   std::function<void(int)> on_main_menu;
   std::function<void(void)> handle_wallet_creation;
-  std::function<void(bytes_data& pass)> set_password_for_wallet;
+  std::function<void(bytes_data &pass)> set_password_for_wallet;
   std::function<bytes_data(void)> get_password_for_wallet;
   std::function<bool(std::string_view)> check_mnemonic;
   std::function<void(std::string_view)> set_mnemonic;
   std::function<void(std::string_view)> set_passphrase;
   std::function<void(void)> import_wallet;
+  std::function<bool(bytes_data &password)> check_password;
+  std::function<void(void)> load_wallet;
+  std::function<void(void)> save_wallet;
   void load(void);
   bytes_data request_input_mnemonic(void);
   bytes_data request_input_optional_passphrase(void);
   int handle_main_menu(void);
-void set_active_tab(int tab);
+  void set_active_tab(int tab);
   Component render_mnemonic_element(void);
   bool confirm_liability_waiver(void);
   Component render_mnemonic_wiping(void);
