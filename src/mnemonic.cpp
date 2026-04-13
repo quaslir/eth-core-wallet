@@ -70,7 +70,7 @@ bytes_data MnemonicGenerator::generateSeed(bytes_data &mnemonic,
 
   bytes_data masterseed =
       crypto_utils::PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
-  OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
+
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
   OPENSSL_cleanse(salt.data(), salt.size());
   return masterseed;

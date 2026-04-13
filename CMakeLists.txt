@@ -20,6 +20,7 @@ src/http.cpp
 src/uint256.cpp
 src/blockchain_client.cpp
 src/async_manager.cpp
+src/config_cli.cpp
 )
 
 include(FetchContent)
@@ -43,7 +44,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
         -fstack-protector-strong
         -fsanitize=address -fsanitize=undefined
     )
-    target_link_options(${PROJECT_NAME} PRIVATE 
+    target_link_options(${PROJECT_NAME} PRIVATE
         -fsanitize=address -fsanitize=undefined
     )
 
@@ -51,7 +52,7 @@ find_program(CPPCHECK_EXE NAMES "cppcheck")
 
 if(CPPCHECK_EXE)
     file(GLOB_RECURSE CPPCHECK_SOURCES "src/*.cpp" "include/*.hpp")
-    
+
     add_custom_target(cppcheck
         COMMAND ${CPPCHECK_EXE}
             --enable=all
@@ -118,13 +119,12 @@ FetchContent_Declare(
 FetchContent_Declare(
   ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI
-  GIT_TAG v5.0.0 
+  GIT_TAG v5.0.0
 )
 
 FetchContent_MakeAvailable(json)
 FetchContent_MakeAvailable(curl)
 FetchContent_MakeAvailable(ftxui)
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json libcurl ftxui::screen 
-    ftxui::dom 
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json libcurl ftxui::screen
+    ftxui::dom
     ftxui::component)
-

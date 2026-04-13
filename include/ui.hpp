@@ -3,13 +3,13 @@
 #include "config.hpp"
 #include "json.hpp"
 #include "wallet.hpp"
-
+#include "iwallet_actions.hpp"
 struct TEMP_DATA {
   bytes_data password_for_wallet_unlocking;
-  bytes_data mnemonic, passphrase; // for import only
+  bytes_data mnemonic, passphrase;
 };
 
-class UserInterface {
+class UserInterface: public IWalletActions {
 public:
   void load(void);
 
@@ -19,6 +19,23 @@ private:
   AsyncBalanceManager balance_manager;
   TEMP_DATA temp;
   CLI cli;
+
   void apply_choice_from_wallet_ui(int choice);
-  void set_callbacks_for_cli(void);
+
+
+   std::string get_mnemonic(void) override;
+   const Config& get_config(void) override;
+ void handle_config_menu(int choice) override;
+ const Wallet& get_wallet(void)  override;
+ void on_main_menu(int choice) override;
+
+  void set_password_for_wallet(bytes_data& password) override;
+bytes_data get_password_for_wallet(void) override;
+bool check_mnemonic(std::string_view mnemonic) override;
+  void set_mnemonic(std::string_view mnemonic)override;
+ void set_passphrase(std::string_view passphrase) override;
+ void import_wallet(void) override;
+ bool check_password(bytes_data& password) override;
+ void load_wallet(void)override ;
+  void save_wallet(void) override;
 };

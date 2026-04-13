@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "iwallet_actions.hpp"
 using bytes_data = std::vector<uint8_t>;
 using namespace ftxui;
 
@@ -22,15 +23,15 @@ enum state_t {
   SET_PASSWORD = 6,
   CONFIRM_PASSWORD = 7,
   WALLET_UI = 8,
-  UNLOCK_PASSWORD = 9
+  UNLOCK_PASSWORD = 9,
+  BIT_LENGTH_CONFIG = 10
 };
 
 class CLI {
 private:
   ScreenInteractive screen = ScreenInteractive::Fullscreen();
   int active_tab = MAIN_MENU;
-  std::function<size_t(void)> get_attempts;
-  std::function<size_t(void)> get_max_attempts;
+  IWalletActions * actions;
 
   Component render_password_setup(void);
   Component create_main_menu(void);
@@ -40,39 +41,14 @@ private:
   Component print_wallet_ui(void);
   Component render_import_mnemonic_component(void);
   Component render_input_optional_passphrase_component(void);
+  Component render_mnemonic_element(void);
+  Element to_center(Element box);
+  Component render_mnemonic_wiping(void);
+  Component set_bit_length(void);
 
 public:
-  std::function<std::string(void)> get_mnemonic;
-  std::function<const Config &(void)> get_config;
-  std::function<void(int)> handle_config_menu;
-  std::function<const Wallet &(void)> get_wallet;
-  std::function<void(int)> on_main_menu;
-  std::function<void(void)> handle_wallet_creation;
-  std::function<void(bytes_data &pass)> set_password_for_wallet;
-  std::function<bytes_data(void)> get_password_for_wallet;
-  std::function<bool(std::string_view)> check_mnemonic;
-  std::function<void(std::string_view)> set_mnemonic;
-  std::function<void(std::string_view)> set_passphrase;
-  std::function<void(void)> import_wallet;
-  std::function<bool(bytes_data &password)> check_password;
-  std::function<void(void)> load_wallet;
-  std::function<void(void)> save_wallet;
+
+void set_actions(IWalletActions * act);
   void load(void);
-  bytes_data request_input_mnemonic(void);
-  bytes_data request_input_optional_passphrase(void);
-  int handle_main_menu(void);
   void set_active_tab(int tab);
-  Component render_mnemonic_element(void);
-  bool confirm_liability_waiver(void);
-  Component render_mnemonic_wiping(void);
-
-  void incorrect_mnemonic_text(void);
-
-  int handle_wallet_ui_input(const Wallet &wallet);
-  bool confirm_danger_action(void);
-  const bytes_data read_and_confirm_password(void);
-  const bytes_data request_unlock_password(size_t attempts,
-                                           size_t max_attempts);
-  void show_self_destruct(void);
-  void display_private_key(const bytes_data &priv_key);
 };

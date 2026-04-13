@@ -2,7 +2,6 @@
 #include "config.hpp"
 #include "tech_utils.hpp"
 
-
 #include <cstddef>
 
 #include <ftxui/component/component.hpp>
@@ -20,6 +19,10 @@
 #include <string>
 #include <string_view>
 
+void CLI::set_actions(IWalletActions * act) {
+    actions = act;
+}
+
 void CLI::load(void) {
   auto main_menu = create_main_menu();
   auto mnemonic_display = render_mnemonic_element();
@@ -31,11 +34,11 @@ void CLI::load(void) {
   auto confirm_password_component = render_confirm_password_setup();
   auto password_unlock = render_request_unlock_password();
   auto wallet_ui = print_wallet_ui();
-
+  auto bit_length_selection_config = set_bit_length();
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
-       confirm_password_component, wallet_ui, password_unlock},
+       confirm_password_component, wallet_ui, password_unlock, bit_length_selection_config},
       &this->active_tab);
 
   screen.Loop(root_container);
@@ -52,12 +55,12 @@ Component CLI::create_main_menu(void) {
     if (event == ftxui::Event::Character('q') ||
         event == ftxui::Event::Character('Q')) {
       selected = 2;
-      on_main_menu(selected);
+      actions->on_main_menu(selected);
       return true;
     }
 
     if (event == ftxui::Event::Return) {
-      on_main_menu(selected + 1);
+      actions->on_main_menu(selected + 1);
       return true;
     }
     return false;
@@ -91,34 +94,33 @@ Component CLI::render_mnemonic_element(void) {
       [&] { this->set_active_tab(MNEMONIC_WIPING); }, ButtonOption::Ascii());
 
   return Renderer(button, [&, button] {
-    std::string mnemonic;
-    if (get_mnemonic) {
-      mnemonic = get_mnemonic();
-    } else
-      mnemonic = "";
-    return vbox({vbox({
-                     text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
+    std::string mnemonic = actions->get_mnemonic();
 
-                 }) | borderDouble |
-                     color(Color::Yellow),
+    auto box = vbox({vbox({
+                         text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
 
-                 separator(),
+                     }) | borderDouble |
+                         color(Color::Yellow),
 
-                 paragraph(std::string{mnemonic}) | hcenter |
-                     color(Color::White) | bold, // fix in the future
+                     separator(),
 
-                 separator(),
+                     paragraph(std::string{mnemonic}) | hcenter |
+                         color(Color::White) | bold, // fix in the future
 
-                 vbox({
-                     text(" WARNING: DO NOT SCREENSHOT! ") | center,
-                     text(" WRITE IT DOWN ON PAPER NOW! ") | center,
-                 }) | border |
-                     color(Color::Red),
+                     separator(),
 
-                 separator(), button->Render() | hcenter | bold | focus
+                     vbox({
+                         text(" WARNING: DO NOT SCREENSHOT! ") | center,
+                         text(" WRITE IT DOWN ON PAPER NOW! ") | center,
+                     }) | border |
+                         color(Color::Red),
 
-           }) |
-           border | center | size(WIDTH, LESS_THAN, 60);
+                     separator(), button->Render() | hcenter | bold | focus
+
+               }) |
+               border | center | size(WIDTH, LESS_THAN, 60);
+
+    return to_center(box);
   });
 }
 
@@ -144,40 +146,43 @@ Component CLI::render_mnemonic_wiping(void) {
   auto field = Input(user_input.get(), "Type here...", input_option);
   field->TakeFocus();
 
-  return Renderer(field, [=] {
+  return Renderer(field, [=, this] {
     bool is_correct = (*user_input == "I AM RESPONSIBLE");
     auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
 
-    return vbox({vbox({text(" [!!!] FINAL LEGAL & SECURITY WARNING [!!!] ") |
-                       bold | center}) |
-                     borderDouble | color(Color::Red),
+    auto box =
+        vbox({vbox({text(" [!!!] FINAL LEGAL & SECURITY WARNING [!!!] ") |
+                    bold | center}) |
+                  borderDouble | color(Color::Red),
 
-                 separator(),
+              separator(),
 
-                 text(" 1. This app will NOW WIPE the mnemonic from memory."),
-                 text(" 2. We have ZERO copies. No database, no logs, no "
-                      "backups."),
-                 text(" 3. If you didn't write it down, your funds are ALREADY "
-                      "LOST."),
+              text(" 1. This app will NOW WIPE the mnemonic from memory."),
+              text(" 2. We have ZERO copies. No database, no logs, no "
+                   "backups."),
+              text(" 3. If you didn't write it down, your funds are ALREADY "
+                   "LOST."),
 
-                 separator(),
+              separator(),
 
-                 text(" To proceed, type exactly: ") | hcenter,
-                 text(" I AM RESPONSIBLE ") | bold | hcenter | inverted,
+              text(" To proceed, type exactly: ") | hcenter,
+              text(" I AM RESPONSIBLE ") | bold | hcenter | inverted,
 
-                 separator(),
+              separator(),
 
-                 hbox({
-                     text(" >>> "),
-                     field->Render() | input_style | border,
-                 }) | hcenter,
+              hbox({
+                  text(" >>> "),
+                  field->Render() | input_style | border,
+              }) | hcenter,
 
-                 separator(),
+              separator(),
 
-                 text(is_correct ? " [ PRESS ENTER TO WIPE MEMORY ] "
-                                 : " [ WAITING FOR CORRECT INPUT ] ") |
-                     bold | hcenter | blink}) |
-           border | center | size(WIDTH, LESS_THAN, 70);
+              text(is_correct ? " [ PRESS ENTER TO WIPE MEMORY ] "
+                              : " [ WAITING FOR CORRECT INPUT ] ") |
+                  bold | hcenter | blink}) |
+        border | center | size(WIDTH, LESS_THAN, 70);
+
+    return to_center(box);
   });
 }
 
@@ -194,8 +199,8 @@ Component CLI::render_import_mnemonic_component(void) {
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
       if (!user_input->empty()) {
-        if (check_mnemonic(std::string_view(*user_input))) {
-          set_mnemonic(*user_input); // fix
+        if (actions->check_mnemonic(std::string_view(*user_input))) {
+          actions->set_mnemonic(*user_input); // fix
           OPENSSL_cleanse(user_input->data(), user_input->size());
           set_active_tab(ENTER_OPTIONAL_PASSPHRASE_MENU);
         } else
@@ -210,7 +215,7 @@ Component CLI::render_import_mnemonic_component(void) {
     return false;
   });
 
-  return Renderer(component, [=] {
+  return Renderer(component, [=, this] {
     Element error_box = emptyElement();
     if (*is_incorrect) {
       error_box = vbox({
@@ -235,33 +240,36 @@ Component CLI::render_import_mnemonic_component(void) {
       });
     }
 
-    return vbox({
-               vbox({
-                   text(" [ WALLET IMPORT ] ") | bold | center,
-               }) | borderDouble,
+    auto box =
+        vbox({
+            vbox({
+                text(" [ WALLET IMPORT ] ") | bold | center,
+            }) | borderDouble,
 
-               error_box,
+            error_box,
 
-               vbox({
-                   text(" STEP 1: ENTER MNEMONIC PHRASE ") | color(Color::Cyan),
-                   text("Input 12, 15, 18, 21, or 24 words separated by "
-                        "space.") |
-                       dim,
-                   text("(Type 'back' or 'exit' to return to main menu)") |
-                       color(Color::DarkSlateGray1),
-               }),
+            vbox({
+                text(" STEP 1: ENTER MNEMONIC PHRASE ") | color(Color::Cyan),
+                text("Input 12, 15, 18, 21, or 24 words separated by "
+                     "space.") |
+                    dim,
+                text("(Type 'back' or 'exit' to return to main menu)") |
+                    color(Color::DarkSlateGray1),
+            }),
 
-               separator(),
+            separator(),
 
-               hbox({
-                   text(" > ") | bold | color(Color::Yellow),
-                   field->Render() | flex,
-               }),
+            hbox({
+                text(" > ") | bold | color(Color::Yellow),
+                field->Render() | flex,
+            }),
 
-               separator(),
-               text(" [ WAITING FOR INPUT ] ") | dim | center,
-           }) |
-           border | center | size(WIDTH, LESS_THAN, 70);
+            separator(),
+            text(" [ WAITING FOR INPUT ] ") | dim | center,
+        }) |
+        border | center | size(WIDTH, LESS_THAN, 70);
+
+    return to_center(box);
   });
 }
 
@@ -277,9 +285,9 @@ Component CLI::render_input_optional_passphrase_component(void) {
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      set_passphrase(*user_input);
+      actions->set_passphrase(*user_input);
       OPENSSL_cleanse(user_input->data(), user_input->size());
-      import_wallet();
+      actions->import_wallet();
       set_active_tab(SET_PASSWORD);
       return true;
     }
@@ -287,8 +295,8 @@ Component CLI::render_input_optional_passphrase_component(void) {
     return false;
   });
 
-  return Renderer(component, [=] {
-    return vbox({
+  return Renderer(component, [=, this] {
+    auto box = vbox({
         text("STEP 2: ENTER PASSPHRASE (OPTIONAL)") | color(Color::Cyan) | bold,
         separator(),
         text("This is an additional security layer"),
@@ -299,63 +307,69 @@ Component CLI::render_input_optional_passphrase_component(void) {
 
         component->Render() | border,
     });
+
+    return to_center(box);
   });
 }
 
 Component CLI::render_config_menu(void) {
 
-  const Config &cfg = get_config();
+  const Config &cfg = actions->get_config();
   static std::vector<std::string> entries;
   static int selected = 0;
   auto menu = Menu(&entries, &selected);
 
-  auto component = Renderer(menu, [&cfg, menu] {
+  auto component = Renderer(menu, [&cfg, menu, this] {
     entries = {
         " 1. ENTROPY SOURCE : [ " +
             std::string{(!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX"
-                                                    : "OS CSPRNG ONLY")},
+                                                    : "OS CSPRNG ONLY")} +
+            " ]",
         " 2. BIT-LENGTH     : [ " +
             std::string{std::to_string(cfg.bit_length) + " bits (" +
                         std::to_string(cfg.bit_length / 32 * 3) + " words) ]"},
         " 3. PASSPHRASE     : [ " +
             std::string{(!cfg.passphrase.empty() ? "ENABLED (BIP-39 SALT)"
-                                                 : "DISABLED")},
-        " 4. DERIVATION     : [ " + cfg.derivation_path,
+                                                 : "DISABLED")} +
+            " ]",
+        " 4. DERIVATION     : [ " + cfg.derivation_path + " ]",
         " [B] Back to Main Menu",
         " [G] Generate Wallet"};
 
-    return vbox({text(" CONFIGURATION SETTINGS ") | bold | hcenter |
-                     color(Color::Cyan),
-                 separator(),
-                 vbox({[&]() {
-                   Elements items;
+    auto box = vbox({text(" CONFIGURATION SETTINGS ") | bold | hcenter |
+                         color(Color::Cyan),
+                     separator(),
+                     vbox({[&]() {
+                       Elements items;
 
-                   for (size_t i = 0; i < entries.size(); i++) {
-                     auto item = text(entries[i]);
+                       for (size_t i = 0; i < entries.size(); i++) {
+                         auto item = text(entries[i]);
 
-                     if (static_cast<int>(i) == selected) {
-                       item = item | inverted | color(Color::Yellow);
-                     }
+                         if (static_cast<int>(i) == selected) {
+                           item = item | inverted | color(Color::Yellow);
+                         }
 
-                     items.push_back(item);
-                   }
+                         items.push_back(item);
+                       }
 
-                   return vbox(std::move(items));
-                 }()}) |
-                     border,
+                       return vbox(std::move(items));
+                     }()}) |
+                         border,
 
-                 separator(),
-                 text(" Use Arrows to navigate, Enter to toggle/select") | dim |
-                     hcenter
+                     separator(),
+                     text(" Use Arrows to navigate, Enter to toggle/select") |
+                         dim | hcenter
 
-           }) |
-           center;
+               }) |
+               center;
+
+    return to_center(box);
   });
   return CatchEvent(component, [&](ftxui::Event event) {
     if (event == ftxui::Event::Return) {
       int choice = selected + 1;
 
-      handle_config_menu(choice);
+      actions->handle_config_menu(choice);
 
       return true;
     }
@@ -372,53 +386,45 @@ Component CLI::print_wallet_ui(void) {
              " 5. Lock & Exit       "};
 
   auto walletUI = Renderer(menu, [=, this] {
-    const Wallet &wallet = get_wallet();
+    const Wallet &wallet = actions->get_wallet(); //!!!
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
-    std::string address = tech_utils::to_hex(wallet.get_eth_address()); // NEEDS TO BE CACHED
+    std::string address =
+        tech_utils::to_hex(wallet.get_eth_address()); // NEEDS TO BE CACHED
 
-    auto info_line = [](const std::string& label, const std::string& value, Color color_) {
-        return hbox({
-            text(label) | size(WIDTH, EQUAL, 12),
-            text(value) | color(color_)
-        });
+    auto info_line = [](const std::string &label, const std::string &value,
+                        Color color_) {
+      return hbox(
+          {text(label) | size(WIDTH, EQUAL, 12), text(value) | color(color_)});
     };
-    auto box =  vbox({
+    auto box =
+        vbox({
 
-               vbox({
-                   text("ETH CORE WALLET ") | bold | hcenter,
-                   text("SESSION ACTIVE ") | dim | hcenter,
-               }) | borderDouble |
-                   color(Color::Cyan),
+            vbox({
+                text("ETH CORE WALLET ") | bold | hcenter,
+                text("SESSION ACTIVE ") | dim | hcenter,
+            }) | borderDouble |
+                color(Color::Cyan),
 
-               vbox({
-                   info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
-                   info_line(" BALANCE: ", balance + " ETH", Color::Yellow),
-                   info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
-                   info_line(" NETWORK: ", "Ethereum Mainnet", Color::Green),
+            vbox({
+                info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
+                info_line(" BALANCE: ", balance + " ETH", Color::Yellow),
+                info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
+                info_line(" NETWORK: ", "Ethereum Mainnet", Color::Green),
 
-               }),
+            }),
 
-               separator(),
-               vbox({
-                   text(" SELECT OPERATION: ") | bold | color(Color::CyanLight),
-                   menu->Render() | color(Color::BlueLight),
-               }) | border,
-               filler(),
-               text(">>> Use Arrows to navigate, Enter to select") | dim |
-                   hcenter,
-           }) |
-           border | center | size(WIDTH, EQUAL, 62);
-
-    return vbox({
-        filler(),
-        hbox({
+            separator(),
+            vbox({
+                text(" SELECT OPERATION: ") | bold | color(Color::CyanLight),
+                menu->Render() | color(Color::BlueLight),
+            }) | border,
             filler(),
-            box,
-            filler()
-        }),
-        filler(),
-    });
+            text(">>> Use Arrows to navigate, Enter to select") | dim | hcenter,
+        }) |
+        border | center | size(WIDTH, EQUAL, 62);
+
+    return to_center(box);
   });
 
   return CatchEvent(walletUI, [=](Event event) {
@@ -445,35 +451,43 @@ Component CLI::render_password_setup(void) {
 
   auto first_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !pass_str->empty()) {
-      if (set_password_for_wallet) {
         bytes_data pass_str_in_bytes(pass_str->begin(), pass_str->end());
-        set_password_for_wallet(pass_str_in_bytes);
+        actions->set_password_for_wallet(pass_str_in_bytes);
 
         // OPENSSL_cleanse(pass_str->data()), pass_str->size());
         OPENSSL_cleanse(pass_str_in_bytes.data(), pass_str_in_bytes.size());
         set_active_tab(CONFIRM_PASSWORD);
-      } else
-        ; // FIX
-      return true;
+
     }
 
     return false;
   });
 
-  return Renderer(first_stage, [=] {
-    return vbox(
-        {text("CREATE PASSWORD") | bold | center, separator(),
+  return Renderer(first_stage, [=, this] {
+    auto box =
+        vbox({text("CREATE PASSWORD") | bold | center | borderDouble |
+                  color(Color::Cyan),
+              separator(),
+              vbox({
+                  text("This password will encrypt your wallet on disk.") |
+                      hcenter,
+                  text("INPUT IS HIDDEN: No characters will be displayed.") |
+                      hcenter | dim,
+                  text("WARNING: If you forget it, your funds are LOST "
+                       "FOREVER.") |
+                      color(Color::Red) | hcenter | bold,
+              }),
 
-         text("This password will encrypt your wallet on disk."),
-         text("INPUT IS HIDDEN: No characters will be displayed."),
-         text("WARNING: If you forget it, your funds are LOST FOREVER.") |
-             color(Color::Red),
+              separator(),
+              hbox({
+                  text(" >>> "),
+                  field->Render() | border | size(WIDTH, EQUAL, 30),
+              }),
+              separator(),
+              text(" Press [ENTER] to continue ") | hcenter | dim}) |
+        border | size(WIDTH, EQUAL, 60);
 
-         separator(),
-         hbox({
-             text(" >>> "),
-             field->Render() | border,
-         }) | hcenter});
+    return to_center(box);
   });
 }
 
@@ -487,7 +501,7 @@ Component CLI::render_confirm_password_setup(void) {
   auto is_incorrect = std::make_shared<bool>(0);
   auto second_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      bytes_data first_pass_in_bytes = get_password_for_wallet();
+      bytes_data first_pass_in_bytes = actions->get_password_for_wallet();
       std::string first_pass(first_pass_in_bytes.begin(),
                              first_pass_in_bytes.end());
 
@@ -496,7 +510,7 @@ Component CLI::render_confirm_password_setup(void) {
       if (first_pass == *second_pass) {
         // OPENSSL_cleanse(first_pass.data(), first_pass.size());
         // OPENSSL_cleanse(second_pass.data(), second_pass.size());
-        save_wallet();
+        actions->save_wallet();
         set_active_tab(WALLET_UI);
         // NEXT STEP
       } else {
@@ -509,7 +523,7 @@ Component CLI::render_confirm_password_setup(void) {
 
     return false;
   });
-  return Renderer(second_stage, [=] {
+  return Renderer(second_stage, [=, this] {
     std::vector<std::string> password_text = !*is_incorrect ? std::vector<std::string>{
     "CONFIRM MASTER PASSWORD",
     "Please re-enter your password to verify.",
@@ -527,11 +541,21 @@ Component CLI::render_confirm_password_setup(void) {
       elements.push_back(text(line) | hcenter);
     }
 
-    return vbox({vbox(std::move(elements)) | color(text_color) | bold,
-                 separator(), hbox({text(" >>> "), field->Render() | border}),
-                 separator(),
-                 text("Press [ENTER] to confirm") | dim | hcenter}) |
-           border | center;
+    auto box =
+        vbox({vbox(std::move(elements)) | color(text_color) | bold, separator(),
+              hbox({
+                  filler(),
+                  text(" >>> "),
+                  field->Render() | border | size(WIDTH, EQUAL, 30),
+                  filler(),
+              }),
+
+              separator(), text("Press [ENTER] to confirm") | dim | hcenter
+
+        }) |
+        border | size(WIDTH, EQUAL, 60);
+
+    return to_center(box);
   });
 }
 
@@ -548,13 +572,13 @@ Component CLI::render_request_unlock_password(void) {
     if (event == Event::Return && !user_input->empty()) {
 
       bytes_data password_in_bytes(user_input->begin(), user_input->end());
-      if (check_password(password_in_bytes)) {
-        load_wallet();
+      if (actions->check_password(password_in_bytes)) {
+        actions->load_wallet();
         set_active_tab(WALLET_UI);
       } else {
         *attempts += 1;
         if (*attempts == max_attempts) {
-            tech_utils::rm_file();
+          tech_utils::rm_file();
           screen.Exit();
         }
       }
@@ -564,7 +588,7 @@ Component CLI::render_request_unlock_password(void) {
     return false;
   });
 
-  return Renderer(component, [=] {
+  return Renderer(component, [=, this] {
     int remaining = max_attempts - *attempts;
     Elements status_info;
     if (*attempts > 0) {
@@ -581,47 +605,39 @@ Component CLI::render_request_unlock_password(void) {
                                  " attempts remaining.") |
                             dim | hcenter);
     }
-   auto box = vbox({
-            text(" Unlock Wallet ") | bold | hcenter |
-                     borderDouble | color(Color::Cyan),
+    auto box =
+        vbox({text(" Unlock Wallet ") | bold | hcenter | borderDouble |
+                  color(Color::Cyan),
 
-                 separator(),
+              separator(),
 
-                 vbox({
-                     text(" Please enter your password to decrypt the local "
-                          "storage. ") |
-                         hcenter,
-                     text(" Your keys remain encrypted until a valid password "
-                          "is provided. ") |
-                         hcenter | dim,
-                 }),
+              vbox({
+                  text(" Please enter your password to decrypt the local "
+                       "storage. ") |
+                      hcenter,
+                  text(" Your keys remain encrypted until a valid password "
+                       "is provided. ") |
+                      hcenter | dim,
+              }),
 
-                 separator() | color(Color::DarkSlateGray1),
+              separator() | color(Color::DarkSlateGray1),
 
-                 vbox(std::move(status_info)) |hcenter,
+              vbox(std::move(status_info)) | hcenter,
 
-                 hbox({
-                     text(" >>> ") | color(Color::Cyan),
-                     field->Render() | border | flex |
-                         size(WIDTH, LESS_THAN, 70),
-                 }) | hcenter | size(WIDTH, EQUAL, 60),
+              hbox({
+                  text(" >>> ") | color(Color::Cyan),
+                  field->Render() | border | flex | size(WIDTH, LESS_THAN, 70),
+              }) | hcenter |
+                  size(WIDTH, EQUAL, 60),
 
-                 separator(),
+              separator(),
 
-                 text(" Press [ENTER] to unlock") | hcenter | dim
+              text(" Press [ENTER] to unlock") | hcenter | dim
 
-           }) |
-           border | size(WIDTH, LESS_THAN, 70);
+        }) |
+        border | size(WIDTH, LESS_THAN, 70);
 
-   return vbox({
-       filler(),
-       hbox({
-           filler(),
-           box,
-           filler(),
-       }),
-       filler(),
-   });
+    return to_center(box);
   });
 }
 
@@ -635,44 +651,15 @@ void show_self_destruct(void) {
   std::cout << "  System exit.\n\n";
 }
 
-bool CLI::confirm_danger_action(void) {
-  std::cout << "\033[2J\033[1;1H";
-  std::cout << "\n  \033[1;41m  !!! SECURITY WARNING !!!  \033[0m\n";
-  std::cout << "  ------------------------------------------\n";
-
-  std::cout << "  1. Anyone with this key has \033[1;31mFULL ACCESS\033[0m to "
-               "your funds.\n";
-  std::cout << "  2. Never share this with anyone, including support.\n";
-  std::cout << "  3. Ensure no one is looking at your screen right now.\n";
-  std::cout << "  4. Do not take screenshots or copy to clipboard.\n";
-  std::cout << "  ------------------------------------------\n";
-  std::cout << "  Are you absolutely sure? (type \033[1;32m'CONFIRM'\033[0m to "
-               "proceed): ";
-
-  std::string input = tech_utils::read_stdin();
-
-  return (input == "CONFIRM");
-}
-
-void CLI::display_private_key(const bytes_data &priv_key) {
-  std::cout << "\n  \033[1;33m[ YOUR PRIVATE KEY (HEX) ]\033[0m\n";
-  std::cout
-      << "  ------------------------------------------------------------\n";
-
-  tech_utils::print_hex(priv_key);
-
-  std::cout
-      << "  ------------------------------------------------------------\n";
-  std::cout << "  \033[3mWrite it down on paper and keep it offline.\033[0m\n";
-  std::cout << "  \033[1;31mPress ENTER immediately to hide this key and "
-               "continue...\033[0m";
-  std::string buffer;
-  if (std::getline(std::cin, buffer)) {
-    std::cout << "\033[2J\033[1;1H";
-  }
-}
-
 void CLI::set_active_tab(int tab) {
   active_tab = tab;
   screen.Post(Event::Custom);
+}
+
+Element CLI::to_center(Element box) {
+  return vbox({
+      filler(),
+      hbox({filler(), box, filler()}),
+      filler(),
+  });
 }
