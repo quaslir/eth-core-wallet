@@ -4,7 +4,9 @@
 #include <iostream>
 
 #define ERROR_MSG "\033[1;31m[!] Invalid choice.\033[0m\n\n"
-
+void Config::set_bit_length(int bt) {
+    bit_length  = bt;
+}
 void Config::handle_bit_length(void) {
   std::string choice, error_msg;
   do {

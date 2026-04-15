@@ -10,6 +10,10 @@ public:
   bytes_data passphrase;
   std::string derivation_path = "m/44'/60'/0'/0/0";
 
+
+    void set_bit_length(int bt);
+
+
   void handle_user_entropy(void);
   void handle_bit_length(void);
   void handle_use_passphrase(void);

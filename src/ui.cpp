@@ -130,3 +130,7 @@ void UserInterface::load_wallet(void) {
 void UserInterface::save_wallet(void) {
      wallet.save(temp.password_for_wallet_unlocking);
 }
+
+void UserInterface::change_bit_length(int new_bit_length){
+    config.set_bit_length(new_bit_length);
+}

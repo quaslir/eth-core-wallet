@@ -1,5 +1,6 @@
 #include "cli.hpp"
 #include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <string>
 
@@ -7,7 +8,7 @@ Component CLI::set_bit_length(void) {
 static int selected = 0;
 const static std::vector<std::string> entries = {
     "[1] 128 BITS (12 WORDS)",
-    " [2] 256 BITS (24 WORDS)"
+    "[2] 256 BITS (24 WORDS)"
 };
 
 const static std::vector<std::string> descriptions = {
@@ -18,6 +19,17 @@ auto menu = Menu(&entries, &selected);
 
 auto component =  CatchEvent(menu, [this] (Event event) {
 if(event == Event::Character('b') || event == Event::Character('B') || event == Event::Escape) {
+    set_active_tab(CONFIG_MENU);
+    return true;
+}
+else if(event == Event::Return) {
+    if(selected == 0) {
+        actions->change_bit_length(128);
+    }
+
+    if(selected == 1) {
+        actions->change_bit_length(256);
+    }
     set_active_tab(CONFIG_MENU);
     return true;
 }

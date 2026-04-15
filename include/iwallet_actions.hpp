@@ -28,5 +28,6 @@ class IWalletActions {
      virtual bool check_password(bytes_data& password) = 0;
      virtual void load_wallet(void) = 0;
      virtual void save_wallet(void) = 0;
+     virtual void change_bit_length(int new_bit_length) = 0;
 
 };
