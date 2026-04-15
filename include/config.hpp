@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <string>
+#include <string_view>
 #include <vector>
 using bytes_data = std::vector<uint8_t>;
 struct Config {
@@ -12,7 +13,7 @@ public:
 
 
     void set_bit_length(int bt);
-
+void set_extra_entropy(std::string_view entropy);
 
   void handle_user_entropy(void);
   void handle_bit_length(void);

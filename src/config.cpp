@@ -7,6 +7,10 @@
 void Config::set_bit_length(int bt) {
     bit_length  = bt;
 }
+
+void Config::set_extra_entropy(std::string_view entropy) {
+    extra_entropy = bytes_data(entropy.begin(), entropy.end());
+}
 void Config::handle_bit_length(void) {
   std::string choice, error_msg;
   do {

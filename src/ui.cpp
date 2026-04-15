@@ -134,3 +134,6 @@ void UserInterface::save_wallet(void) {
 void UserInterface::change_bit_length(int new_bit_length){
     config.set_bit_length(new_bit_length);
 }
+void UserInterface::set_extra_entropy(std::string_view entropy) {
+    config.set_extra_entropy(entropy);
+}

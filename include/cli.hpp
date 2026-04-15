@@ -24,7 +24,8 @@ enum state_t {
   CONFIRM_PASSWORD = 7,
   WALLET_UI = 8,
   UNLOCK_PASSWORD = 9,
-  BIT_LENGTH_CONFIG = 10
+  BIT_LENGTH_CONFIG = 10,
+  EXTRA_ENTROPY_CONFIG = 11
 };
 
 class CLI {
@@ -45,6 +46,7 @@ private:
   Element to_center(Element box);
   Component render_mnemonic_wiping(void);
   Component set_bit_length(void);
+  Component handle_extra_entropy(void);
 
 public:
 

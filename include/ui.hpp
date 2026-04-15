@@ -39,4 +39,5 @@ bool check_mnemonic(std::string_view mnemonic) override;
  void load_wallet(void)override ;
   void save_wallet(void) override;
   void change_bit_length(int new_bit_length) override;
+  void set_extra_entropy(std::string_view entropy) override;
 };

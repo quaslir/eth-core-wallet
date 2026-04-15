@@ -35,10 +35,11 @@ void CLI::load(void) {
   auto password_unlock = render_request_unlock_password();
   auto wallet_ui = print_wallet_ui();
   auto bit_length_selection_config = set_bit_length();
+  auto extra_entropy_selection_config = handle_extra_entropy();
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
-       confirm_password_component, wallet_ui, password_unlock, bit_length_selection_config},
+       confirm_password_component, wallet_ui, password_unlock, bit_length_selection_config, extra_entropy_selection_config},
       &this->active_tab);
 
   screen.Loop(root_container);
@@ -368,9 +369,23 @@ Component CLI::render_config_menu(void) {
   });
   return CatchEvent(component, [&](ftxui::Event event) {
     if (event == ftxui::Event::Return) {
-      int choice = selected + 1;
-
-      actions->handle_config_menu(choice);
+        switch(selected) {
+            case 0:
+            set_active_tab(EXTRA_ENTROPY_CONFIG);
+            break;
+            case 1:
+            set_active_tab(BIT_LENGTH_CONFIG);
+            break;
+            case 2:
+            // passphrase
+            break;
+            case 3:
+            // derivation
+            break;
+            case 4:
+            set_active_tab(MAIN_MENU);
+            break;
+        }
 
       return true;
     }
