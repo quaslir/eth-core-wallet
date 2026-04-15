@@ -1,4 +1,5 @@
 #include "crypto_utils.hpp"
+#include <cstdint>
 #include <iostream>
 #include <regex>
 #include <stdexcept>
@@ -153,4 +154,5 @@ std::vector<uint32_t> change_derive_path(unsigned int index) {
   new_path_deriv.back() = index;
   return new_path_deriv;
 }
+
 } // namespace crypto_utils

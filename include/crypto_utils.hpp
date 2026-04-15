@@ -1,5 +1,6 @@
 #pragma once
 #include <charconv>
+#include <cstdint>
 #include <memory>
 #include <stdint.h>
 #include <vector>
@@ -61,4 +62,5 @@ const std::vector<uint32_t> path_deriv = {0x8000002C, 0x8000003C, 0x80000000,
 
 bool is_valid_derive_path(const std::string &path);
 std::vector<uint32_t> change_derive_path(unsigned int index);
+
 } // namespace crypto_utils

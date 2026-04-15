@@ -205,10 +205,11 @@ Component CLI::render_import_mnemonic_component(void) {
           set_active_tab(ENTER_OPTIONAL_PASSPHRASE_MENU);
         } else
           *is_incorrect = true;
+        user_input->clear();
         return true;
       } else
         *is_incorrect = true;
-
+      user_input->clear();
       return true;
     }
 
