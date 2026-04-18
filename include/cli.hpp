@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "iwallet_actions.hpp"
 #include "wallet.hpp"
 #include <cstddef>
 #include <ftxui/component/component.hpp>
@@ -9,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include "iwallet_actions.hpp"
 using bytes_data = std::vector<uint8_t>;
 using namespace ftxui;
 
@@ -34,7 +34,7 @@ class CLI {
 private:
   ScreenInteractive screen = ScreenInteractive::Fullscreen();
   int active_tab = MAIN_MENU;
-  IWalletActions * actions;
+  IWalletActions *actions;
 
   Component render_password_setup(void);
   Component create_main_menu(void);
@@ -51,9 +51,9 @@ private:
   Component handle_extra_entropy(void);
   Component handle_passphrase(void);
   Component handle_derivation_path(void);
-public:
 
-void set_actions(IWalletActions * act);
+public:
+  void set_actions(IWalletActions *act);
   void load(void);
   void set_active_tab(int tab);
 };

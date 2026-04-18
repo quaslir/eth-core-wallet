@@ -91,9 +91,8 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
   std::vector<uint16_t> mnemonic_indexes;
 
   int checkSum = 0;
-  auto words = mnemonic | std::views::split(' ') | std::views::filter([](auto && r) {
-      return !r.empty();
-  });
+  auto words = mnemonic | std::views::split(' ') |
+               std::views::filter([](auto &&r) { return !r.empty(); });
 
   for (auto word_range : words) {
     std::string_view word{word_range.begin(), word_range.end()};
@@ -103,7 +102,8 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
       return false;
     mnemonic_indexes.push_back(index);
   }
-if(mnemonic_indexes.size() % 3 != 0) return false;
+  if (mnemonic_indexes.size() % 3 != 0)
+    return false;
 
   checkSum = static_cast<int>(mnemonic_indexes.size() / 3);
 

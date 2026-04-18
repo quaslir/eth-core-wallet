@@ -48,7 +48,7 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   bytes_data seed = mem.generateSeed(mnemonic, passphrase);
 
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
-  //OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
+  // OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
 
   std::string_view key = "Bitcoin seed";
   master_node = crypto_utils::HMAC_SHA512(key, seed);

@@ -7,6 +7,7 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
@@ -19,9 +20,7 @@
 #include <string>
 #include <string_view>
 
-void CLI::set_actions(IWalletActions * act) {
-    actions = act;
-}
+void CLI::set_actions(IWalletActions *act) { actions = act; }
 
 void CLI::load(void) {
   auto main_menu = create_main_menu();
@@ -41,7 +40,8 @@ void CLI::load(void) {
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
-       confirm_password_component, wallet_ui, password_unlock, bit_length_selection_config, extra_entropy_selection_config,
+       confirm_password_component, wallet_ui, password_unlock,
+       bit_length_selection_config, extra_entropy_selection_config,
        passphrase_selection_config, derive_path_selection_config},
       &this->active_tab);
 
@@ -197,7 +197,7 @@ Component CLI::render_import_mnemonic_component(void) {
   auto input_option = InputOption();
   input_option.multiline = false;
 
-  auto field = Input(user_input.get(), "Enter mnemonic....", input_option);
+  auto field = Input(user_input.get(), "Enter mnemonic...", input_option);
   field->TakeFocus();
 
   auto component = CatchEvent(field, [=, this](Event event) {
@@ -214,6 +214,9 @@ Component CLI::render_import_mnemonic_component(void) {
       } else
         *is_incorrect = true;
       user_input->clear();
+      return true;
+    } else if (event == Event::Escape) {
+      set_active_tab(MAIN_MENU);
       return true;
     }
 
@@ -258,7 +261,7 @@ Component CLI::render_import_mnemonic_component(void) {
                 text("Input 12, 15, 18, 21, or 24 words separated by "
                      "space.") |
                     dim,
-                text("(Type 'back' or 'exit' to return to main menu)") |
+                text("(Press ESC to return to main menu)") |
                     color(Color::DarkSlateGray1),
             }),
 
@@ -338,69 +341,73 @@ Component CLI::render_config_menu(void) {
                                                  : "DISABLED")} +
             " ]",
         " 4. DERIVATION     : [ " + cfg.derivation_path + " ]",
-        " [B] Back to Main Menu",
-        " [G] Generate Wallet"};
+    };
 
-    auto box = vbox({text(" CONFIGURATION SETTINGS ") | bold | hcenter |
-                         color(Color::Cyan),
-                     separator(),
-                     vbox({[&]() {
-                       Elements items;
+    auto box =
+        vbox({
+            text(" CONFIGURATION SETTINGS ") | bold | hcenter |
+                color(Color::Cyan),
+            separator(),
+            vbox({[]() {
+              Elements items;
 
-                       for (size_t i = 0; i < entries.size(); i++) {
-                         auto item = text(entries[i]);
+              for (size_t i = 0; i < entries.size(); i++) {
+                auto item = text(entries[i]);
 
-                         if (static_cast<int>(i) == selected) {
-                           item = item | inverted | color(Color::Yellow);
-                         }
+                if (static_cast<int>(i) == selected) {
+                  item = item | inverted | color(Color::Yellow);
+                }
 
-                         items.push_back(item);
-                       }
+                items.push_back(item);
+              }
 
-                       return vbox(std::move(items));
-                     }()}) |
-                         border,
+              return vbox(std::move(items));
+            }()}) |
+                border,
 
-                     separator(),
-                     text(" Use Arrows to navigate, Enter to toggle/select") |
-                         dim | hcenter
+            text(" Use Arrows to navigate, Enter to toggle/select") | dim |
+                hcenter,
+            separator(),
+            text(" [B] Back to Main Menu") | bold | color(Color::DarkCyan),
+            text(" [G] Generate Wallet") | bold | color(Color::LightCyan1Bis),
 
-               }) |
-               center;
+        }) |
+        center;
 
     return to_center(box);
   });
   return CatchEvent(component, [&](ftxui::Event event) {
     if (event == ftxui::Event::Return) {
-        switch(selected) {
-            case 0:
-            set_active_tab(EXTRA_ENTROPY_CONFIG);
-            break;
-            case 1:
-            set_active_tab(BIT_LENGTH_CONFIG);
-            break;
-            case 2:
+      switch (selected) {
+      case 0:
+        set_active_tab(EXTRA_ENTROPY_CONFIG);
+        break;
+      case 1:
+        set_active_tab(BIT_LENGTH_CONFIG);
+        break;
+      case 2:
 
-            set_active_tab(PASSPHRASE_CONFIG);
-            break;
-            case 3:
-            set_active_tab(DERIVE_PATH_CONFIG);
-            break;
-            case 4:
-            set_active_tab(MAIN_MENU);
-            break;
-        }
+        set_active_tab(PASSPHRASE_CONFIG);
+        break;
+      case 3:
+        set_active_tab(DERIVE_PATH_CONFIG);
+        break;
+      case 4:
+        set_active_tab(MAIN_MENU);
+        break;
+      }
 
       return true;
-    } else if(event == Event::Character('g') || event == Event::Character('G')) {
-        actions->create_wallet();
-        return true;
+    } else if (event == Event::Character('g') ||
+               event == Event::Character('G')) {
+      actions->create_wallet();
+      return true;
 
-
-    } else if(event == Event::Character('b') || event == Event::Character('B')) {
+    } else if (event == Event::Character('b') ||
+               event == Event::Character('B')) {
       set_active_tab(MAIN_MENU);
       return true;
-  }
+    }
     return false;
   });
 }
@@ -479,13 +486,12 @@ Component CLI::render_password_setup(void) {
 
   auto first_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !pass_str->empty()) {
-        bytes_data pass_str_in_bytes(pass_str->begin(), pass_str->end());
-        actions->set_password_for_wallet(pass_str_in_bytes);
+      bytes_data pass_str_in_bytes(pass_str->begin(), pass_str->end());
+      actions->set_password_for_wallet(pass_str_in_bytes);
 
-        // OPENSSL_cleanse(pass_str->data()), pass_str->size());
-        OPENSSL_cleanse(pass_str_in_bytes.data(), pass_str_in_bytes.size());
-        set_active_tab(CONFIRM_PASSWORD);
-
+      // OPENSSL_cleanse(pass_str->data()), pass_str->size());
+      OPENSSL_cleanse(pass_str_in_bytes.data(), pass_str_in_bytes.size());
+      set_active_tab(CONFIRM_PASSWORD);
     }
 
     return false;
@@ -667,16 +673,6 @@ Component CLI::render_request_unlock_password(void) {
 
     return to_center(box);
   });
-}
-
-void show_self_destruct(void) {
-  std::cout << "\033[2J\033[1;1H"; // Clear
-  std::cout << "\n  \033[1;31m[CRITICAL] ACCESS DENIED: 3/3 ATTEMPTS\033[0m\n";
-  std::cout << "  ------------------------------------------\n";
-  std::cout << "  Action: \033[1mDELETING KEYSTORE\033[0m\n";
-
-  std::cout << "  File shredded. Use your seed phrase to recover.\n";
-  std::cout << "  System exit.\n\n";
 }
 
 void CLI::set_active_tab(int tab) {
