@@ -36,10 +36,13 @@ void CLI::load(void) {
   auto wallet_ui = print_wallet_ui();
   auto bit_length_selection_config = set_bit_length();
   auto extra_entropy_selection_config = handle_extra_entropy();
+  auto passphrase_selection_config = handle_passphrase();
+  auto derive_path_selection_config = handle_derivation_path();
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
-       confirm_password_component, wallet_ui, password_unlock, bit_length_selection_config, extra_entropy_selection_config},
+       confirm_password_component, wallet_ui, password_unlock, bit_length_selection_config, extra_entropy_selection_config,
+       passphrase_selection_config, derive_path_selection_config},
       &this->active_tab);
 
   screen.Loop(root_container);
@@ -377,10 +380,11 @@ Component CLI::render_config_menu(void) {
             set_active_tab(BIT_LENGTH_CONFIG);
             break;
             case 2:
-            // passphrase
+
+            set_active_tab(PASSPHRASE_CONFIG);
             break;
             case 3:
-            // derivation
+            set_active_tab(DERIVE_PATH_CONFIG);
             break;
             case 4:
             set_active_tab(MAIN_MENU);
@@ -388,7 +392,15 @@ Component CLI::render_config_menu(void) {
         }
 
       return true;
-    }
+    } else if(event == Event::Character('g') || event == Event::Character('G')) {
+        actions->create_wallet();
+        return true;
+
+
+    } else if(event == Event::Character('b') || event == Event::Character('B')) {
+      set_active_tab(MAIN_MENU);
+      return true;
+  }
     return false;
   });
 }

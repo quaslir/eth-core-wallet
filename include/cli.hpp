@@ -25,7 +25,9 @@ enum state_t {
   WALLET_UI = 8,
   UNLOCK_PASSWORD = 9,
   BIT_LENGTH_CONFIG = 10,
-  EXTRA_ENTROPY_CONFIG = 11
+  EXTRA_ENTROPY_CONFIG = 11,
+  PASSPHRASE_CONFIG = 12,
+  DERIVE_PATH_CONFIG = 13
 };
 
 class CLI {
@@ -47,7 +49,8 @@ private:
   Component render_mnemonic_wiping(void);
   Component set_bit_length(void);
   Component handle_extra_entropy(void);
-
+  Component handle_passphrase(void);
+  Component handle_derivation_path(void);
 public:
 
 void set_actions(IWalletActions * act);

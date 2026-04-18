@@ -47,32 +47,19 @@ std::string UserInterface::get_mnemonic(void) {
     return std::string{temp.mnemonic.begin(), temp.mnemonic.end()};
 }
 
-void UserInterface::handle_config_menu(int choice) {
-    if (choice == 1) {
-      config.handle_extra_entropy();
-    } else if (choice == 2) {
-      cli.set_active_tab(BIT_LENGTH_CONFIG);
-    } else if (choice == 3) {
-      config.handle_use_passphrase();
-    } else if (choice == 4) {
-      config.handle_derivation_path();
-    } else if (choice == 5) {
-      cli.set_active_tab(MAIN_MENU);
-    }
+void UserInterface::create_wallet(void) {
+    temp.mnemonic = wallet.prepare_mnemonic(config);
+    std::string view_mnemonic(reinterpret_cast<const char *>(temp.mnemonic.data()),
+                              temp.mnemonic.size());
 
-    else if (choice == 6) {
-      temp.mnemonic = wallet.prepare_mnemonic(config);
-      std::string view_mnemonic(reinterpret_cast<const char *>(temp.mnemonic.data()),
-                                temp.mnemonic.size());
+    cli.set_active_tab(MNEMONIC_DISPLAY);
 
-      cli.set_active_tab(MNEMONIC_DISPLAY);
+    const std::vector<uint32_t> PATH_DERIVE =
+        Key_Derive::parse_derive_path(config.derivation_path);
 
-      const std::vector<uint32_t> PATH_DERIVE =
-          Key_Derive::parse_derive_path(config.derivation_path);
-
-      wallet.finalize_from_mnemonic(temp.mnemonic, config.passphrase, PATH_DERIVE);
-    }
+    wallet.finalize_from_mnemonic(temp.mnemonic, config.passphrase, PATH_DERIVE);
 }
+
 
  const Wallet& UserInterface::get_wallet(void) {
      return this->wallet;
@@ -136,4 +123,12 @@ void UserInterface::change_bit_length(int new_bit_length){
 }
 void UserInterface::set_extra_entropy(std::string_view entropy) {
     config.set_extra_entropy(entropy);
+}
+
+void UserInterface::add_passphrase(const bytes_data& pass) {
+    config.set_passphrase(pass);
+}
+
+void UserInterface::change_derivation_path(std::string_view derive_path){
+    config.change_derivation_path(derive_path);
 }

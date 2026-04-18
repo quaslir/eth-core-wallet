@@ -11,8 +11,7 @@ public:
   bytes_data passphrase;
   std::string derivation_path = "m/44'/60'/0'/0/0";
 
-
-    void set_bit_length(int bt);
+void set_bit_length(int bt);
 void set_extra_entropy(std::string_view entropy);
 
   void handle_user_entropy(void);
@@ -20,7 +19,8 @@ void set_extra_entropy(std::string_view entropy);
   void handle_use_passphrase(void);
   void handle_derivation_path(void);
   void handle_extra_entropy(void);
-
+  void set_passphrase(const bytes_data& pass = {});
+  void change_derivation_path(std::string_view derive_path);
 private:
   void render_passphrase_menu(std::string_view error_msg) const;
   void render_passphrase_input_screen() const;

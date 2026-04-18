@@ -16,7 +16,6 @@ class IWalletActions {
     virtual ~IWalletActions() = default;
     virtual std::string get_mnemonic(void) = 0;
     virtual const Config& get_config(void) = 0;
-    virtual void handle_config_menu(int choice) = 0;
     virtual const Wallet& get_wallet(void)  = 0;
     virtual void on_main_menu(int choice) = 0;
     virtual void set_password_for_wallet(bytes_data& password) = 0;
@@ -30,5 +29,7 @@ class IWalletActions {
      virtual void save_wallet(void) = 0;
      virtual void change_bit_length(int new_bit_length) = 0;
      virtual void set_extra_entropy(std::string_view entropy) = 0;
-
+     virtual void add_passphrase(const bytes_data& passphrase) = 0;
+     virtual void change_derivation_path(std::string_view derive_path) = 0;
+     virtual void create_wallet(void) = 0;
 };
