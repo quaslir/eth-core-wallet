@@ -42,5 +42,6 @@ private:
   void create_wallet(void) override;
    void update_balance(void) override;
    void copy_address(void) override;
+   void copy_private_key(void) override;
    const bytes_data& get_private_key(void) override;
 };

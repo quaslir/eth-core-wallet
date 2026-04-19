@@ -45,7 +45,7 @@ bool EncryptedKeystore::load(const std::string &filename) {
   return true;
 }
 
-AlchemyJSON::AlchemyJSON(const std::string &jsonrpc, const std::string &method,
+GetBalanceMethod::GetBalanceMethod(const std::string &jsonrpc, const std::string &method,
                          const std::vector<std::string> &params, int id) {
   j["jsonrpc"] = jsonrpc;
   j["method"] = method;
@@ -53,8 +53,8 @@ AlchemyJSON::AlchemyJSON(const std::string &jsonrpc, const std::string &method,
   j["id"] = id;
 }
 
-std::string AlchemyJSON::to_string(void) const { return j.dump(); }
+std::string GetBalanceMethod::to_string(void) const { return j.dump(); }
 
-void AlchemyJSON::parse(const std::string &data) { j = json::parse(data); }
+void GetBalanceMethod::parse(const std::string &data) { j = json::parse(data); }
 
-std::string AlchemyJSON::get_result(void) const { return j["result"]; }
+std::string GetBalanceMethod::get_result(void) const { return j["result"]; }

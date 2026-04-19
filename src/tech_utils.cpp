@@ -1,5 +1,8 @@
 #include "tech_utils.hpp"
+#include <array>
 #include <charconv>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 
@@ -36,6 +39,20 @@ std::string to_hex(const bytes_data &data) {
   }
 
   return hex_format;
+}
+
+
+bytes_data to_hex_bytes(const bytes_data& data) {
+    static const char hex_chars[] = "0123456789abcdef";
+    bytes_data hex_format;
+    hex_format.reserve(data.size() * 2);
+
+    for(const auto& byte: data) {
+        hex_format.push_back(static_cast<uint8_t>(hex_chars[(byte >> 4) & 0x0F]));
+        hex_format.push_back(static_cast<uint8_t>(hex_chars[byte & 0x0F]));
+    }
+
+    return hex_format;
 }
 
 bytes_data from_hex_to_bytes(const std::string &hex) {

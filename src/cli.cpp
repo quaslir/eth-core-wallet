@@ -763,6 +763,7 @@ auto content_box = vbox({
     filler(),
 
     separatorLight(),
+    text("Press C to copy private key") | bold | color(Color::Yellow),
     button_subtab_1->Render() | dim | hcenter
 }) | borderStyled(ROUNDED) | color(Color::Red1) | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 10) | hcenter;
 
@@ -775,6 +776,8 @@ auto private_key_displayer_component = CatchEvent(private_key_view, [=, this](Ev
      *active_sub_tab = 0;
      set_active_tab(WALLET_UI);
      return true;
+ } else if(event == Event::Character('c') || event == Event::Character('C')) {
+     actions->copy_private_key();
  }
 
  return false;

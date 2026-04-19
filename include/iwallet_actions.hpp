@@ -34,6 +34,8 @@ class IWalletActions {
      virtual void create_wallet(void) = 0;
      virtual void update_balance(void) = 0;
      virtual void copy_address(void) = 0;
+     virtual void copy_private_key(void) = 0;
      virtual void apply_choice_from_wallet_ui(int choice) = 0;
      virtual const bytes_data& get_private_key(void) =0;
+
 };

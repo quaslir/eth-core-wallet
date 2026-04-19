@@ -151,6 +151,17 @@ void UserInterface::copy_address(void) {
     #endif
 }
 
+void UserInterface::copy_private_key(void) {
+
+    #ifdef __APPLE__
+    std::string command = "echo " + tech_utils::to_hex(wallet.get_private_key()) + "| pbcopy";
+    std::system(command.c_str());
+    #else
+    // handle
+    #endif
+}
+
+
 const bytes_data& UserInterface::get_private_key(void) {
 return wallet.get_private_key();
 }
