@@ -20,7 +20,7 @@ private:
   TEMP_DATA temp;
   CLI cli;
 
-  void apply_choice_from_wallet_ui(int choice);
+  void apply_choice_from_wallet_ui(int choice) override;
 
   std::string get_mnemonic(void) override;
   const Config &get_config(void) override;
@@ -42,4 +42,5 @@ private:
   void create_wallet(void) override;
    void update_balance(void) override;
    void copy_address(void) override;
+   const bytes_data& get_private_key(void) override;
 };

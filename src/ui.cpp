@@ -26,16 +26,20 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     break; // send transaction
   case 2:
     wallet.derive_next();
+    balance_manager.clear_timer();
+    update_balance();
     break;
 
   case 3:
     wallet.derive_prev();
+    balance_manager.clear_timer();
+    update_balance();
     break;
   case 4: // show private_key
-
+  cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
   case 5: // exit
-    // wallet.save();
+    //wallet.save();
 
     break;
   }
@@ -145,4 +149,8 @@ void UserInterface::copy_address(void) {
     #else
     // handle
     #endif
+}
+
+const bytes_data& UserInterface::get_private_key(void) {
+return wallet.get_private_key();
 }

@@ -2,7 +2,6 @@
 #include "crypto_utils.hpp"
 #include "tech_utils.hpp"
 
-#define ERROR_MSG "\033[1;31m[!] Invalid choice.\033[0m\n\n"
 void Config::set_bit_length(int bt) { bit_length = bt; }
 
 void Config::set_extra_entropy(std::string_view entropy) {

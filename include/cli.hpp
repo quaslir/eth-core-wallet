@@ -1,14 +1,12 @@
-#include "config.hpp"
+
 #include "iwallet_actions.hpp"
-#include "wallet.hpp"
+
 #include <cstddef>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <functional>
-#include <string>
-#include <string_view>
+
 #include <vector>
 using bytes_data = std::vector<uint8_t>;
 using namespace ftxui;
@@ -27,7 +25,8 @@ enum state_t {
   BIT_LENGTH_CONFIG = 10,
   EXTRA_ENTROPY_CONFIG = 11,
   PASSPHRASE_CONFIG = 12,
-  DERIVE_PATH_CONFIG = 13
+  DERIVE_PATH_CONFIG = 13,
+  DISPLAY_PRIVATE_KEY = 14
 };
 
 class CLI {
@@ -51,7 +50,7 @@ private:
   Component handle_extra_entropy(void);
   Component handle_passphrase(void);
   Component handle_derivation_path(void);
-
+  Component display_private_key(void);
 public:
   void set_actions(IWalletActions *act);
   void load(void);

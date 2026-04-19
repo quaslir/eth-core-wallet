@@ -13,6 +13,7 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
+#include <ftxui/dom/node.hpp>
 #include <ftxui/screen/color.hpp>
 
 
@@ -22,7 +23,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
-
+#include "wallet.hpp"
 void CLI::set_actions(IWalletActions *act) { actions = act; }
 
 void CLI::load(void) {
@@ -40,12 +41,13 @@ void CLI::load(void) {
   auto extra_entropy_selection_config = handle_extra_entropy();
   auto passphrase_selection_config = handle_passphrase();
   auto derive_path_selection_config = handle_derivation_path();
+  auto display_priv_key = display_private_key();
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
        confirm_password_component, wallet_ui, password_unlock,
        bit_length_selection_config, extra_entropy_selection_config,
-       passphrase_selection_config, derive_path_selection_config},
+       passphrase_selection_config, derive_path_selection_config, display_priv_key},
       &this->active_tab);
 
   std::atomic<bool> refresh_ui = true;
@@ -483,6 +485,7 @@ Component CLI::print_wallet_ui(void) {
       int choice = selected + 1;
       if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
           choice == 5) {
+            actions->apply_choice_from_wallet_ui(choice);
         return true;
       }
       return true;
@@ -695,6 +698,100 @@ Component CLI::render_request_unlock_password(void) {
     return to_center(box);
   });
 }
+
+
+Component CLI::display_private_key(void) {
+auto active_sub_tab = std::make_shared<int>(0);
+
+auto button_subtab_0 = Button(
+    "Press [ENTER] to reveal | [ESC] to cancel",
+    [&] {}, ButtonOption::Ascii());
+
+auto button_subtab_1  = Button(
+    "Press [ENTER] to close the menu",
+    [&] {}, ButtonOption::Ascii());
+
+Component warning_view = Renderer(button_subtab_0, [=, this] {
+    auto element = vbox({
+        text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | bold | hcenter | color(Color::Red1),
+        separatorDouble() | color(Color::Red1),
+
+        paragraph("You are about to reveal your PRIVATE KEY. Anyone who sees this key can take full control of your funds forever. Do not share it with anyone, including support staff or developers.")
+        | hcenter,
+        filler() | size(HEIGHT, EQUAL, 1),
+
+        vbox({
+            text(" • NEVER share this key via email or chat.") | color(Color::Yellow),
+            text(" • NEVER enter it on websites you don't trust.") | color(Color::Yellow),
+            text(" • ALWAYS store it in a physical, offline place.") | color(Color::Green)
+        }) | hcenter,
+
+        filler() | size(HEIGHT, EQUAL, 1),
+
+        button_subtab_0->Render() | hcenter | blink | color(Color::Red1)
+    }) | borderDouble | color(Color::Red1) | bgcolor(Color::Black) | size(WIDTH, EQUAL,60);
+
+    return to_center(element);
+    });
+
+warning_view->TakeFocus();
+auto warning_component = CatchEvent(warning_view, [=, this] (Event event) {
+    if(event == Event::Return) {
+        *active_sub_tab = 1;
+        return true;
+    } else if(event == Event::Escape) {
+        set_active_tab(WALLET_UI);
+        return true;
+    }
+
+    return false;
+});
+
+
+Component private_key_view = Renderer(button_subtab_1, [=, this] {
+const bytes_data & private_key_in_bytes = actions->get_private_key();
+std::string private_key_hex = tech_utils::to_hex(private_key_in_bytes); // fix
+
+auto content_box = vbox({
+    text(" YOUR PRIVATE KEY ") | bold | hcenter | color(Color::Yellow),
+
+    separatorLight(),
+    filler(),
+
+    paragraph(private_key_hex) | hcenter | color(Color::Red1),
+
+    filler(),
+
+    separatorLight(),
+    button_subtab_1->Render() | dim | hcenter
+}) | borderStyled(ROUNDED) | color(Color::Red1) | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 10) | hcenter;
+
+return to_center(content_box);
+});
+
+
+auto private_key_displayer_component = CatchEvent(private_key_view, [=, this](Event event) {
+ if(event == Event::Return) {
+     *active_sub_tab = 0;
+     set_active_tab(WALLET_UI);
+     return true;
+ }
+
+ return false;
+});
+  auto container = Container::Tab({warning_component, private_key_displayer_component}, active_sub_tab.get());
+
+    return Renderer(container, [=] {
+
+        container->ChildAt(*active_sub_tab)->TakeFocus();
+        if(*active_sub_tab == 0) {
+            return warning_component->Render();
+        }
+        return private_key_displayer_component->Render();
+    });
+
+}
+
 
 void CLI::set_active_tab(int tab) {
   active_tab = tab;
