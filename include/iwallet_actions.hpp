@@ -32,4 +32,6 @@ class IWalletActions {
      virtual void add_passphrase(const bytes_data& passphrase) = 0;
      virtual void change_derivation_path(std::string_view derive_path) = 0;
      virtual void create_wallet(void) = 0;
+     virtual void update_balance(void) = 0;
+     virtual void copy_address(void) = 0;
 };

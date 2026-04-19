@@ -2,6 +2,8 @@
 #include "config.hpp"
 #include "tech_utils.hpp"
 
+#include <atomic>
+#include <chrono>
 #include <cstddef>
 
 #include <ftxui/component/component.hpp>
@@ -12,13 +14,14 @@
 #include <ftxui/dom/elements.hpp>
 
 #include <ftxui/screen/color.hpp>
-#include <iostream>
+
 
 #include <memory>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <string>
 #include <string_view>
+#include <thread>
 
 void CLI::set_actions(IWalletActions *act) { actions = act; }
 
@@ -45,7 +48,19 @@ void CLI::load(void) {
        passphrase_selection_config, derive_path_selection_config},
       &this->active_tab);
 
+  std::atomic<bool> refresh_ui = true;
+  std::thread refresh_thread ([&] {
+      while(refresh_ui) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(500));
+          screen.PostEvent(Event::Custom);
+      }
+  });
   screen.Loop(root_container);
+
+  refresh_ui = false;
+  if(refresh_thread.joinable()) {
+      refresh_thread.join();
+  }
 }
 
 Component CLI::create_main_menu(void) {
@@ -422,6 +437,7 @@ Component CLI::print_wallet_ui(void) {
 
   auto walletUI = Renderer(menu, [=, this] {
     const Wallet &wallet = actions->get_wallet(); //!!!
+    actions->update_balance();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
     std::string address =
@@ -462,7 +478,7 @@ Component CLI::print_wallet_ui(void) {
     return to_center(box);
   });
 
-  return CatchEvent(walletUI, [=](Event event) {
+  return CatchEvent(walletUI, [=,this](Event event) {
     if (event == Event::Return) {
       int choice = selected + 1;
       if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
@@ -470,6 +486,9 @@ Component CLI::print_wallet_ui(void) {
         return true;
       }
       return true;
+    } else if(event == Event::Character('c') || event == Event::Character('C')) {
+        actions->copy_address();
+        return true;
     }
 
     return false;
@@ -545,6 +564,7 @@ Component CLI::render_confirm_password_setup(void) {
         // OPENSSL_cleanse(first_pass.data(), first_pass.size());
         // OPENSSL_cleanse(second_pass.data(), second_pass.size());
         actions->save_wallet();
+        actions->update_balance();
         set_active_tab(WALLET_UI);
         // NEXT STEP
       } else {
@@ -608,6 +628,7 @@ Component CLI::render_request_unlock_password(void) {
       bytes_data password_in_bytes(user_input->begin(), user_input->end());
       if (actions->check_password(password_in_bytes)) {
         actions->load_wallet();
+        actions->update_balance();
         set_active_tab(WALLET_UI);
       } else {
         *attempts += 1;

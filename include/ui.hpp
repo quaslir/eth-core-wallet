@@ -40,4 +40,6 @@ private:
   void set_extra_entropy(std::string_view entropy) override;
   void change_derivation_path(std::string_view derive_path) override;
   void create_wallet(void) override;
+   void update_balance(void) override;
+   void copy_address(void) override;
 };

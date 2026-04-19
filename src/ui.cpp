@@ -5,6 +5,8 @@
 #include "iwallet_actions.hpp"
 #include "json.hpp"
 #include "security.hpp"
+#include "tech_utils.hpp"
+#include <cstdlib>
 #include <string>
 #include <string_view>
 
@@ -125,4 +127,22 @@ void UserInterface::add_passphrase(const bytes_data &pass) {
 
 void UserInterface::change_derivation_path(std::string_view derive_path) {
   config.change_derivation_path(derive_path);
+}
+void UserInterface::update_balance(void) {
+    if(!balance_manager.get_status()) {
+        wallet.set_balance(balance_manager.get_balance());
+        std::string addr = "0x" + tech_utils::to_hex(wallet.get_eth_address());
+        balance_manager.request_balance(addr);
+    }
+
+    balance_manager.update();
+}
+
+void UserInterface::copy_address(void) {
+    #ifdef __APPLE__
+    std::string command = "echo " + tech_utils::to_hex(wallet.get_eth_address()) + "| pbcopy";
+    std::system(command.c_str());
+    #else
+    // handle
+    #endif
 }
