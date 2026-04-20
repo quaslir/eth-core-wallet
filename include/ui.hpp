@@ -5,10 +5,18 @@
 #include "iwallet_actions.hpp"
 #include "json.hpp"
 #include "wallet.hpp"
+#include <string>
 struct TEMP_DATA {
   bytes_data password_for_wallet_unlocking;
   bytes_data mnemonic, passphrase;
 };
+
+
+struct ActiveNetwork {
+    std::string name = "Ethereum Mainnet";
+    std::string rpc_addr;
+};
+
 
 class UserInterface : public IWalletActions {
 public:
@@ -21,6 +29,7 @@ private:
   AsyncTransactionsHistoryManager history_manager;
   TEMP_DATA temp;
   CLI cli;
+  ActiveNetwork active_network;
 
   void apply_choice_from_wallet_ui(int choice) override;
 
@@ -49,4 +58,5 @@ private:
    std::vector<TransactionRecord>get_transactions_history(void) override;
    void update_transactions_data(void) override;
    void request_transactions_data(void) override;
+   const std::string& get_current_network(void) override;
 };

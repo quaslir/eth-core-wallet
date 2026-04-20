@@ -23,24 +23,29 @@ void UserInterface::load(void) {
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
   switch (choice) {
   case 1:
-  request_transactions_data();
-  cli.set_active_tab(TRANSACTION_HISTORY);
+
     break; // send transaction
-  case 2:
-    wallet.derive_next();
-    balance_manager.clear_timer();
-    update_balance();
+    case 2:
+    request_transactions_data();
+    cli.set_active_tab(TRANSACTION_HISTORY);
+    break;
+  case 3:
+  wallet.derive_next();
+  balance_manager.clear();
     break;
 
-  case 3:
-    wallet.derive_prev();
+  case 4:
+  if( wallet.derive_prev()) {
+
     balance_manager.clear_timer();
+    wallet.set_balance("0.0000");
     update_balance();
+  }
     break;
-  case 4: // show private_key
+  case 5: // show private_key
   cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
-  case 5: // exit
+  case 6: // exit
     //wallet.save();
 
     break;
@@ -135,7 +140,6 @@ void UserInterface::change_derivation_path(std::string_view derive_path) {
   config.change_derivation_path(derive_path);
 }
 void UserInterface::update_balance(void) {
-
     if(!wallet.is_loaded()) return;
 
     if(!balance_manager.get_status()) {
@@ -187,4 +191,7 @@ void UserInterface::update_transactions_data(void) {
 
 const bytes_data& UserInterface::get_private_key(void) {
 return wallet.get_private_key();
+}
+const std::string& UserInterface::get_current_network(void) {
+return active_network.name;
 }

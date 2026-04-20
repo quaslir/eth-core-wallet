@@ -41,4 +41,5 @@ class IWalletActions {
      virtual std::vector<TransactionRecord>get_transactions_history(void) = 0;
      virtual void request_transactions_data(void) = 0;
      virtual void update_transactions_data(void) = 0;
+     virtual const std::string& get_current_network(void)  = 0;
 };

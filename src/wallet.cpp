@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "security.hpp"
 #include <iostream>
+#include <mutex>
 
 Wallet::~Wallet() {
   OPENSSL_cleanse(priv_key.data(), priv_key.size());
@@ -57,7 +58,8 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   derive(path_deriv);
 }
 
-const bytes_data &Wallet::get_eth_address(void) const {
+ bytes_data Wallet::get_eth_address(void) const {
+    std::lock_guard<std::mutex> lock(wallet_mutex);
   return this->eth_address;
 }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }

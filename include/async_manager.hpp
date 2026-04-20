@@ -18,6 +18,6 @@ AsyncBalanceManager() : last_update_time(std::chrono::steady_clock::now() - std:
   void update(void);
   std::string get_balance(void) const;
   bool get_status(void) const;
-
+  void clear(void);
   void clear_timer(void);
 };

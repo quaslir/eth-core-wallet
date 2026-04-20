@@ -1,7 +1,7 @@
 #include "async_manager.hpp"
 #include <chrono>
 #include <exception>
-#include <ratio>
+
 
 
 void AsyncBalanceManager::request_balance(const std::string &addr) {
@@ -45,3 +45,8 @@ bool AsyncBalanceManager::get_status(void) const {
 void AsyncBalanceManager::clear_timer(void) {
     last_update_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(TIMER);
 }
+
+ void AsyncBalanceManager:: clear(void) {
+     current_balance = "0.0000";
+     updating = false;
+ }

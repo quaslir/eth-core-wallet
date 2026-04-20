@@ -15,7 +15,7 @@ private:
   std::string current_balance;
   MnemonicGenerator mem;
   long long index = 0;
-
+  mutable std::mutex wallet_mutex;
   int get_number_of_bits(void) const;
 
 public:
@@ -23,7 +23,7 @@ public:
   bytes_data prepare_mnemonic(Config &conf) const;
   void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase,
                               const std::vector<uint32_t> &path_deriv);
-  const bytes_data &get_eth_address(void) const;
+  bytes_data get_eth_address(void) const;
   const bytes_data &get_private_key(void) const;
   const bytes_data &get_master_node(void) const;
 

@@ -55,7 +55,7 @@ void CLI::load(void) {
   std::atomic<bool> refresh_ui = true;
   std::thread refresh_thread ([&] {
       while(refresh_ui) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(500));
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
           actions->update_balance();
           actions->update_transactions_data();
           screen.PostEvent(Event::Custom);
@@ -437,9 +437,9 @@ Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries;
   auto menu = Menu(&entries, &selected);
-  entries = {" 1. Send Transaction ", " 2. Next Address      ",
-             " 3. Previous Address  ", " 4. Export Key        ",
-             " 5. Lock & Exit       "};
+  entries = {" 1. Send Transaction ", " 2. Transaction history", " 3. Next Address",
+             " 4. Previous Address", " 5. Export Key",
+             " 6. Lock & Exit"};
 
   auto walletUI = Renderer(menu, [=, this] {
     const Wallet &wallet = actions->get_wallet(); //!!!
@@ -466,7 +466,7 @@ Component CLI::print_wallet_ui(void) {
                 info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
                 info_line(" BALANCE: ", balance + " ETH", Color::Yellow),
                 info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
-                info_line(" NETWORK: ", "Ethereum Mainnet", Color::Green),
+                info_line(" NETWORK: ", actions->get_current_network(), Color::Green),
 
             }),
 
@@ -487,7 +487,7 @@ Component CLI::print_wallet_ui(void) {
     if (event == Event::Return) {
       int choice = selected + 1;
       if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
-          choice == 5) {
+          choice == 5 || choice == 6) {
             actions->apply_choice_from_wallet_ui(choice);
         return true;
       }
