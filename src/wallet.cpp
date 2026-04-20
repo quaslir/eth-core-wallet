@@ -131,3 +131,7 @@ void Wallet::import_wallet(bytes_data &mnemonic, bytes_data &passphrase) {
   OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
 }
+
+bool Wallet::is_loaded(void) const {
+    return !eth_address.empty();
+}

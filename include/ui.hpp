@@ -1,4 +1,5 @@
 #include "async_manager.hpp"
+#include "async_transactions_history_manager.hpp"
 #include "cli.hpp"
 #include "config.hpp"
 #include "iwallet_actions.hpp"
@@ -17,6 +18,7 @@ private:
   Wallet wallet;
   Config config;
   AsyncBalanceManager balance_manager;
+  AsyncTransactionsHistoryManager history_manager;
   TEMP_DATA temp;
   CLI cli;
 
@@ -44,4 +46,7 @@ private:
    void copy_address(void) override;
    void copy_private_key(void) override;
    const bytes_data& get_private_key(void) override;
+   std::vector<TransactionRecord>get_transactions_history(void) override;
+   void update_transactions_data(void) override;
+   void request_transactions_data(void) override;
 };

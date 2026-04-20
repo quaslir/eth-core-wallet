@@ -1,6 +1,6 @@
 #include "json.hpp"
 #include "tech_utils.hpp"
-#include <stdexcept>
+#include <fstream>
 json EncryptedKeystore::to_json(void) const {
   json j;
   j["ciphertext"] = tech_utils::to_hex(ciphertext);
@@ -58,3 +58,40 @@ std::string GetBalanceMethod::to_string(void) const { return j.dump(); }
 void GetBalanceMethod::parse(const std::string &data) { j = json::parse(data); }
 
 std::string GetBalanceMethod::get_result(void) const { return j["result"]; }
+
+namespace transactions_history {
+    json form_receives(const std::string & addr) {
+        return {
+            {"id", 1},
+            {"jsonrpc", "2.0"},
+            {"method", "alchemy_getAssetTransfers"},
+            {"params", {
+                {
+                    {"fromBlock", "0x0"},
+                    {"toBlock", "latest"},
+                    {"toAddress", addr},
+                    {"category", {"external", "erc20"}},
+                    {"withMetadata", true},
+                    {"excludeZeroValue", true}
+                }
+            }}
+    };
+    }
+    json form_sends(const std::string & addr) {
+        return {
+            {"id", 1},
+            {"jsonrpc", "2.0"},
+            {"method", "alchemy_getAssetTransfers"},
+            {"params", {
+                {
+                    {"fromBlock", "0x0"},
+                    {"toBlock", "latest"},
+                    {"fromAddress", addr},
+                    {"category", {"external", "erc20"}},
+                    {"withMetadata", true},
+                    {"excludeZeroValue", true}
+                }
+            }}
+    };
+    }
+}

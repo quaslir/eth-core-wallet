@@ -2,6 +2,7 @@
 
 
 
+#include "async_manager.hpp"
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -37,5 +38,7 @@ class IWalletActions {
      virtual void copy_private_key(void) = 0;
      virtual void apply_choice_from_wallet_ui(int choice) = 0;
      virtual const bytes_data& get_private_key(void) =0;
-
+     virtual std::vector<TransactionRecord>get_transactions_history(void) = 0;
+     virtual void request_transactions_data(void) = 0;
+     virtual void update_transactions_data(void) = 0;
 };

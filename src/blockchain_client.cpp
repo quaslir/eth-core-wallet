@@ -1,10 +1,11 @@
 #include "blockchain_client.hpp"
 #include "http.hpp"
 #include <exception>
-#include <iostream>
+#include "uint256.hpp"
 #include <string>
 #include <vector>
 #include "json.hpp"
+
 std::string BlockchainClient::get_balance(const std::string &eth_addr) const {
 
   try {
@@ -30,7 +31,7 @@ std::string BlockchainClient::get_balance(const std::string &eth_addr) const {
   }
 }
 
-std::vector<TransactionRecord>BlockchainClient:: parse_transactions(const json& j) const {
+std::vector<TransactionRecord>BlockchainClient:: parse_transactions(const json& j, bool incoming)  {
     try {
 std::vector<TransactionRecord> history;
 
@@ -39,17 +40,22 @@ for(const auto& item: j["result"]["transfers"]) {
     tx.hash = item["hash"].get<std::string>();
     tx.value = item.is_null() ? 0.0 : item["value"].get<double>();
     tx.asset = item["asset"].get<std::string>();
-
+    tx.incoming = incoming;
     if(item.contains("from")) {
-        tx.from_to = item["from"].get<std::string>();
+        tx.from = item["from"].get<std::string>();
+    }
+    if(item.contains("to")) {
+        tx.to = item["to"].get<std::string>();
     }
 
     if(item.contains("metadata") && !item["metadata"]["blockTimestamp"].is_null()) {
         tx.timestamp = item["metadata"]["blockTimestamp"].get<std::string>();
     }
 
-    return history;
+    history.push_back(tx);
+
 }
+    return history;
     } catch(const std::exception& err) {
         return {};
     }
@@ -58,34 +64,34 @@ for(const auto& item: j["result"]["transfers"]) {
 }
 
 
-void BlockchainClient::get_transaction_history(const std::string& eth_addr) const {
-json request_body_1 = {
-    {"id", 1},
-    {"jsonrpc", "2.0"},
-    {"method", "alchemy_getAssetTransfers"},
-    {"params", {
-        {
-            {"fromBlock", "0x0"},
-            {"toBlock", "latest"},
-            {"toAddress", eth_addr},
-            {"category", {"external", "erc20"}},
-            {"withMetadata", true},
-            {"excludeZeroValue", true}
-        }
-    }}
+std::vector<TransactionRecord> BlockchainClient::get_transaction_history(const std::string& eth_addr) {
+
+json request_body_1 = transactions_history::form_receives(eth_addr);
+json request_body_2 = transactions_history::form_sends(eth_addr);
+
+auto make_request_and_parse_buffer = [](const json &j) {
+    try {
+        std::string data = j.dump();
+        std::string buffer = http::post_request("https://eth-sepolia.g.alchemy.com/v2/MkveNSvN4rHOvLoZK8dE3", data);
+        json res = json::parse(buffer);
+        return res;
+    } catch(const std::exception& err) {
+        return json::object();
+    }
 };
 
-try {
-    std::string data = request_body_1.dump();
-    std::string buffer = http::post_request("https://eth-sepolia.g.alchemy.com/v2/MkveNSvN4rHOvLoZK8dE3", data);
-    json res = json::parse(buffer);
-    auto parsed = parse_transactions(res);
-    if(parsed.empty()) {
-        // handle
-    }
+json object_in = make_request_and_parse_buffer(request_body_1);
+json object_out = make_request_and_parse_buffer(request_body_2);
 
+auto history_in = parse_transactions(object_in);
+auto history_out = parse_transactions(object_out, false);
 
-} catch(const std::exception& err) {
-    // handle
-}
+std::vector<TransactionRecord> full_history = std::move(history_in);
+full_history.insert(full_history.end(), history_out.begin(), history_out.end());
+
+std::sort(full_history.begin(), full_history.end(), [](const auto& a, const auto&b) {
+    return b.timestamp < a.timestamp;
+});
+return full_history;
+
 }

@@ -1,4 +1,5 @@
 #include "cli.hpp"
+
 #include "config.hpp"
 #include "tech_utils.hpp"
 
@@ -15,7 +16,7 @@
 
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/color.hpp>
-
+#include <ftxui/dom/table.hpp>
 
 #include <memory>
 #include <openssl/crypto.h>
@@ -42,18 +43,21 @@ void CLI::load(void) {
   auto passphrase_selection_config = handle_passphrase();
   auto derive_path_selection_config = handle_derivation_path();
   auto display_priv_key = display_private_key();
+  auto trans_history = transaction_history_render();
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
        confirm_password_component, wallet_ui, password_unlock,
        bit_length_selection_config, extra_entropy_selection_config,
-       passphrase_selection_config, derive_path_selection_config, display_priv_key},
+       passphrase_selection_config, derive_path_selection_config, display_priv_key, trans_history},
       &this->active_tab);
 
   std::atomic<bool> refresh_ui = true;
   std::thread refresh_thread ([&] {
       while(refresh_ui) {
           std::this_thread::sleep_for(std::chrono::milliseconds(500));
+          actions->update_balance();
+          actions->update_transactions_data();
           screen.PostEvent(Event::Custom);
       }
   });
@@ -439,7 +443,6 @@ Component CLI::print_wallet_ui(void) {
 
   auto walletUI = Renderer(menu, [=, this] {
     const Wallet &wallet = actions->get_wallet(); //!!!
-    actions->update_balance();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
     std::string address =
@@ -796,6 +799,79 @@ auto private_key_displayer_component = CatchEvent(private_key_view, [=, this](Ev
 }
 
 
+Component CLI::transaction_history_render(void) {
+
+
+    const auto buttons = Container::Horizontal({
+        Button(
+            " [B] BACK ",
+            [&] {set_active_tab(WALLET_UI);}, create_button("[B] BACK", Color::Red)),
+        Button(
+            " [R] REFRESH ",
+            [&] {actions->request_transactions_data();}, create_button("[R] REFRESH", Color::Cyan2))
+    });
+
+
+    auto component =  Renderer(buttons, [buttons, this]() mutable->Element {
+                auto history = actions->get_transactions_history();
+                    if(history.empty()) {
+                        return vbox({
+                            text("LOADING...") | bold | hcenter | color(Color::Cyan2)
+                        }) | center;
+                    }
+
+    std::vector<std::vector<std::string>> table_data;
+    table_data.push_back({" DATE ", " TYPE ", " AMOUNT ", " FROM ", " TO ", " HASH "  });
+        for(const auto&tx : history) {
+            table_data.push_back({
+                tx.timestamp.substr(5, 11),
+                tx.incoming ? " IN " : " OUT ",
+                std::to_string(tx.value).substr(0, 6) + " " + tx.asset,
+                tx.from.substr(0, 6) + "..." + tx.from.substr(38),
+                tx.to.substr(0, 6) + "..." + tx.to.substr(38),
+                tx.hash.substr(0, 8) + "..."
+            });
+        }
+
+        auto table = Table(table_data);
+
+        table.SelectRow(0).Decorate(bold | bgcolor(Color::Blue) | color(Color::White));
+        table.SelectRow(0).SeparatorVertical();
+
+            table.SelectColumn(0).Decorate(color(Color::GrayDark));
+            table.SelectColumn(2).Decorate(color(Color::GreenLight) | bold);
+
+
+
+        table.SelectAll().SeparatorVertical(LIGHT);
+        table.SelectAll().Border(LIGHT);
+        auto box =  vbox({
+            text(" TRANSACTION HISTORY ") | bold | hcenter | color(Color::Yellow),
+            separator(),
+            table.Render() | frame | hcenter | flex,
+
+            hbox({
+                buttons->Render() | hcenter
+            }) | hcenter
+
+        }) | borderDouble | color(Color::BlueLight) | flex | size(HEIGHT, EQUAL, 20);
+
+        return to_center(box);
+    });
+
+    return CatchEvent(component, [this](Event event) {
+        if(event == Event::Character('b') || event == Event::Character('B')) {
+            set_active_tab(WALLET_UI);
+            return true;
+        }
+        else if(event == Event::Character('r') || event == Event::Character('R')) {
+            actions->request_transactions_data();
+            return true;
+        }
+        return false;
+    });
+}
+
 void CLI::set_active_tab(int tab) {
   active_tab = tab;
   screen.Post(Event::Custom);
@@ -807,4 +883,19 @@ Element CLI::to_center(Element box) {
       hbox({filler(), box, filler()}),
       filler(),
   });
+}
+
+int CLI::get_tab_data(void) const {
+    return active_tab;
+}
+
+ButtonOption CLI::create_button(const std::string& label, Color c) const {
+    auto opt  = ButtonOption::Ascii();
+
+    opt.transform = [label, c](const EntryState& state) {
+        auto t = text(" " + label + " ");
+        return state.focused ? (t | inverted | color(c)) : (t | color(c));
+    };
+
+    return opt;
 }

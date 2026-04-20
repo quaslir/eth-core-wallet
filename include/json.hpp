@@ -1,5 +1,4 @@
 #pragma once
-#include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdint.h>
 #include <string>
@@ -27,3 +26,8 @@ struct GetBalanceMethod {
   void parse(const std::string &data);
   std::string get_result(void) const;
 };
+
+namespace transactions_history {
+    json form_receives(const std::string & addr);
+    json form_sends(const std::string & addr);
+}

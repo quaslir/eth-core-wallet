@@ -21,6 +21,7 @@ src/uint256.cpp
 src/blockchain_client.cpp
 src/async_manager.cpp
 src/config_cli.cpp
+src/async_transactions_history_manager.cpp
 )
 
 include(FetchContent)

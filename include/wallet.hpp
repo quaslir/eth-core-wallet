@@ -44,4 +44,5 @@ public:
   bool update_index(void) const;
   void save(bytes_data &password,
             const std::string &filename = "session.json") const;
+  bool is_loaded(void) const;
 };

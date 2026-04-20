@@ -1,6 +1,7 @@
+#pragma once
 #include <memory>
 #include <openssl/bn.h>
-#include <stdexcept>
+
 #include <string>
 
 struct BNDeleter {

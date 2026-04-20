@@ -23,6 +23,8 @@ void UserInterface::load(void) {
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
   switch (choice) {
   case 1:
+  request_transactions_data();
+  cli.set_active_tab(TRANSACTION_HISTORY);
     break; // send transaction
   case 2:
     wallet.derive_next();
@@ -133,6 +135,9 @@ void UserInterface::change_derivation_path(std::string_view derive_path) {
   config.change_derivation_path(derive_path);
 }
 void UserInterface::update_balance(void) {
+
+    if(!wallet.is_loaded()) return;
+
     if(!balance_manager.get_status()) {
         wallet.set_balance(balance_manager.get_balance());
         std::string addr = "0x" + tech_utils::to_hex(wallet.get_eth_address());
@@ -159,6 +164,24 @@ void UserInterface::copy_private_key(void) {
     #else
     // handle
     #endif
+}
+
+std::vector<TransactionRecord>UserInterface::get_transactions_history(void) {
+return history_manager.get_transactions_history();
+}
+
+void UserInterface::request_transactions_data(void) {
+    if(history_manager.get_status()) return;
+    std::string addr = tech_utils::to_hex(wallet.get_eth_address());
+    if(addr.empty()) return;
+  history_manager.request_transactions_data("0x" + addr);
+}
+
+void UserInterface::update_transactions_data(void) {
+    if(!wallet.is_loaded()) return;
+    if(history_manager.get_status()) {
+    history_manager.update();
+    }
 }
 
 

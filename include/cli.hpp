@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
@@ -26,7 +27,8 @@ enum state_t {
   EXTRA_ENTROPY_CONFIG = 11,
   PASSPHRASE_CONFIG = 12,
   DERIVE_PATH_CONFIG = 13,
-  DISPLAY_PRIVATE_KEY = 14
+  DISPLAY_PRIVATE_KEY = 14,
+  TRANSACTION_HISTORY = 15
 };
 
 class CLI {
@@ -51,8 +53,12 @@ private:
   Component handle_passphrase(void);
   Component handle_derivation_path(void);
   Component display_private_key(void);
+  Component transaction_history_render(void);
+
+  ButtonOption create_button(const std::string& label, Color c) const;
 public:
   void set_actions(IWalletActions *act);
   void load(void);
   void set_active_tab(int tab);
+  int get_tab_data(void) const;
 };
