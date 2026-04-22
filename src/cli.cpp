@@ -1,5 +1,5 @@
 #include "cli.hpp"
-
+#include "custom_text.hpp"
 #include "config.hpp"
 #include "supported_networks.hpp"
 #include "tech_utils.hpp"
@@ -759,8 +759,6 @@ Component CLI::display_private_key(void) {
 
   Component private_key_view = Renderer(button_subtab_1, [=, this] {
     const bytes_data &private_key_in_bytes = actions->get_private_key();
-    std::string private_key_hex =
-        tech_utils::to_hex(private_key_in_bytes); // fix
 
     auto content_box =
         vbox(
@@ -768,7 +766,7 @@ Component CLI::display_private_key(void) {
 
              separatorLight(), filler(),
 
-             paragraph(private_key_hex) | hcenter | color(Color::Red1),
+             byte_text(private_key_in_bytes) | hcenter | color(Color::Red1),
 
              filler(),
 
