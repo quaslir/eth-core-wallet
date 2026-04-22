@@ -1,11 +1,13 @@
 #include "ui.hpp"
 #include "async_manager.hpp"
 
+#include "blockchain_client.hpp"
 #include "config.hpp"
 #include "iwallet_actions.hpp"
 #include "json.hpp"
 #include "security.hpp"
 #include "tech_utils.hpp"
+#include <cstddef>
 #include <cstdlib>
 #include <string>
 #include <string_view>
@@ -25,28 +27,31 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
   case 1:
 
     break; // send transaction
-    case 2:
+  case 2:
     request_transactions_data();
     cli.set_active_tab(TRANSACTION_HISTORY);
     break;
   case 3:
-  wallet.derive_next();
-  balance_manager.clear();
+    cli.set_active_tab(CHANGE_NETWORK);
     break;
-
   case 4:
-  if( wallet.derive_prev()) {
+    wallet.derive_next();
+    balance_manager.clear();
+    break;
 
-    balance_manager.clear_timer();
-    wallet.set_balance("0.0000");
-    update_balance();
-  }
+  case 5:
+    if (wallet.derive_prev()) {
+
+      balance_manager.clear_timer();
+      wallet.set_balance("0.0000");
+      update_balance();
+    }
     break;
-  case 5: // show private_key
-  cli.set_active_tab(DISPLAY_PRIVATE_KEY);
+  case 6: // show private_key
+    cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
-  case 6: // exit
-    //wallet.save();
+  case 7: // exit
+    // wallet.save();
 
     break;
   }
@@ -140,58 +145,69 @@ void UserInterface::change_derivation_path(std::string_view derive_path) {
   config.change_derivation_path(derive_path);
 }
 void UserInterface::update_balance(void) {
-    if(!wallet.is_loaded()) return;
+  if (!wallet.is_loaded())
+    return;
 
-    if(!balance_manager.get_status()) {
-        wallet.set_balance(balance_manager.get_balance());
-        std::string addr = "0x" + tech_utils::to_hex(wallet.get_eth_address());
-        balance_manager.request_balance(addr);
-    }
+  if (!balance_manager.get_status()) {
+    wallet.set_balance(balance_manager.get_balance());
+    std::string addr = "0x" + tech_utils::to_hex(wallet.get_eth_address());
+    balance_manager.request_balance(addr);
+  }
 
-    balance_manager.update();
+  balance_manager.update();
 }
 
 void UserInterface::copy_address(void) {
-    #ifdef __APPLE__
-    std::string command = "echo " + tech_utils::to_hex(wallet.get_eth_address()) + "| pbcopy";
-    std::system(command.c_str());
-    #else
-    // handle
-    #endif
+#ifdef __APPLE__
+  std::string command =
+      "echo " + tech_utils::to_hex(wallet.get_eth_address()) + "| pbcopy";
+  std::system(command.c_str());
+#else
+// handle
+#endif
 }
 
 void UserInterface::copy_private_key(void) {
 
-    #ifdef __APPLE__
-    std::string command = "echo " + tech_utils::to_hex(wallet.get_private_key()) + "| pbcopy";
-    std::system(command.c_str());
-    #else
-    // handle
-    #endif
+#ifdef __APPLE__
+  std::string command =
+      "echo " + tech_utils::to_hex(wallet.get_private_key()) + "| pbcopy";
+  std::system(command.c_str());
+#else
+// handle
+#endif
 }
 
-std::vector<TransactionRecord>UserInterface::get_transactions_history(void) {
-return history_manager.get_transactions_history();
+std::vector<TransactionRecord> UserInterface::get_transactions_history(void) {
+  return history_manager.get_transactions_history();
 }
 
 void UserInterface::request_transactions_data(void) {
-    if(history_manager.get_status()) return;
-    std::string addr = tech_utils::to_hex(wallet.get_eth_address());
-    if(addr.empty()) return;
+  if (history_manager.get_status())
+    return;
+  std::string addr = tech_utils::to_hex(wallet.get_eth_address());
+  if (addr.empty())
+    return;
   history_manager.request_transactions_data("0x" + addr);
 }
 
 void UserInterface::update_transactions_data(void) {
-    if(!wallet.is_loaded()) return;
-    if(history_manager.get_status()) {
+  if (!wallet.is_loaded())
+    return;
+  if (history_manager.get_status()) {
     history_manager.update();
-    }
+  }
 }
 
-
-const bytes_data& UserInterface::get_private_key(void) {
-return wallet.get_private_key();
+const bytes_data &UserInterface::get_private_key(void) {
+  return wallet.get_private_key();
 }
-const std::string& UserInterface::get_current_network(void) {
-return active_network.name;
+std::string UserInterface::get_current_network(void) {
+  return block_client.get_active_network_name();
+}
+
+void UserInterface::change_network(size_t index) {
+  if (index >= networks::list.size())
+    return; // handle
+  block_client.change_network(networks::list[index]);
 }

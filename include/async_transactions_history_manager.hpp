@@ -6,18 +6,21 @@
 #define TIMER 1000
 
 class AsyncTransactionsHistoryManager {
-    private:
-    std::future<std::vector<TransactionRecord>> worker;
-    bool updating = false;
-    std::chrono::steady_clock::time_point last_update_time;
-    std::vector<TransactionRecord> current_transactions_history;
+private:
+  std::future<std::vector<TransactionRecord>> worker;
+  bool updating = false;
+  const BlockchainClient &block_client;
+  std::chrono::steady_clock::time_point last_update_time;
+  std::vector<TransactionRecord> current_transactions_history;
 
-    public:
+public:
+  AsyncTransactionsHistoryManager(const BlockchainClient &client)
+      : block_client(client),
+        last_update_time(std::chrono::steady_clock::now() -
+                         std::chrono::milliseconds(TIMER)) {}
 
-    AsyncTransactionsHistoryManager() : last_update_time(std::chrono::steady_clock::now() - std::chrono::milliseconds(TIMER)) {}
-
-    void request_transactions_data(const std::string& eth_addr);
-    void update(void);
-    bool get_status(void);
-    std::vector<TransactionRecord> get_transactions_history(void) const;
+  void request_transactions_data(const std::string &eth_addr);
+  void update(void);
+  bool get_status(void);
+  std::vector<TransactionRecord> get_transactions_history(void) const;
 };

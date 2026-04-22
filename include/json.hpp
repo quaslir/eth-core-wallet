@@ -21,13 +21,13 @@ struct GetBalanceMethod {
   json j;
 
   GetBalanceMethod(const std::string &jsonrpc, const std::string &method,
-              const std::vector<std::string> &params, int id);
+                   const std::vector<std::string> &params, int id);
   std::string to_string(void) const;
   void parse(const std::string &data);
   std::string get_result(void) const;
 };
 
 namespace transactions_history {
-    json form_receives(const std::string & addr);
-    json form_sends(const std::string & addr);
-}
+json form_receives(const std::string &addr);
+json form_sends(const std::string &addr);
+} // namespace transactions_history

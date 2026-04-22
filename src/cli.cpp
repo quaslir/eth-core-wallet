@@ -1,8 +1,8 @@
 #include "cli.hpp"
 
 #include "config.hpp"
+#include "supported_networks.hpp"
 #include "tech_utils.hpp"
-
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -15,16 +15,16 @@
 #include <ftxui/dom/elements.hpp>
 
 #include <ftxui/dom/node.hpp>
-#include <ftxui/screen/color.hpp>
 #include <ftxui/dom/table.hpp>
+#include <ftxui/screen/color.hpp>
 
+#include "wallet.hpp"
 #include <memory>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <string>
 #include <string_view>
 #include <thread>
-#include "wallet.hpp"
 void CLI::set_actions(IWalletActions *act) { actions = act; }
 
 void CLI::load(void) {
@@ -44,28 +44,30 @@ void CLI::load(void) {
   auto derive_path_selection_config = handle_derivation_path();
   auto display_priv_key = display_private_key();
   auto trans_history = transaction_history_render();
+  auto network_changer = change_network_render();
   auto root_container = Container::Tab(
       {main_menu, config_menu, import_wallet_ui, optional_passphrase,
        mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
        confirm_password_component, wallet_ui, password_unlock,
        bit_length_selection_config, extra_entropy_selection_config,
-       passphrase_selection_config, derive_path_selection_config, display_priv_key, trans_history},
+       passphrase_selection_config, derive_path_selection_config,
+       display_priv_key, trans_history, network_changer},
       &this->active_tab);
 
   std::atomic<bool> refresh_ui = true;
-  std::thread refresh_thread ([&] {
-      while(refresh_ui) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          actions->update_balance();
-          actions->update_transactions_data();
-          screen.PostEvent(Event::Custom);
-      }
+  std::thread refresh_thread([&] {
+    while (refresh_ui) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      actions->update_balance();
+      actions->update_transactions_data();
+      screen.PostEvent(Event::Custom);
+    }
   });
   screen.Loop(root_container);
 
   refresh_ui = false;
-  if(refresh_thread.joinable()) {
-      refresh_thread.join();
+  if (refresh_thread.joinable()) {
+    refresh_thread.join();
   }
 }
 
@@ -437,9 +439,10 @@ Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries;
   auto menu = Menu(&entries, &selected);
-  entries = {" 1. Send Transaction ", " 2. Transaction history", " 3. Next Address",
-             " 4. Previous Address", " 5. Export Key",
-             " 6. Lock & Exit"};
+  entries = {" 1. Send Transaction ", " 2. Transaction history",
+             " 3. Change Network",    " 4. Next Address",
+             " 5. Previous Address",  " 6. Export Key",
+             " 7. Lock & Exit"};
 
   auto walletUI = Renderer(menu, [=, this] {
     const Wallet &wallet = actions->get_wallet(); //!!!
@@ -466,7 +469,8 @@ Component CLI::print_wallet_ui(void) {
                 info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
                 info_line(" BALANCE: ", balance + " ETH", Color::Yellow),
                 info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
-                info_line(" NETWORK: ", actions->get_current_network(), Color::Green),
+                info_line(" NETWORK: ", actions->get_current_network(),
+                          Color::Green),
 
             }),
 
@@ -483,18 +487,15 @@ Component CLI::print_wallet_ui(void) {
     return to_center(box);
   });
 
-  return CatchEvent(walletUI, [=,this](Event event) {
+  return CatchEvent(walletUI, [=, this](Event event) {
     if (event == Event::Return) {
-      int choice = selected + 1;
-      if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
-          choice == 5 || choice == 6) {
-            actions->apply_choice_from_wallet_ui(choice);
-        return true;
-      }
+      actions->apply_choice_from_wallet_ui(selected + 1);
       return true;
-    } else if(event == Event::Character('c') || event == Event::Character('C')) {
-        actions->copy_address();
-        return true;
+
+    } else if (event == Event::Character('c') ||
+               event == Event::Character('C')) {
+      actions->copy_address();
+      return true;
     }
 
     return false;
@@ -702,174 +703,218 @@ Component CLI::render_request_unlock_password(void) {
   });
 }
 
-
 Component CLI::display_private_key(void) {
-auto active_sub_tab = std::make_shared<int>(0);
+  auto active_sub_tab = std::make_shared<int>(0);
 
-auto button_subtab_0 = Button(
-    "Press [ENTER] to reveal | [ESC] to cancel",
-    [&] {}, ButtonOption::Ascii());
+  auto button_subtab_0 = Button(
+      "Press [ENTER] to reveal | [ESC] to cancel", [&] {},
+      ButtonOption::Ascii());
 
-auto button_subtab_1  = Button(
-    "Press [ENTER] to close the menu",
-    [&] {}, ButtonOption::Ascii());
+  auto button_subtab_1 =
+      Button("Press [ENTER] to close the menu", [&] {}, ButtonOption::Ascii());
 
-Component warning_view = Renderer(button_subtab_0, [=, this] {
-    auto element = vbox({
-        text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | bold | hcenter | color(Color::Red1),
-        separatorDouble() | color(Color::Red1),
+  Component warning_view = Renderer(button_subtab_0, [=, this] {
+    auto element =
+        vbox({text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | bold | hcenter |
+                  color(Color::Red1),
+              separatorDouble() | color(Color::Red1),
 
-        paragraph("You are about to reveal your PRIVATE KEY. Anyone who sees this key can take full control of your funds forever. Do not share it with anyone, including support staff or developers.")
-        | hcenter,
-        filler() | size(HEIGHT, EQUAL, 1),
+              paragraph("You are about to reveal your PRIVATE KEY. Anyone who "
+                        "sees this key can take full control of your funds "
+                        "forever. Do not share it with anyone, including "
+                        "support staff or developers.") |
+                  hcenter,
+              filler() | size(HEIGHT, EQUAL, 1),
 
-        vbox({
-            text(" • NEVER share this key via email or chat.") | color(Color::Yellow),
-            text(" • NEVER enter it on websites you don't trust.") | color(Color::Yellow),
-            text(" • ALWAYS store it in a physical, offline place.") | color(Color::Green)
-        }) | hcenter,
+              vbox({text(" • NEVER share this key via email or chat.") |
+                        color(Color::Yellow),
+                    text(" • NEVER enter it on websites you don't trust.") |
+                        color(Color::Yellow),
+                    text(" • ALWAYS store it in a physical, offline place.") |
+                        color(Color::Green)}) |
+                  hcenter,
 
-        filler() | size(HEIGHT, EQUAL, 1),
+              filler() | size(HEIGHT, EQUAL, 1),
 
-        button_subtab_0->Render() | hcenter | blink | color(Color::Red1)
-    }) | borderDouble | color(Color::Red1) | bgcolor(Color::Black) | size(WIDTH, EQUAL,60);
+              button_subtab_0->Render() | hcenter | blink |
+                  color(Color::Red1)}) |
+        borderDouble | color(Color::Red1) | bgcolor(Color::Black) |
+        size(WIDTH, EQUAL, 60);
 
     return to_center(element);
-    });
+  });
 
-warning_view->TakeFocus();
-auto warning_component = CatchEvent(warning_view, [=, this] (Event event) {
-    if(event == Event::Return) {
-        *active_sub_tab = 1;
-        return true;
-    } else if(event == Event::Escape) {
-        set_active_tab(WALLET_UI);
-        return true;
+  warning_view->TakeFocus();
+  auto warning_component = CatchEvent(warning_view, [=, this](Event event) {
+    if (event == Event::Return) {
+      *active_sub_tab = 1;
+      return true;
+    } else if (event == Event::Escape) {
+      set_active_tab(WALLET_UI);
+      return true;
     }
 
     return false;
-});
+  });
 
+  Component private_key_view = Renderer(button_subtab_1, [=, this] {
+    const bytes_data &private_key_in_bytes = actions->get_private_key();
+    std::string private_key_hex =
+        tech_utils::to_hex(private_key_in_bytes); // fix
 
-Component private_key_view = Renderer(button_subtab_1, [=, this] {
-const bytes_data & private_key_in_bytes = actions->get_private_key();
-std::string private_key_hex = tech_utils::to_hex(private_key_in_bytes); // fix
+    auto content_box =
+        vbox(
+            {text(" YOUR PRIVATE KEY ") | bold | hcenter | color(Color::Yellow),
 
-auto content_box = vbox({
-    text(" YOUR PRIVATE KEY ") | bold | hcenter | color(Color::Yellow),
+             separatorLight(), filler(),
 
-    separatorLight(),
-    filler(),
+             paragraph(private_key_hex) | hcenter | color(Color::Red1),
 
-    paragraph(private_key_hex) | hcenter | color(Color::Red1),
+             filler(),
 
-    filler(),
+             separatorLight(),
+             text("Press C to copy private key") | bold | color(Color::Yellow),
+             button_subtab_1->Render() | dim | hcenter}) |
+        borderStyled(ROUNDED) | color(Color::Red1) | size(WIDTH, EQUAL, 60) |
+        size(HEIGHT, EQUAL, 10) | hcenter;
 
-    separatorLight(),
-    text("Press C to copy private key") | bold | color(Color::Yellow),
-    button_subtab_1->Render() | dim | hcenter
-}) | borderStyled(ROUNDED) | color(Color::Red1) | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 10) | hcenter;
+    return to_center(content_box);
+  });
 
-return to_center(content_box);
-});
-
-
-auto private_key_displayer_component = CatchEvent(private_key_view, [=, this](Event event) {
- if(event == Event::Return) {
-     *active_sub_tab = 0;
-     set_active_tab(WALLET_UI);
-     return true;
- } else if(event == Event::Character('c') || event == Event::Character('C')) {
-     actions->copy_private_key();
- }
-
- return false;
-});
-  auto container = Container::Tab({warning_component, private_key_displayer_component}, active_sub_tab.get());
-
-    return Renderer(container, [=] {
-
-        container->ChildAt(*active_sub_tab)->TakeFocus();
-        if(*active_sub_tab == 0) {
-            return warning_component->Render();
+  auto private_key_displayer_component =
+      CatchEvent(private_key_view, [=, this](Event event) {
+        if (event == Event::Return) {
+          *active_sub_tab = 0;
+          set_active_tab(WALLET_UI);
+          return true;
+        } else if (event == Event::Character('c') ||
+                   event == Event::Character('C')) {
+          actions->copy_private_key();
         }
-        return private_key_displayer_component->Render();
-    });
 
+        return false;
+      });
+  auto container =
+      Container::Tab({warning_component, private_key_displayer_component},
+                     active_sub_tab.get());
+
+  return Renderer(container, [=] {
+    container->ChildAt(*active_sub_tab)->TakeFocus();
+    if (*active_sub_tab == 0) {
+      return warning_component->Render();
+    }
+    return private_key_displayer_component->Render();
+  });
 }
-
 
 Component CLI::transaction_history_render(void) {
 
+  const auto buttons = Container::Horizontal(
+      {Button(
+           " [B] BACK ", [&] { set_active_tab(WALLET_UI); },
+           create_button("[B] BACK", Color::Red)),
+       Button(
+           " [R] REFRESH ", [&] { actions->request_transactions_data(); },
+           create_button("[R] REFRESH", Color::Cyan2))});
 
-    const auto buttons = Container::Horizontal({
-        Button(
-            " [B] BACK ",
-            [&] {set_active_tab(WALLET_UI);}, create_button("[B] BACK", Color::Red)),
-        Button(
-            " [R] REFRESH ",
-            [&] {actions->request_transactions_data();}, create_button("[R] REFRESH", Color::Cyan2))
-    });
-
-
-    auto component =  Renderer(buttons, [buttons, this]() mutable->Element {
-                auto history = actions->get_transactions_history();
-                    if(history.empty()) {
-                        return vbox({
-                            text("LOADING...") | bold | hcenter | color(Color::Cyan2)
-                        }) | center;
-                    }
+  auto component = Renderer(buttons, [buttons, this]() mutable -> Element {
+    auto history = actions->get_transactions_history();
+    if (history.empty()) {
+      return vbox({text("LOADING...") | bold | hcenter | color(Color::Cyan2)}) |
+             center;
+    }
 
     std::vector<std::vector<std::string>> table_data;
-    table_data.push_back({" DATE ", " TYPE ", " AMOUNT ", " FROM ", " TO ", " HASH "  });
-        for(const auto&tx : history) {
-            table_data.push_back({
-                tx.timestamp.substr(5, 11),
-                tx.incoming ? " IN " : " OUT ",
-                std::to_string(tx.value).substr(0, 6) + " " + tx.asset,
-                tx.from.substr(0, 6) + "..." + tx.from.substr(38),
-                tx.to.substr(0, 6) + "..." + tx.to.substr(38),
-                tx.hash.substr(0, 8) + "..."
-            });
-        }
+    table_data.push_back(
+        {" DATE ", " TYPE ", " AMOUNT ", " FROM ", " TO ", " HASH "});
+    for (const auto &tx : history) {
+      table_data.push_back(
+          {tx.timestamp.substr(5, 11), tx.incoming ? " IN " : " OUT ",
+           std::to_string(tx.value).substr(0, 6) + " " + tx.asset,
+           tx.from.substr(0, 6) + "..." + tx.from.substr(38),
+           tx.to.substr(0, 6) + "..." + tx.to.substr(38),
+           tx.hash.substr(0, 8) + "..."});
+    }
 
-        auto table = Table(table_data);
+    auto table = Table(table_data);
 
-        table.SelectRow(0).Decorate(bold | bgcolor(Color::Blue) | color(Color::White));
-        table.SelectRow(0).SeparatorVertical();
+    table.SelectRow(0).Decorate(bold | bgcolor(Color::Blue) |
+                                color(Color::White));
+    table.SelectRow(0).SeparatorVertical();
 
-            table.SelectColumn(0).Decorate(color(Color::GrayDark));
-            table.SelectColumn(2).Decorate(color(Color::GreenLight) | bold);
+    table.SelectColumn(0).Decorate(color(Color::GrayDark));
+    table.SelectColumn(2).Decorate(color(Color::GreenLight) | bold);
 
+    table.SelectAll().SeparatorVertical(LIGHT);
+    table.SelectAll().Border(LIGHT);
+    auto box = vbox({text(" TRANSACTION HISTORY ") | bold | hcenter |
+                         color(Color::Yellow),
+                     separator(), table.Render() | frame | hcenter | flex,
 
+                     hbox({buttons->Render() | hcenter}) | hcenter
 
-        table.SelectAll().SeparatorVertical(LIGHT);
-        table.SelectAll().Border(LIGHT);
-        auto box =  vbox({
-            text(" TRANSACTION HISTORY ") | bold | hcenter | color(Color::Yellow),
-            separator(),
-            table.Render() | frame | hcenter | flex,
+               }) |
+               borderDouble | color(Color::BlueLight) | flex |
+               size(HEIGHT, EQUAL, 20);
 
-            hbox({
-                buttons->Render() | hcenter
-            }) | hcenter
+    return to_center(box);
+  });
 
-        }) | borderDouble | color(Color::BlueLight) | flex | size(HEIGHT, EQUAL, 20);
+  return CatchEvent(component, [this](Event event) {
+    if (event == Event::Character('b') || event == Event::Character('B')) {
+      set_active_tab(WALLET_UI);
+      return true;
+    } else if (event == Event::Character('r') ||
+               event == Event::Character('R')) {
+      actions->request_transactions_data();
+      return true;
+    }
+    return false;
+  });
+}
 
-        return to_center(box);
-    });
+Component CLI::change_network_render(void) {
 
-    return CatchEvent(component, [this](Event event) {
-        if(event == Event::Character('b') || event == Event::Character('B')) {
-            set_active_tab(WALLET_UI);
-            return true;
-        }
-        else if(event == Event::Character('r') || event == Event::Character('R')) {
-            actions->request_transactions_data();
-            return true;
-        }
-        return false;
-    });
+  auto menu_opts = MenuOption::Vertical();
+  auto selected = std::make_shared<int>(0);
+  menu_opts.on_enter = [=, this] { actions->change_network(*selected); };
+
+  const static std::vector<std::string> networks =
+      networks::get_network_names();
+
+  auto menu = Menu(&networks, selected.get(), menu_opts);
+
+  auto component = Renderer(menu, [this, menu] {
+    auto box =
+        vbox({text(" 🌐 SELECT NETWORK ") | bold | hcenter | color(Color::Cyan),
+              separatorDouble(),
+              menu->Render() | frame | size(HEIGHT, ftxui::LESS_THAN, 10) |
+                  hcenter,
+              filler(), separatorLight(),
+
+              hbox({text(" CURRENT: ") | bold,
+                    text(actions->get_current_network()) |
+                        color(Color::GreenLight)}) |
+                  hcenter,
+
+              separatorLight(),
+
+              hbox({text(" Press "), text("[B]") | bold | color(Color::Yellow),
+                    text(" to return to main menu")}) |
+                  hcenter | color(Color::GrayLight)}) |
+        borderDouble | center | size(WIDTH, ftxui::EQUAL, 60);
+
+    return to_center(box);
+  });
+
+  return CatchEvent(component, [this](Event event) {
+    if (event == Event::Character('b') || event == Event::Character('B')) {
+      set_active_tab(WALLET_UI);
+      return true;
+    }
+
+    return false;
+  });
 }
 
 void CLI::set_active_tab(int tab) {
@@ -885,17 +930,15 @@ Element CLI::to_center(Element box) {
   });
 }
 
-int CLI::get_tab_data(void) const {
-    return active_tab;
-}
+int CLI::get_tab_data(void) const { return active_tab; }
 
-ButtonOption CLI::create_button(const std::string& label, Color c) const {
-    auto opt  = ButtonOption::Ascii();
+ButtonOption CLI::create_button(const std::string &label, Color c) const {
+  auto opt = ButtonOption::Ascii();
 
-    opt.transform = [label, c](const EntryState& state) {
-        auto t = text(" " + label + " ");
-        return state.focused ? (t | inverted | color(c)) : (t | color(c));
-    };
+  opt.transform = [label, c](const EntryState &state) {
+    auto t = text(" " + label + " ");
+    return state.focused ? (t | inverted | color(c)) : (t | color(c));
+  };
 
-    return opt;
+  return opt;
 }

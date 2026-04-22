@@ -28,7 +28,8 @@ enum state_t {
   PASSPHRASE_CONFIG = 12,
   DERIVE_PATH_CONFIG = 13,
   DISPLAY_PRIVATE_KEY = 14,
-  TRANSACTION_HISTORY = 15
+  TRANSACTION_HISTORY = 15,
+  CHANGE_NETWORK = 16
 };
 
 class CLI {
@@ -54,8 +55,10 @@ private:
   Component handle_derivation_path(void);
   Component display_private_key(void);
   Component transaction_history_render(void);
+  Component change_network_render(void);
 
-  ButtonOption create_button(const std::string& label, Color c) const;
+  ButtonOption create_button(const std::string &label, Color c) const;
+
 public:
   void set_actions(IWalletActions *act);
   void load(void);

@@ -2,16 +2,16 @@
 #include <chrono>
 #include <exception>
 
-
-
 void AsyncBalanceManager::request_balance(const std::string &addr) {
   if (updating)
     return;
 
   auto now = std::chrono::steady_clock::now();
-  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_update_time).count();
-  if(elapsed < TIMER) return;
-
+  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                     now - last_update_time)
+                     .count();
+  if (elapsed < TIMER)
+    return;
 
   updating = true;
 
@@ -38,15 +38,14 @@ void AsyncBalanceManager::update(void) {
 std::string AsyncBalanceManager::get_balance(void) const {
   return this->current_balance;
 }
-bool AsyncBalanceManager::get_status(void) const {
-    return updating;
-}
+bool AsyncBalanceManager::get_status(void) const { return updating; }
 
 void AsyncBalanceManager::clear_timer(void) {
-    last_update_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(TIMER);
+  last_update_time =
+      std::chrono::steady_clock::now() - std::chrono::milliseconds(TIMER);
 }
 
- void AsyncBalanceManager:: clear(void) {
-     current_balance = "0.0000";
-     updating = false;
- }
+void AsyncBalanceManager::clear(void) {
+  current_balance = "0.0000";
+  updating = false;
+}

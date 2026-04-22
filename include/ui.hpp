@@ -1,22 +1,17 @@
 #include "async_manager.hpp"
 #include "async_transactions_history_manager.hpp"
+#include "blockchain_client.hpp"
 #include "cli.hpp"
 #include "config.hpp"
 #include "iwallet_actions.hpp"
 #include "json.hpp"
 #include "wallet.hpp"
+#include <cstddef>
 #include <string>
 struct TEMP_DATA {
   bytes_data password_for_wallet_unlocking;
   bytes_data mnemonic, passphrase;
 };
-
-
-struct ActiveNetwork {
-    std::string name = "Ethereum Mainnet";
-    std::string rpc_addr;
-};
-
 
 class UserInterface : public IWalletActions {
 public:
@@ -25,11 +20,12 @@ public:
 private:
   Wallet wallet;
   Config config;
-  AsyncBalanceManager balance_manager;
-  AsyncTransactionsHistoryManager history_manager;
+  BlockchainClient block_client;
+  AsyncBalanceManager balance_manager = AsyncBalanceManager(block_client);
+  AsyncTransactionsHistoryManager history_manager =
+      AsyncTransactionsHistoryManager(block_client);
   TEMP_DATA temp;
   CLI cli;
-  ActiveNetwork active_network;
 
   void apply_choice_from_wallet_ui(int choice) override;
 
@@ -51,12 +47,13 @@ private:
   void set_extra_entropy(std::string_view entropy) override;
   void change_derivation_path(std::string_view derive_path) override;
   void create_wallet(void) override;
-   void update_balance(void) override;
-   void copy_address(void) override;
-   void copy_private_key(void) override;
-   const bytes_data& get_private_key(void) override;
-   std::vector<TransactionRecord>get_transactions_history(void) override;
-   void update_transactions_data(void) override;
-   void request_transactions_data(void) override;
-   const std::string& get_current_network(void) override;
+  void update_balance(void) override;
+  void copy_address(void) override;
+  void copy_private_key(void) override;
+  const bytes_data &get_private_key(void) override;
+  std::vector<TransactionRecord> get_transactions_history(void) override;
+  void update_transactions_data(void) override;
+  void request_transactions_data(void) override;
+  std::string get_current_network(void) override;
+  void change_network(size_t index) override;
 };

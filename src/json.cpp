@@ -45,8 +45,10 @@ bool EncryptedKeystore::load(const std::string &filename) {
   return true;
 }
 
-GetBalanceMethod::GetBalanceMethod(const std::string &jsonrpc, const std::string &method,
-                         const std::vector<std::string> &params, int id) {
+GetBalanceMethod::GetBalanceMethod(const std::string &jsonrpc,
+                                   const std::string &method,
+                                   const std::vector<std::string> &params,
+                                   int id) {
   j["jsonrpc"] = jsonrpc;
   j["method"] = method;
   j["params"] = params;
@@ -60,38 +62,28 @@ void GetBalanceMethod::parse(const std::string &data) { j = json::parse(data); }
 std::string GetBalanceMethod::get_result(void) const { return j["result"]; }
 
 namespace transactions_history {
-    json form_receives(const std::string & addr) {
-        return {
-            {"id", 1},
-            {"jsonrpc", "2.0"},
-            {"method", "alchemy_getAssetTransfers"},
-            {"params", {
-                {
-                    {"fromBlock", "0x0"},
-                    {"toBlock", "latest"},
-                    {"toAddress", addr},
-                    {"category", {"external", "erc20"}},
-                    {"withMetadata", true},
-                    {"excludeZeroValue", true}
-                }
-            }}
-    };
-    }
-    json form_sends(const std::string & addr) {
-        return {
-            {"id", 1},
-            {"jsonrpc", "2.0"},
-            {"method", "alchemy_getAssetTransfers"},
-            {"params", {
-                {
-                    {"fromBlock", "0x0"},
-                    {"toBlock", "latest"},
-                    {"fromAddress", addr},
-                    {"category", {"external", "erc20"}},
-                    {"withMetadata", true},
-                    {"excludeZeroValue", true}
-                }
-            }}
-    };
-    }
+json form_receives(const std::string &addr) {
+  return {{"id", 1},
+          {"jsonrpc", "2.0"},
+          {"method", "alchemy_getAssetTransfers"},
+          {"params",
+           {{{"fromBlock", "0x0"},
+             {"toBlock", "latest"},
+             {"toAddress", addr},
+             {"category", {"external", "erc20"}},
+             {"withMetadata", true},
+             {"excludeZeroValue", true}}}}};
 }
+json form_sends(const std::string &addr) {
+  return {{"id", 1},
+          {"jsonrpc", "2.0"},
+          {"method", "alchemy_getAssetTransfers"},
+          {"params",
+           {{{"fromBlock", "0x0"},
+             {"toBlock", "latest"},
+             {"fromAddress", addr},
+             {"category", {"external", "erc20"}},
+             {"withMetadata", true},
+             {"excludeZeroValue", true}}}}};
+}
+} // namespace transactions_history

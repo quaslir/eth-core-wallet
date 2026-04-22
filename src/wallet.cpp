@@ -58,8 +58,8 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   derive(path_deriv);
 }
 
- bytes_data Wallet::get_eth_address(void) const {
-    std::lock_guard<std::mutex> lock(wallet_mutex);
+bytes_data Wallet::get_eth_address(void) const {
+  std::lock_guard<std::mutex> lock(wallet_mutex);
   return this->eth_address;
 }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }
@@ -134,6 +134,4 @@ void Wallet::import_wallet(bytes_data &mnemonic, bytes_data &passphrase) {
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
 }
 
-bool Wallet::is_loaded(void) const {
-    return !eth_address.empty();
-}
+bool Wallet::is_loaded(void) const { return !eth_address.empty(); }
