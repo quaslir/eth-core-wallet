@@ -1,7 +1,6 @@
 #pragma once
 #include "json.hpp"
 #include "supported_networks.hpp"
-#include <iostream>
 #include <string>
 #include <vector>
 struct TransactionRecord {

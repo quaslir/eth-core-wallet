@@ -59,16 +59,12 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
 const Config &UserInterface::get_config(void) { return this->config; }
 
-std::string UserInterface::get_mnemonic(void) {
-  return std::string{temp.mnemonic.begin(), temp.mnemonic.end()};
+bytes_data UserInterface::get_mnemonic(void) {
+  return temp.mnemonic;
 }
 
 void UserInterface::create_wallet(void) {
   temp.mnemonic = wallet.prepare_mnemonic(config);
-  std::string view_mnemonic(
-      reinterpret_cast<const char *>(temp.mnemonic.data()),
-      temp.mnemonic.size());
-
   cli.set_active_tab(MNEMONIC_DISPLAY);
 
   const std::vector<uint32_t> PATH_DERIVE =

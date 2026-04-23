@@ -3,14 +3,13 @@
 #include <cstdint>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <iomanip>
 #include <memory>
 #include <vector>
 
 using namespace ftxui;
 using bytes_data = std::vector<uint8_t>;
 
-class TextNode : public Node {
+class BytesTextNode : public Node {
     private:
     const bytes_data& data_;
 
@@ -43,12 +42,12 @@ class TextNode : public Node {
     }
 
 
-    explicit TextNode(const bytes_data& data) : data_(data) {}
+    explicit BytesTextNode(const bytes_data& data) : data_(data) {}
 
 
 };
 
 
 inline Element byte_text(const bytes_data& data) {
-    return std::make_shared<TextNode>(data);
+    return std::make_shared<BytesTextNode>(data);
 }

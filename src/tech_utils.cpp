@@ -1,34 +1,13 @@
 #include "tech_utils.hpp"
-#include <array>
+
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
+#include <openssl/crypto.h>
+
 
 namespace tech_utils {
-void clear_stdin(void) {
-  std::cin.clear();
-
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-
-std::string read_stdin(void) {
-  std::string input;
-  if (!std::getline(std::cin, input)) {
-    exit(0);
-  }
-  return input;
-}
-
-void print_hex(const bytes_data &data) {
-  std::cout << "0x";
-
-  for (const auto &byte : data) {
-    std::cout << std::format("{:02x}", byte);
-  }
-  std::cout << std::endl;
-}
 
 std::string to_hex(const bytes_data &data) {
   std::string hex_format;
@@ -123,4 +102,8 @@ void trim(std::string &data) {
   data.erase(0, start);
 }
 void rm_file(const std::string &filename) { std::filesystem::remove(filename); }
+
+void clear(bytes_data& data) {
+    OPENSSL_cleanse(data.data(), data.size());
+}
 } // namespace tech_utils

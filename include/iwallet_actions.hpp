@@ -13,7 +13,7 @@ struct Config;
 class IWalletActions {
 public:
   virtual ~IWalletActions() = default;
-  virtual std::string get_mnemonic(void) = 0;
+  virtual bytes_data get_mnemonic(void) = 0;
   virtual const Config &get_config(void) = 0;
   virtual const Wallet &get_wallet(void) = 0;
   virtual void on_main_menu(int choice) = 0;

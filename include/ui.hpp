@@ -29,7 +29,7 @@ private:
 
   void apply_choice_from_wallet_ui(int choice) override;
 
-  std::string get_mnemonic(void) override;
+  bytes_data get_mnemonic(void) override;
   const Config &get_config(void) override;
   const Wallet &get_wallet(void) override;
   void on_main_menu(int choice) override;

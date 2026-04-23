@@ -1,5 +1,6 @@
 #include "cli.hpp"
-#include "custom_text.hpp"
+#include "text_bytes.hpp"
+#include "text_component.hpp"
 #include "config.hpp"
 #include "supported_networks.hpp"
 #include "tech_utils.hpp"
@@ -115,13 +116,21 @@ Component CLI::create_main_menu(void) {
 }
 
 Component CLI::render_mnemonic_element(void) {
-
+    auto mnemonic = std::make_shared<bytes_data>(actions->get_mnemonic());
   auto button = Button(
       " [ PRESS ENTER TO CONTINUE ] ",
-      [&] { this->set_active_tab(MNEMONIC_WIPING); }, ButtonOption::Ascii());
+      [this, mnemonic] {
+         if(!mnemonic->empty()) {
+             tech_utils::clear(*mnemonic);
+             mnemonic->clear();
+         }
 
-  return Renderer(button, [&, button] {
-    std::string mnemonic = actions->get_mnemonic();
+          this->set_active_tab(MNEMONIC_WIPING);
+
+
+      }, ButtonOption::Ascii());
+  return Renderer(button, [this, button, mnemonic] {
+
 
     auto box = vbox({vbox({
                          text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
@@ -131,7 +140,7 @@ Component CLI::render_mnemonic_element(void) {
 
                      separator(),
 
-                     paragraph(std::string{mnemonic}) | hcenter |
+                     text_(actions->get_mnemonic()) | hcenter |
                          color(Color::White) | bold, // fix in the future
 
                      separator(),
