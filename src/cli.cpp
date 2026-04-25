@@ -7,7 +7,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
-
+#include "paragraph.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -132,7 +132,9 @@ Component CLI::render_mnemonic_element(void) {
   return Renderer(button, [this, button, mnemonic] {
 
 
-    auto box = vbox({vbox({
+    auto box = vbox({
+
+        vbox({
                          text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
 
                      }) | borderDouble |
@@ -140,8 +142,8 @@ Component CLI::render_mnemonic_element(void) {
 
                      separator(),
 
-                     text_(actions->get_mnemonic()) | hcenter |
-                         color(Color::White) | bold, // fix in the future
+                     paragraph_(actions->get_mnemonic()) | hcenter |
+                         color(Color::White) | bold,
 
                      separator(),
 
@@ -154,7 +156,7 @@ Component CLI::render_mnemonic_element(void) {
                      separator(), button->Render() | hcenter | bold | focus
 
                }) |
-               border | center | size(WIDTH, LESS_THAN, 60);
+               border | center | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 15);
 
     return to_center(box);
   });

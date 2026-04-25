@@ -11,7 +11,7 @@ using bytes_data = std::vector<uint8_t>;
 
 class BytesTextNode : public Node {
     private:
-    const bytes_data& data_;
+    bytes_data data_;
 
 
 
@@ -42,7 +42,7 @@ class BytesTextNode : public Node {
     }
 
 
-    explicit BytesTextNode(const bytes_data& data) : data_(data) {}
+    explicit BytesTextNode(bytes_data data) : data_(std::move(data)) {}
 
 
 };

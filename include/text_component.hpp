@@ -14,7 +14,7 @@ class TextNode : public Node {
      bytes_data data_;
 
     public:
-    explicit TextNode(const bytes_data& data) : data_(data) {}
+    explicit TextNode(bytes_data data) : data_(std::move(data)) {}
     ~TextNode() {
         if(!data_.empty()) {
             tech_utils::clear(data_);
