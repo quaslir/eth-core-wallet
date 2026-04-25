@@ -59,9 +59,7 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
 const Config &UserInterface::get_config(void) { return this->config; }
 
-bytes_data UserInterface::get_mnemonic(void) {
-  return temp.mnemonic;
-}
+bytes_data UserInterface::get_mnemonic(void) { return temp.mnemonic; }
 
 void UserInterface::create_wallet(void) {
   temp.mnemonic = wallet.prepare_mnemonic(config);
@@ -89,7 +87,7 @@ void UserInterface::on_main_menu(int choice) {
   }
 }
 
-void UserInterface::set_password_for_wallet(bytes_data &password) {
+void UserInterface::set_password_for_wallet(bytes_data password) {
   this->temp.password_for_wallet_unlocking = password;
 }
 bytes_data UserInterface::get_password_for_wallet(void) {

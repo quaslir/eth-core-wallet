@@ -13,5 +13,5 @@ bytes_data to_bytes_from_bits(const bytes_data &data);
 uint32_t parse_uint32(const std::string &data);
 void trim(std::string &data);
 void rm_file(const std::string &filename = "session.json");
-void clear(bytes_data& data);
+void clear(bytes_data &data);
 } // namespace tech_utils

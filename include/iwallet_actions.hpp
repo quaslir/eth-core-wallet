@@ -17,7 +17,7 @@ public:
   virtual const Config &get_config(void) = 0;
   virtual const Wallet &get_wallet(void) = 0;
   virtual void on_main_menu(int choice) = 0;
-  virtual void set_password_for_wallet(bytes_data &password) = 0;
+  virtual void set_password_for_wallet(bytes_data password) = 0;
   virtual bytes_data get_password_for_wallet(void) = 0;
   virtual bool check_mnemonic(std::string_view mnemonic) = 0;
   virtual void set_mnemonic(std::string_view mnemonic) = 0;

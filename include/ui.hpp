@@ -34,7 +34,7 @@ private:
   const Wallet &get_wallet(void) override;
   void on_main_menu(int choice) override;
   void add_passphrase(const bytes_data &passphrase) override;
-  void set_password_for_wallet(bytes_data &password) override;
+  void set_password_for_wallet(bytes_data password) override;
   bytes_data get_password_for_wallet(void) override;
   bool check_mnemonic(std::string_view mnemonic) override;
   void set_mnemonic(std::string_view mnemonic) override;

@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <openssl/crypto.h>
 
-
 namespace tech_utils {
 
 std::string to_hex(const bytes_data &data) {
@@ -103,7 +102,5 @@ void trim(std::string &data) {
 }
 void rm_file(const std::string &filename) { std::filesystem::remove(filename); }
 
-void clear(bytes_data& data) {
-    OPENSSL_cleanse(data.data(), data.size());
-}
+void clear(bytes_data &data) { OPENSSL_cleanse(data.data(), data.size()); }
 } // namespace tech_utils

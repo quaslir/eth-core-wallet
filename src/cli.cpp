@@ -1,13 +1,14 @@
 #include "cli.hpp"
-#include "text_bytes.hpp"
-#include "text_component.hpp"
 #include "config.hpp"
+#include "input_component.hpp"
+#include "paragraph.hpp"
 #include "supported_networks.hpp"
 #include "tech_utils.hpp"
+#include "text_bytes.hpp"
+#include "text_component.hpp"
 #include <atomic>
 #include <chrono>
 #include <cstddef>
-#include "paragraph.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -116,47 +117,45 @@ Component CLI::create_main_menu(void) {
 }
 
 Component CLI::render_mnemonic_element(void) {
-    auto mnemonic = std::make_shared<bytes_data>(actions->get_mnemonic());
+  auto mnemonic = std::make_shared<bytes_data>(actions->get_mnemonic());
   auto button = Button(
       " [ PRESS ENTER TO CONTINUE ] ",
       [this, mnemonic] {
-         if(!mnemonic->empty()) {
-             tech_utils::clear(*mnemonic);
-             mnemonic->clear();
-         }
+        if (!mnemonic->empty()) {
+          tech_utils::clear(*mnemonic);
+          mnemonic->clear();
+        }
 
-          this->set_active_tab(MNEMONIC_WIPING);
-
-
-      }, ButtonOption::Ascii());
+        this->set_active_tab(MNEMONIC_WIPING);
+      },
+      ButtonOption::Ascii());
   return Renderer(button, [this, button, mnemonic] {
-
-
     auto box = vbox({
 
-        vbox({
-                         text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
+                   vbox({
+                       text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
 
-                     }) | borderDouble |
-                         color(Color::Yellow),
+                   }) | borderDouble |
+                       color(Color::Yellow),
 
-                     separator(),
+                   separator(),
 
-                     paragraph_(actions->get_mnemonic()) | hcenter |
-                         color(Color::White) | bold,
+                   paragraph_(actions->get_mnemonic()) | hcenter |
+                       color(Color::White) | bold,
 
-                     separator(),
+                   separator(),
 
-                     vbox({
-                         text(" WARNING: DO NOT SCREENSHOT! ") | center,
-                         text(" WRITE IT DOWN ON PAPER NOW! ") | center,
-                     }) | border |
-                         color(Color::Red),
+                   vbox({
+                       text(" WARNING: DO NOT SCREENSHOT! ") | center,
+                       text(" WRITE IT DOWN ON PAPER NOW! ") | center,
+                   }) | border |
+                       color(Color::Red),
 
-                     separator(), button->Render() | hcenter | bold | focus
+                   separator(), button->Render() | hcenter | bold | focus
 
                }) |
-               border | center | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 15);
+               border | center | size(WIDTH, EQUAL, 60) |
+               size(HEIGHT, EQUAL, 15);
 
     return to_center(box);
   });
@@ -226,20 +225,24 @@ Component CLI::render_mnemonic_wiping(void) {
 
 Component CLI::render_import_mnemonic_component(void) {
   auto is_incorrect = std::make_shared<bool>(0);
-  auto user_input = std::make_shared<std::string>("");
+  auto user_input = std::make_shared<bytes_data>();
 
   auto input_option = InputOption();
   input_option.multiline = false;
 
-  auto field = Input(user_input.get(), "Enter mnemonic...", input_option);
+  auto field = input_(*user_input);
   field->TakeFocus();
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
       if (!user_input->empty()) {
-        if (actions->check_mnemonic(std::string_view(*user_input))) {
-          actions->set_mnemonic(*user_input); // fix
-          OPENSSL_cleanse(user_input->data(), user_input->size());
+        std::string_view view_mnemonic{
+            reinterpret_cast<const char *>(user_input->data()),
+            user_input->size()};
+        if (actions->check_mnemonic(view_mnemonic)) {
+          actions->set_mnemonic(view_mnemonic);
+          tech_utils::clear(*user_input);
+          user_input->clear();
           set_active_tab(ENTER_OPTIONAL_PASSPHRASE_MENU);
         } else
           *is_incorrect = true;
@@ -456,7 +459,7 @@ Component CLI::print_wallet_ui(void) {
              " 7. Lock & Exit"};
 
   auto walletUI = Renderer(menu, [=, this] {
-    const Wallet &wallet = actions->get_wallet(); //!!!
+    const Wallet &wallet = actions->get_wallet();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
     std::string address =
@@ -518,17 +521,17 @@ Component CLI::render_password_setup(void) {
   auto input_option = InputOption();
   input_option.multiline = false;
   input_option.password = true;
-  auto pass_str = std::make_shared<std::string>(""); // FIX
-  auto field = Input(pass_str.get(), "Enter password...", input_option);
+  auto pass_str = std::make_shared<bytes_data>();
+  auto field = input_(*pass_str);
 
   auto first_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !pass_str->empty()) {
-      bytes_data pass_str_in_bytes(pass_str->begin(), pass_str->end());
-      actions->set_password_for_wallet(pass_str_in_bytes);
+      actions->set_password_for_wallet(*pass_str);
 
-      // OPENSSL_cleanse(pass_str->data()), pass_str->size());
-      OPENSSL_cleanse(pass_str_in_bytes.data(), pass_str_in_bytes.size());
+      tech_utils::clear(*pass_str);
+      pass_str->clear();
       set_active_tab(CONFIRM_PASSWORD);
+      return true;
     }
 
     return false;
@@ -566,28 +569,27 @@ Component CLI::render_confirm_password_setup(void) {
   auto input_option = InputOption();
   input_option.multiline = false;
   input_option.password = true;
-  auto second_pass = std::make_shared<std::string>("");
-  auto field = Input(second_pass.get(), "Enter password...", input_option);
+
+  auto second_pass = std::make_shared<bytes_data>();
+  auto field = input_(*second_pass);
 
   auto is_incorrect = std::make_shared<bool>(0);
   auto second_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      bytes_data first_pass_in_bytes = actions->get_password_for_wallet();
-      std::string first_pass(first_pass_in_bytes.begin(),
-                             first_pass_in_bytes.end());
+      auto first_pass =
+          std::make_shared<bytes_data>(actions->get_password_for_wallet());
 
-      // OPENSSL_cleanse(first_pass_in_bytes.data(),
-      // first_pass_in_bytes.size());
-      if (first_pass == *second_pass) {
-        // OPENSSL_cleanse(first_pass.data(), first_pass.size());
-        // OPENSSL_cleanse(second_pass.data(), second_pass.size());
+      if (*first_pass == *second_pass) {
+        tech_utils::clear(*first_pass);
+        tech_utils::clear(*second_pass);
+        first_pass->clear();
+        second_pass->clear();
         actions->save_wallet();
         actions->update_balance();
         set_active_tab(WALLET_UI);
-        // NEXT STEP
       } else {
-        *is_incorrect = true;
         second_pass->clear();
+        *is_incorrect = true;
       }
 
       return true;
@@ -635,16 +637,17 @@ Component CLI::render_request_unlock_password(void) {
   auto input_option = InputOption();
   auto attempts = std::make_shared<std::size_t>(0);
   constexpr static size_t max_attempts = 3;
-  std::shared_ptr<std::string> user_input = std::make_shared<std::string>("");
+  auto user_input = std::make_shared<bytes_data>();
   input_option.multiline = false;
   input_option.password = true;
-  auto field = Input(user_input.get(), "Enter password...", input_option);
+  auto field = input_(*user_input);
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !user_input->empty()) {
 
-      bytes_data password_in_bytes(user_input->begin(), user_input->end());
-      if (actions->check_password(password_in_bytes)) {
+      if (actions->check_password(*user_input)) {
+        tech_utils::clear(*user_input);
+        user_input->clear();
         actions->load_wallet();
         actions->update_balance();
         set_active_tab(WALLET_UI);
