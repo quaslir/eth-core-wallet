@@ -5,6 +5,7 @@
 #include <ftxui/dom/node.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/screen.hpp>
+#include <iterator>
 #include <memory>
 #include <vector>
 #include "tech_utils.hpp"
@@ -16,11 +17,11 @@ class SecureInput : public ComponentBase {
 private:
 
 bytes_data& data_;
-
+bool password_ = false;
 
 public:
 
-explicit SecureInput(bytes_data & data) : data_(data) {}
+explicit SecureInput(bytes_data & data, bool password) : data_(data), password_(password) {}
 
 bool Focusable(void) const override {
     return true;
@@ -41,7 +42,13 @@ return false;
 }
 
 Element Render(void) override {
-auto content = text_(data_);
+    Element content;
+    if(password_) {
+        bytes_data hidden_input(data_.size(), static_cast<uint8_t>('*'));
+        content = text_(hidden_input);
+    } else {
+        content = text_(data_);
+    }
 
 auto decorator = Focused() ? (borderHeavy | color(Color::Yellow)) : border;
 
@@ -49,6 +56,6 @@ return content | decorator | size(WIDTH,EQUAL, 30);
 }
 };
 
-inline Component input_(bytes_data& data) {
-    return std::make_shared<SecureInput>(data);
+inline Component input_(bytes_data& data, bool password = false) {
+    return std::make_shared<SecureInput>(data, password);
 }

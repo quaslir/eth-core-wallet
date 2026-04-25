@@ -319,19 +319,21 @@ Component CLI::render_import_mnemonic_component(void) {
 }
 
 Component CLI::render_input_optional_passphrase_component(void) {
-  auto user_input = std::make_shared<std::string>("");
+  auto user_input = std::make_shared<bytes_data>();
 
   auto input_option = InputOption();
   input_option.multiline = false;
   input_option.password = true;
 
-  auto field = Input(user_input.get(), "Enter passphrase...", input_option);
+  auto field = input_(*user_input, true);
   field->TakeFocus();
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      actions->set_passphrase(*user_input);
-      OPENSSL_cleanse(user_input->data(), user_input->size());
+      actions->set_passphrase(std::string_view{reinterpret_cast<const char *>(user_input->data()), user_input->size()});
+
+      tech_utils::clear(*user_input);
+
       actions->import_wallet();
       set_active_tab(SET_PASSWORD);
       return true;
@@ -522,7 +524,7 @@ Component CLI::render_password_setup(void) {
   input_option.multiline = false;
   input_option.password = true;
   auto pass_str = std::make_shared<bytes_data>();
-  auto field = input_(*pass_str);
+  auto field = input_(*pass_str, true);
 
   auto first_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !pass_str->empty()) {
@@ -571,7 +573,7 @@ Component CLI::render_confirm_password_setup(void) {
   input_option.password = true;
 
   auto second_pass = std::make_shared<bytes_data>();
-  auto field = input_(*second_pass);
+  auto field = input_(*second_pass, true);
 
   auto is_incorrect = std::make_shared<bool>(0);
   auto second_stage = CatchEvent(field, [=, this](Event event) {
@@ -640,7 +642,7 @@ Component CLI::render_request_unlock_password(void) {
   auto user_input = std::make_shared<bytes_data>();
   input_option.multiline = false;
   input_option.password = true;
-  auto field = input_(*user_input);
+  auto field = input_(*user_input, true);
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !user_input->empty()) {
