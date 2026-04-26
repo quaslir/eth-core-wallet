@@ -5,7 +5,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <openssl/crypto.h>
-
+#include <string>
+#include <string_view>
 namespace tech_utils {
 
 std::string to_hex(const bytes_data &data) {
@@ -103,4 +104,31 @@ void trim(std::string &data) {
 void rm_file(const std::string &filename) { std::filesystem::remove(filename); }
 
 void clear(bytes_data &data) { OPENSSL_cleanse(data.data(), data.size()); }
+
+bool to_double(const std::string &str, double &val) {
+  try {
+    std::size_t pos;
+    double result = std::stod(str, &pos);
+
+    if (pos != str.size())
+      return false;
+
+    val = result;
+
+    return true;
+  } catch (...) {
+    // shoud be cleaned in the future
+    return false;
+  }
+}
+
+double eth_to_usd(const std::string &eth, double price) {
+  double eth_in_usd;
+  if (!to_double(eth, eth_in_usd)) {
+    return 0.0;
+  }
+
+  return eth_in_usd * price;
+}
+
 } // namespace tech_utils

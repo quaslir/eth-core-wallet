@@ -1,8 +1,11 @@
 #include "blockchain_client.hpp"
+#include "configuration.hpp"
 #include "http.hpp"
 #include "json.hpp"
+#include "tech_utils.hpp"
 #include "uint256.hpp"
 #include <exception>
+#include <iostream>
 #include <string>
 #include <vector>
 std::string BlockchainClient::get_balance(const std::string &eth_addr) const {
@@ -113,4 +116,17 @@ std::string BlockchainClient::form_url(void) const {
 
 std::string BlockchainClient::get_active_network_name(void) const {
   return active_network.name;
+}
+
+double BlockchainClient::get_eth_price_in_usd(void) {
+  try {
+    std::string buffer = http::get_request(ETH_USD_URL);
+    json j = json::parse(buffer);
+
+    double value = j.value("USD", 0.0);
+    return value;
+
+  } catch (const std::exception &err) {
+    return 0.0;
+  }
 }

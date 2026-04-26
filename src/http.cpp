@@ -51,11 +51,13 @@ std::string get_request(const std::string &url) {
   }
 
   std::string buffer;
+  struct curl_slist *headers = nullptr;
+  headers = curl_slist_append(headers, "User-Agent: EthCoreWallet/1.0");
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_callback);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   // TLS
   curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
@@ -65,6 +67,8 @@ std::string get_request(const std::string &url) {
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
 
   CURLcode res = curl_easy_perform(curl);
+
+  curl_slist_free_all(headers);
   curl_easy_cleanup(curl);
 
   if (res != CURLE_OK) {

@@ -33,7 +33,7 @@ void AsyncTransactionsHistoryManager::update(void) {
     }
   }
 }
-bool AsyncTransactionsHistoryManager::get_status(void) {
+bool AsyncTransactionsHistoryManager::get_status(void) const {
   return this->updating;
 }
 std::vector<TransactionRecord>

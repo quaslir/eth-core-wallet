@@ -9,24 +9,24 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+
+#include <fmt/core.h>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
-
 #include <ftxui/dom/node.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/color.hpp>
 
 #include "wallet.hpp"
 #include <memory>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <string>
 #include <string_view>
 #include <thread>
+
 void CLI::set_actions(IWalletActions *act) { actions = act; }
 
 void CLI::load(void) {
@@ -62,6 +62,7 @@ void CLI::load(void) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       actions->update_balance();
       actions->update_transactions_data();
+      actions->update_eth_price();
       screen.PostEvent(Event::Custom);
     }
   });
@@ -330,7 +331,9 @@ Component CLI::render_input_optional_passphrase_component(void) {
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      actions->set_passphrase(std::string_view{reinterpret_cast<const char *>(user_input->data()), user_input->size()});
+      actions->set_passphrase(
+          std::string_view{reinterpret_cast<const char *>(user_input->data()),
+                           user_input->size()});
 
       tech_utils::clear(*user_input);
 
@@ -464,6 +467,8 @@ Component CLI::print_wallet_ui(void) {
     const Wallet &wallet = actions->get_wallet();
     std::string balance =
         wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
+    double balance_in_usd =
+        tech_utils::eth_to_usd(balance, actions->get_current_eth_price());
     std::string address =
         tech_utils::to_hex(wallet.get_eth_address()); // NEEDS TO BE CACHED
 
@@ -483,7 +488,10 @@ Component CLI::print_wallet_ui(void) {
 
             vbox({
                 info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
-                info_line(" BALANCE: ", balance + " ETH", Color::Yellow),
+                info_line(" BALANCE: ",
+                          balance + " ETH " + "~ " +
+                              fmt::format("{:.2f}", balance_in_usd) + " USD",
+                          Color::Yellow),
                 info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
                 info_line(" NETWORK: ", actions->get_current_network(),
                           Color::Green),

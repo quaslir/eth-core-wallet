@@ -14,4 +14,6 @@ uint32_t parse_uint32(const std::string &data);
 void trim(std::string &data);
 void rm_file(const std::string &filename = "session.json");
 void clear(bytes_data &data);
+bool to_double(const std::string &str, double &val);
+double eth_to_usd(const std::string &eth, double price);
 } // namespace tech_utils

@@ -1,3 +1,4 @@
+#include "async_eth_usd_update.hpp"
 #include "async_manager.hpp"
 #include "async_transactions_history_manager.hpp"
 #include "blockchain_client.hpp"
@@ -24,6 +25,7 @@ private:
   AsyncBalanceManager balance_manager = AsyncBalanceManager(block_client);
   AsyncTransactionsHistoryManager history_manager =
       AsyncTransactionsHistoryManager(block_client);
+  Async_ETH_USD_Currency eth_price_manager;
   TEMP_DATA temp;
   CLI cli;
 
@@ -56,4 +58,6 @@ private:
   void request_transactions_data(void) override;
   std::string get_current_network(void) override;
   void change_network(size_t index) override;
+  void update_eth_price(void) override;
+  double get_current_eth_price(void) override;
 };

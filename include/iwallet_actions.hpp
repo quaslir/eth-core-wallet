@@ -2,7 +2,7 @@
 #include "blockchain_client.hpp"
 #include <cstddef>
 #include <cstdint>
-
+#include <string>
 #include <string_view>
 #include <vector>
 struct TransactionRecord;
@@ -41,4 +41,6 @@ public:
   virtual void update_transactions_data(void) = 0;
   virtual std::string get_current_network(void) = 0;
   virtual void change_network(size_t index) = 0;
+  virtual void update_eth_price(void) = 0;
+  virtual double get_current_eth_price(void) = 0;
 };

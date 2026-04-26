@@ -151,6 +151,17 @@ void UserInterface::update_balance(void) {
   balance_manager.update();
 }
 
+void UserInterface::update_eth_price(void) {
+  if (!wallet.is_loaded())
+    return;
+
+  if (!eth_price_manager.get_status()) {
+    eth_price_manager.request_eth_price();
+  }
+
+  eth_price_manager.update();
+}
+
 void UserInterface::copy_address(void) {
 #ifdef __APPLE__
   std::string command =
@@ -204,4 +215,8 @@ void UserInterface::change_network(size_t index) {
   if (index >= networks::list.size())
     return; // handle
   block_client.change_network(networks::list[index]);
+}
+
+double UserInterface::get_current_eth_price(void) {
+  return eth_price_manager.get_current_eth_price();
 }

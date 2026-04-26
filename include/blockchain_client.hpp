@@ -1,6 +1,8 @@
 #pragma once
 #include "json.hpp"
 #include "supported_networks.hpp"
+
+#include <cstddef>
 #include <string>
 #include <vector>
 struct TransactionRecord {
@@ -22,6 +24,7 @@ public:
   void change_network(const networks::NetworkConfig &new_network);
 
   std::string get_active_network_name(void) const;
+  static double get_eth_price_in_usd(void);
 
 private:
   static std::vector<TransactionRecord>

@@ -22,8 +22,9 @@ src/blockchain_client.cpp
 src/async_manager.cpp
 src/config_cli.cpp
 src/async_transactions_history_manager.cpp
+src/async_eth_usd_update.cpp
 )
-
+set(CMAKE_CXX_EXTENSIONS OFF)
 include(FetchContent)
 
 find_package(PkgConfig REQUIRED)
@@ -123,9 +124,17 @@ FetchContent_Declare(
   GIT_TAG v5.0.0
 )
 
+
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG      10.2.1
+)
+
 FetchContent_MakeAvailable(json)
 FetchContent_MakeAvailable(curl)
 FetchContent_MakeAvailable(ftxui)
+FetchContent_MakeAvailable(fmt)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json libcurl ftxui::screen
     ftxui::dom
-    ftxui::component)
+    ftxui::component fmt::fmt)

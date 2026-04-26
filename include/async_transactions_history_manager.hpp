@@ -21,6 +21,6 @@ public:
 
   void request_transactions_data(const std::string &eth_addr);
   void update(void);
-  bool get_status(void);
+  bool get_status(void) const;
   std::vector<TransactionRecord> get_transactions_history(void) const;
 };
