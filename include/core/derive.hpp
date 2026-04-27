@@ -1,5 +1,7 @@
-#include <stdint.h>
 #include <vector>
+#include <string>
+#include <cstdint>
+
 extern "C" {
 #include <openssl/bn.h>
 #include <secp256k1.h>
