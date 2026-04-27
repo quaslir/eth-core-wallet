@@ -45,9 +45,6 @@ src/config/config.cpp
 set(CMAKE_CXX_EXTENSIONS OFF)
 include(FetchContent)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SECP256K1 REQUIRED libsecp256k1)
-
 add_executable(${PROJECT_NAME} src/main.cpp ${CORE_SOURCES} ${UI_SOURCES} ${UTILS_SOURCES} ${MANAGERS_SOURCES}
 ${API_SOURCES} ${DRIVERS_SOURCES} ${CONFIG_SOURCES})
 
@@ -151,10 +148,22 @@ FetchContent_Declare(
   GIT_TAG      10.2.1
 )
 
+FetchContent_Declare(
+  secp256k1
+  GIT_REPOSITORY https://github.com/bitcoin-core/secp256k1.git
+  GIT_TAG        v0.4.1
+)
+
+
+set(SECP256K1_ENABLE_MODULE_RECOVERY ON CACHE BOOL "" FORCE)
+set(SECP256K1_ENABLE_MODULE_SCHNORRSIG OFF CACHE BOOL "" FORCE)
+set(SECP256K1_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(json)
 FetchContent_MakeAvailable(curl)
 FetchContent_MakeAvailable(ftxui)
 FetchContent_MakeAvailable(fmt)
+FetchContent_MakeAvailable(secp256k1)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json libcurl ftxui::screen
     ftxui::dom
-    ftxui::component fmt::fmt)
+    ftxui::component fmt::fmt secp256k1)
