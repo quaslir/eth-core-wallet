@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <openssl/crypto.h>
+#include <fmt/core.h>
 #include <string>
-#include <string_view>
 namespace tech_utils {
 
 std::string to_hex(const bytes_data &data) {
@@ -14,7 +14,7 @@ std::string to_hex(const bytes_data &data) {
   hex_format.reserve(data.size());
 
   for (const auto &byte : data) {
-    hex_format.append(std::format("{:02x}", byte));
+    hex_format.append(fmt::format("{:02x}", byte));
   }
 
   return hex_format;
