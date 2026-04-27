@@ -122,13 +122,8 @@ bool to_double(const std::string &str, double &val) {
   }
 }
 
-double eth_to_usd(const std::string &eth, double price) {
-  double eth_in_usd;
-  if (!to_double(eth, eth_in_usd)) {
-    return 0.0;
-  }
-
-  return eth_in_usd * price;
+double eth_to_usd(double eth, double price) {
+    return eth * price;
 }
 
 } // namespace tech_utils

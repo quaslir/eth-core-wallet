@@ -1,5 +1,6 @@
 #pragma once
 #include "blockchain_client.hpp"
+#include "wallet_info.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -8,14 +9,14 @@
 struct TransactionRecord;
 using bytes_data = std::vector<uint8_t>;
 
-class Wallet;
 struct Config;
+
 class IWalletActions {
 public:
   virtual ~IWalletActions() = default;
   virtual bytes_data get_mnemonic(void) = 0;
   virtual const Config &get_config(void) = 0;
-  virtual const Wallet &get_wallet(void) = 0;
+  virtual WalletInfo get_wallet(void) = 0;
   virtual void on_main_menu(int choice) = 0;
   virtual void set_password_for_wallet(bytes_data password) = 0;
   virtual bytes_data get_password_for_wallet(void) = 0;

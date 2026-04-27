@@ -10,9 +10,9 @@ using bytes_data = std::vector<uint8_t>;
 class Wallet {
 private:
   bytes_data priv_key;
-  bytes_data eth_address;
+  std::string eth_address;
   bytes_data master_node;
-  std::string current_balance;
+  double current_balance;
   MnemonicGenerator mem;
   long long index = 0;
   mutable std::mutex wallet_mutex;
@@ -23,16 +23,16 @@ public:
   bytes_data prepare_mnemonic(Config &conf) const;
   void finalize_from_mnemonic(bytes_data &mnemonic, bytes_data &passphrase,
                               const std::vector<uint32_t> &path_deriv);
-  bytes_data get_eth_address(void) const;
+  std::string get_eth_address(void) const;
   const bytes_data &get_private_key(void) const;
   const bytes_data &get_master_node(void) const;
 
-  std::string get_balance(void) const;
+  double get_balance(void) const;
   void sync_derive_path(std::vector<uint32_t> &derive_path) const;
-  void set_eth_address(const bytes_data &addr);
+  //void set_eth_address(std::string&&addr);
   void set_private_key(const bytes_data &private_key);
   void set_master_node(const bytes_data &master_n);
-  void set_balance(const std::string &balance);
+  void set_balance(double balance);
   void set_index(const int i);
   bool derive_next(void);
   bool derive_prev(void);

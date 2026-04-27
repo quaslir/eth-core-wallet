@@ -17,7 +17,7 @@ struct TransactionRecord {
 
 class BlockchainClient {
 public:
-  std::string get_balance(const std::string &eth_addr) const;
+  double get_balance(const std::string &eth_addr) const;
   std::vector<TransactionRecord>
   get_transaction_history(const std::string &eth_addr) const;
   BlockchainClient() : active_network(networks::list[0]) {}

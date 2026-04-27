@@ -7,9 +7,9 @@
 class AsyncBalanceManager {
 private:
   const BlockchainClient &block_client;
-  std::future<std::string> worker;
+  std::future<double> worker;
   bool updating = false;
-  std::string current_balance = "0";
+  double current_balance = 0.0;
   std::chrono::steady_clock::time_point last_update_time;
 
 public:
@@ -19,7 +19,7 @@ public:
                          std::chrono::milliseconds(TIMER)) {}
   void request_balance(const std::string &addr);
   void update(void);
-  std::string get_balance(void) const;
+  double get_balance(void) const;
   bool get_status(void) const;
   void clear(void);
   void clear_timer(void);

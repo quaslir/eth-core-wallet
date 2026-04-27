@@ -1,6 +1,8 @@
 #include "cli.hpp"
 #include "config.hpp"
 #include "input_component.hpp"
+#include "iwallet_actions.hpp"
+#include "wallet_info.hpp"
 #include "paragraph.hpp"
 #include "supported_networks.hpp"
 #include "tech_utils.hpp"
@@ -21,7 +23,6 @@
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/color.hpp>
 
-#include "wallet.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -464,13 +465,10 @@ Component CLI::print_wallet_ui(void) {
              " 7. Lock & Exit"};
 
   auto walletUI = Renderer(menu, [=, this] {
-    const Wallet &wallet = actions->get_wallet();
-    std::string balance =
-        wallet.get_balance().empty() ? "0.00" : wallet.get_balance();
+    WalletInfo wallet_info = actions->get_wallet();
+
     double balance_in_usd =
-        tech_utils::eth_to_usd(balance, actions->get_current_eth_price());
-    std::string address =
-        tech_utils::to_hex(wallet.get_eth_address()); // NEEDS TO BE CACHED
+        tech_utils::eth_to_usd(wallet_info.balance, actions->get_current_eth_price());
 
     auto info_line = [](const std::string &label, const std::string &value,
                         Color color_) {
@@ -489,10 +487,10 @@ Component CLI::print_wallet_ui(void) {
             vbox({
                 info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
                 info_line(" BALANCE: ",
-                          balance + " ETH " + "~ " +
+                           fmt::format("{:.5f}", wallet_info.balance)  + " ETH " + "~ " +
                               fmt::format("{:.2f}", balance_in_usd) + " USD",
                           Color::Yellow),
-                info_line(" ADDRESS: ", "0x" + address, Color::DarkSlateGray1),
+                info_line(" ADDRESS: ", wallet_info.addr, Color::DarkSlateGray1),
                 info_line(" NETWORK: ", actions->get_current_network(),
                           Color::Green),
 

@@ -5,10 +5,9 @@
 #include "tech_utils.hpp"
 #include "uint256.hpp"
 #include <exception>
-#include <iostream>
 #include <string>
 #include <vector>
-std::string BlockchainClient::get_balance(const std::string &eth_addr) const {
+double BlockchainClient::get_balance(const std::string &eth_addr) const {
 
   try {
     GetBalanceMethod alchm("2.0", "eth_getBalance", {eth_addr, "latest"}, 1);
@@ -17,17 +16,23 @@ std::string BlockchainClient::get_balance(const std::string &eth_addr) const {
 
     std::string buffer = http::post_request(form_url(), data);
     if (buffer.empty())
-      return "";
+      return 0.0;
 
     alchm.parse(buffer);
 
     Uint256 uint256_t(alchm.get_result(), 1);
 
-    return uint256_t.from_wei_to_eth();
+    std::string res =  uint256_t.from_wei_to_eth();
+
+    double value;
+
+    if(!tech_utils::to_double(res, value)) return 0.0;
+
+    return value;
 
   } catch (const std::exception &err) { // handle in the future
                                         // handle
-    return "";
+    return 0.0;
   }
 }
 

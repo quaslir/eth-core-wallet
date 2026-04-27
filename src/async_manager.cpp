@@ -28,14 +28,14 @@ void AsyncBalanceManager::update(void) {
       try {
         current_balance = worker.get();
       } catch (const std::exception &err) {
-        current_balance = "0";
+        current_balance = 0.0;
       }
       updating = false;
       last_update_time = std::chrono::steady_clock::now();
     }
   }
 }
-std::string AsyncBalanceManager::get_balance(void) const {
+double AsyncBalanceManager::get_balance(void) const {
   return this->current_balance;
 }
 bool AsyncBalanceManager::get_status(void) const { return updating; }
@@ -46,6 +46,6 @@ void AsyncBalanceManager::clear_timer(void) {
 }
 
 void AsyncBalanceManager::clear(void) {
-  current_balance = "0.0000";
+  current_balance = 0.0;
   updating = false;
 }

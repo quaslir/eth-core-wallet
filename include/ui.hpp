@@ -2,20 +2,20 @@
 #include "async_manager.hpp"
 #include "async_transactions_history_manager.hpp"
 #include "blockchain_client.hpp"
+#include "wallet_info.hpp"
 #include "cli.hpp"
 #include "config.hpp"
 #include "iwallet_actions.hpp"
 #include "json.hpp"
 #include "wallet.hpp"
-#include <cstddef>
-#include <string>
-struct TEMP_DATA {
-  bytes_data password_for_wallet_unlocking;
-  bytes_data mnemonic, passphrase;
-};
+
+
 
 class UserInterface : public IWalletActions {
 public:
+
+
+
   void load(void);
 
 private:
@@ -26,6 +26,10 @@ private:
   AsyncTransactionsHistoryManager history_manager =
       AsyncTransactionsHistoryManager(block_client);
   Async_ETH_USD_Currency eth_price_manager;
+  struct TEMP_DATA {
+    bytes_data password_for_wallet_unlocking;
+    bytes_data mnemonic, passphrase;
+  };
   TEMP_DATA temp;
   CLI cli;
 
@@ -33,7 +37,7 @@ private:
 
   bytes_data get_mnemonic(void) override;
   const Config &get_config(void) override;
-  const Wallet &get_wallet(void) override;
+  WalletInfo get_wallet(void) override;
   void on_main_menu(int choice) override;
   void add_passphrase(const bytes_data &passphrase) override;
   void set_password_for_wallet(bytes_data password) override;

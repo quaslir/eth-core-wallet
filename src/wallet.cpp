@@ -1,8 +1,10 @@
 #include "wallet.hpp"
 #include "config.hpp"
 #include "security.hpp"
+#include "tech_utils.hpp"
 #include <iostream>
 #include <mutex>
+#include <string>
 
 Wallet::~Wallet() {
   OPENSSL_cleanse(priv_key.data(), priv_key.size());
@@ -36,7 +38,7 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
     devk.derive_child(keys, path_deriv[i]);
   }
 
-  eth_address = devk.generate_address(keys.parent_key);
+  eth_address = "0x" + tech_utils::to_hex(devk.generate_address(keys.parent_key));
 
   priv_key = keys.parent_key;
   OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
@@ -49,7 +51,6 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   bytes_data seed = mem.generateSeed(mnemonic, passphrase);
 
   OPENSSL_cleanse(passphrase.data(), passphrase.size());
-  // OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
 
   std::string_view key = "Bitcoin seed";
   master_node = crypto_utils::HMAC_SHA512(key, seed);
@@ -58,8 +59,7 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   derive(path_deriv);
 }
 
-bytes_data Wallet::get_eth_address(void) const {
-  std::lock_guard<std::mutex> lock(wallet_mutex);
+std::string Wallet::get_eth_address(void) const {
   return this->eth_address;
 }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }
@@ -68,8 +68,8 @@ const bytes_data &Wallet::get_master_node(void) const {
   return this->master_node;
 }
 
-std::string Wallet::get_balance(void) const { return this->current_balance; }
-void Wallet::set_balance(const std::string &balance) {
+double Wallet::get_balance(void) const { return this->current_balance; }
+void Wallet::set_balance(double balance) {
   this->current_balance = balance;
 }
 
@@ -111,9 +111,7 @@ bool Wallet::derive_prev(void) {
   return true;
 }
 
-void Wallet::set_eth_address(const bytes_data &addr) {
-  this->eth_address = addr;
-}
+
 void Wallet::set_private_key(const bytes_data &private_key) {
   this->priv_key = private_key;
 }
