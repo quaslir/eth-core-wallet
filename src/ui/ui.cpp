@@ -72,7 +72,7 @@ void UserInterface::create_wallet(void) {
 }
 
 WalletInfo UserInterface::get_wallet(void) {
-return WalletInfo(wallet.get_eth_address(), balance_manager.get_balance());
+  return WalletInfo(wallet.get_eth_address(), balance_manager.get_balance());
 }
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {
@@ -166,8 +166,7 @@ void UserInterface::update_eth_price(void) {
 
 void UserInterface::copy_address(void) {
 #ifdef __APPLE__
-  std::string command =
-      "echo " + wallet.get_eth_address() + "| pbcopy";
+  std::string command = "echo " + wallet.get_eth_address() + "| pbcopy";
   std::system(command.c_str());
 #else
 // handle
@@ -190,12 +189,11 @@ std::vector<TransactionRecord> UserInterface::get_transactions_history(void) {
 }
 
 void UserInterface::request_transactions_data(void) {
-    std::string addr{};
+  std::string addr{};
   if (history_manager.get_status())
     return;
 
   addr = wallet.get_eth_address();
-
 
   if (addr.empty())
     return;

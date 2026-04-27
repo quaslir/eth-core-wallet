@@ -38,7 +38,8 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
     devk.derive_child(keys, path_deriv[i]);
   }
 
-  eth_address = "0x" + tech_utils::to_hex(devk.generate_address(keys.parent_key));
+  eth_address =
+      "0x" + tech_utils::to_hex(devk.generate_address(keys.parent_key));
 
   priv_key = keys.parent_key;
   OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
@@ -59,9 +60,7 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
   derive(path_deriv);
 }
 
-std::string Wallet::get_eth_address(void) const {
-  return this->eth_address;
-}
+std::string Wallet::get_eth_address(void) const { return this->eth_address; }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }
 const long long &Wallet::getIndex(void) const { return this->index; }
 const bytes_data &Wallet::get_master_node(void) const {
@@ -69,9 +68,7 @@ const bytes_data &Wallet::get_master_node(void) const {
 }
 
 double Wallet::get_balance(void) const { return this->current_balance; }
-void Wallet::set_balance(double balance) {
-  this->current_balance = balance;
-}
+void Wallet::set_balance(double balance) { this->current_balance = balance; }
 
 bool Wallet::derive_next(void) {
   if (index >= 0x7FFFFFF)
@@ -110,7 +107,6 @@ bool Wallet::derive_prev(void) {
 
   return true;
 }
-
 
 void Wallet::set_private_key(const bytes_data &private_key) {
   this->priv_key = private_key;

@@ -22,11 +22,12 @@ double BlockchainClient::get_balance(const std::string &eth_addr) const {
 
     Uint256 uint256_t(alchm.get_result(), 1);
 
-    std::string res =  uint256_t.from_wei_to_eth();
+    std::string res = uint256_t.from_wei_to_eth();
 
     double value;
 
-    if(!tech_utils::to_double(res, value)) return 0.0;
+    if (!tech_utils::to_double(res, value))
+      return 0.0;
 
     return value;
 

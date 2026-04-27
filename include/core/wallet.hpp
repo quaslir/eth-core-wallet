@@ -29,7 +29,7 @@ public:
 
   double get_balance(void) const;
   void sync_derive_path(std::vector<uint32_t> &derive_path) const;
-  //void set_eth_address(std::string&&addr);
+  // void set_eth_address(std::string&&addr);
   void set_private_key(const bytes_data &private_key);
   void set_master_node(const bytes_data &master_n);
   void set_balance(double balance);

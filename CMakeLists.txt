@@ -4,35 +4,55 @@ project(eth-core-wallet)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(SOURCES
-src/main.cpp
-src/mnemonic.cpp
-src/crypto_utils.cpp
-src/tech_utils.cpp
-src/derive.cpp
-src/ui.cpp
-src/security.cpp
-src/wallet.cpp
-src/cli.cpp
-src/config.cpp
-src/json.cpp
-src/http.cpp
-src/uint256.cpp
-src/blockchain_client.cpp
-src/async_manager.cpp
-src/config_cli.cpp
-src/async_transactions_history_manager.cpp
-src/async_eth_usd_update.cpp
+
+set(CORE_SOURCES
+src/core/uint256.cpp
+src/core/wallet.cpp
+src/core/derive.cpp
+src/core/security.cpp
+src/core/mnemonic.cpp
 )
+
+set(UI_SOURCES
+src/ui/cli.cpp
+src/ui/config_cli.cpp
+src/ui/ui.cpp
+)
+
+set(UTILS_SOURCES
+src/utils/crypto_utils.cpp
+src/utils/tech_utils.cpp
+)
+set(MANAGERS_SOURCES
+src/async-managers/async_eth_usd_update.cpp
+src/async-managers/async_balance.cpp
+src/async-managers/async_transactions_history_manager.cpp
+)
+
+set(API_SOURCES
+src/api/json.cpp
+src/api/http.cpp
+)
+
+set(DRIVERS_SOURCES
+src/drivers/blockchain_client.cpp
+)
+
+set(CONFIG_SOURCES
+src/config/config.cpp
+)
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 include(FetchContent)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SECP256K1 REQUIRED libsecp256k1)
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} src/main.cpp ${CORE_SOURCES} ${UI_SOURCES} ${UTILS_SOURCES} ${MANAGERS_SOURCES}
+${API_SOURCES} ${DRIVERS_SOURCES} ${CONFIG_SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE include ${SECP256K1_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE include include/ui include/ui/ftxui-components include/async-managers
+include/utils include/api include/core include/config include/drivers ${SECP256K1_INCLUDE_DIRS})
 
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build" FORCE)

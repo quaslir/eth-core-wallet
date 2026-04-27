@@ -2,20 +2,15 @@
 #include "async_manager.hpp"
 #include "async_transactions_history_manager.hpp"
 #include "blockchain_client.hpp"
-#include "wallet_info.hpp"
 #include "cli.hpp"
 #include "config.hpp"
 #include "iwallet_actions.hpp"
 #include "json.hpp"
 #include "wallet.hpp"
-
-
+#include "wallet_info.hpp"
 
 class UserInterface : public IWalletActions {
 public:
-
-
-
   void load(void);
 
 private:

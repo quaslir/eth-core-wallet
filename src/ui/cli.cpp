@@ -2,12 +2,12 @@
 #include "config.hpp"
 #include "input_component.hpp"
 #include "iwallet_actions.hpp"
-#include "wallet_info.hpp"
 #include "paragraph.hpp"
 #include "supported_networks.hpp"
 #include "tech_utils.hpp"
 #include "text_bytes.hpp"
 #include "text_component.hpp"
+#include "wallet_info.hpp"
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -467,8 +467,8 @@ Component CLI::print_wallet_ui(void) {
   auto walletUI = Renderer(menu, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
 
-    double balance_in_usd =
-        tech_utils::eth_to_usd(wallet_info.balance, actions->get_current_eth_price());
+    double balance_in_usd = tech_utils::eth_to_usd(
+        wallet_info.balance, actions->get_current_eth_price());
 
     auto info_line = [](const std::string &label, const std::string &value,
                         Color color_) {
@@ -487,10 +487,12 @@ Component CLI::print_wallet_ui(void) {
             vbox({
                 info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
                 info_line(" BALANCE: ",
-                           fmt::format("{:.5f}", wallet_info.balance)  + " ETH " + "~ " +
-                              fmt::format("{:.2f}", balance_in_usd) + " USD",
+                          fmt::format("{:.5f}", wallet_info.balance) + " ETH " +
+                              "~ " + fmt::format("{:.2f}", balance_in_usd) +
+                              " USD",
                           Color::Yellow),
-                info_line(" ADDRESS: ", wallet_info.addr, Color::DarkSlateGray1),
+                info_line(" ADDRESS: ", wallet_info.addr,
+                          Color::DarkSlateGray1),
                 info_line(" NETWORK: ", actions->get_current_network(),
                           Color::Green),
 
