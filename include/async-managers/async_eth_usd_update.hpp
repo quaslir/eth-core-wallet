@@ -1,5 +1,4 @@
-#include "blockchain_client.hpp"
-#include "configuration.hpp"
+#include "config/configuration.hpp"
 #include <chrono>
 #include <future>
 

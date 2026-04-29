@@ -1,4 +1,4 @@
-#include "uint256.hpp"
+#include "core/uint256.hpp"
 
 Uint256::Uint256() : bn(BN_new()) {
   if (!bn) {

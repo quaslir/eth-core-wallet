@@ -1,9 +1,9 @@
 #pragma once
-#include "config.hpp"
+#include "config/config.hpp"
 #include "derive.hpp"
 #include "mnemonic.hpp"
 #include "security.hpp"
-#include "tech_utils.hpp"
+#include "utils/tech_utils.hpp"
 #include <string>
 
 using bytes_data = std::vector<uint8_t>;

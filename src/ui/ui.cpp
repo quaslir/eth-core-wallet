@@ -1,12 +1,11 @@
-#include "ui.hpp"
-#include "async_manager.hpp"
+#include "ui/ui.hpp"
 
-#include "blockchain_client.hpp"
-#include "config.hpp"
+#include "drivers/blockchain_client.hpp"
+#include "config/config.hpp"
 #include "iwallet_actions.hpp"
-#include "json.hpp"
-#include "security.hpp"
-#include "tech_utils.hpp"
+#include "api/json.hpp"
+#include "core/security.hpp"
+#include "utils/tech_utils.hpp"
 #include <cstddef>
 #include <cstdlib>
 #include <string>

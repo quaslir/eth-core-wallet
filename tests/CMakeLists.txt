@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-add_executable(${PROJECT_NAME} test_main.cpp)
+add_executable(${PROJECT_NAME} test_main.cpp core/test_mnemonic.cpp)
 
 
 include(FetchContent)
@@ -21,4 +21,4 @@ FetchContent_MakeAvailable(Catch2)
 
 
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain wallet_core)

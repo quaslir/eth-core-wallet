@@ -1,7 +1,6 @@
-#include "config.hpp"
-#include "crypto_utils.hpp"
-#include "tech_utils.hpp"
-#include <stdint.h>
+#include "config/config.hpp"
+#include "utils/crypto_utils.hpp"
+#include "utils/tech_utils.hpp"
 #include <string_view>
 #include <vector>
 using bytes_data = std::vector<uint8_t>;

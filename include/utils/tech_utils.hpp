@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using bytes_data = std::vector<uint8_t>;
@@ -16,4 +17,5 @@ void rm_file(const std::string &filename = "session.json");
 void clear(bytes_data &data);
 bool to_double(const std::string &str, double &val);
 double eth_to_usd(double eth, double price);
+bool contains_only_lowercase(std::string_view string);
 } // namespace tech_utils

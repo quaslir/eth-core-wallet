@@ -1,6 +1,6 @@
 #pragma once
-#include "json.hpp"
-#include "supported_networks.hpp"
+#include "api/json.hpp"
+#include "core/supported_networks.hpp"
 
 #include <cstddef>
 #include <string>

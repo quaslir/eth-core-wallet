@@ -1,7 +1,7 @@
-#include "derive.hpp"
+#include "core/derive.hpp"
 #include "Keccak256.hpp"
-#include "crypto_utils.hpp"
-#include "tech_utils.hpp"
+#include "utils/crypto_utils.hpp"
+#include "utils/tech_utils.hpp"
 #include <ranges>
 #include <stdexcept>
 extern "C" {

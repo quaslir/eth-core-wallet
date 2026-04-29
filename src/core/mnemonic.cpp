@@ -1,6 +1,7 @@
-#include "mnemonic.hpp"
-#include "bip39.hpp"
-#include "config.hpp"
+#include "core/mnemonic.hpp"
+#include "core/bip39.hpp"
+#include "config/config.hpp"
+#include "utils/tech_utils.hpp"
 #include <ranges>
 MnemonicGenerator::MnemonicGenerator() {}
 
@@ -83,6 +84,7 @@ bytes_data MnemonicGenerator::createSalt(bytes_data &passphrase) {
 }
 
 bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
+if(!tech_utils::contains_only_lowercase(mnemonic)) return false;
   std::vector<uint16_t> mnemonic_indexes;
 
   int checkSum = 0;
@@ -91,13 +93,15 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
 
   for (auto word_range : words) {
     std::string_view word{word_range.begin(), word_range.end()};
+    if(word.empty()) return false;
     int index = bip_39::getIndex(word);
 
     if (index < 0)
       return false;
     mnemonic_indexes.push_back(index);
   }
-  if (mnemonic_indexes.size() % 3 != 0)
+  if (mnemonic_indexes.size() != 12 && mnemonic_indexes.size() != 15 && mnemonic_indexes.size() != 18 &&
+      mnemonic_indexes.size() != 21 && mnemonic_indexes.size() !=24)
     return false;
 
   checkSum = static_cast<int>(mnemonic_indexes.size() / 3);

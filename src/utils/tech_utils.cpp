@@ -1,5 +1,6 @@
-#include "tech_utils.hpp"
+#include "utils/tech_utils.hpp"
 
+#include <cctype>
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
@@ -124,4 +125,18 @@ bool to_double(const std::string &str, double &val) {
 
 double eth_to_usd(double eth, double price) { return eth * price; }
 
+bool contains_only_lowercase(std::string_view string) {
+    if(string.empty() || string.front() == ' ' || string.back() == ' ') return false;
+
+    for(size_t i = 0; i < string.size(); i++) {
+        char c = string[i];
+        if(c == ' ') {
+
+            if(string[i + 1] == ' ') return false;
+
+        } else if(c < 'a' || c > 'z') return false;
+    }
+
+    return true;
+}
 } // namespace tech_utils

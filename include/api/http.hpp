@@ -1,9 +1,7 @@
 #pragma once
 
 #include <curl/curl.h>
-#include <stdint.h>
-#include <string_view>
-#include <vector>
+#include <string>
 
 namespace http {
 std::string post_request(const std::string &url, const std::string &data);

@@ -1,4 +1,4 @@
-#include "ui.hpp"
+#include "ui/ui.hpp"
 int main(void) {
   UserInterface ui;
   ui.load();

@@ -1,10 +1,9 @@
-#include "wallet.hpp"
-#include "config.hpp"
-#include "security.hpp"
-#include "tech_utils.hpp"
+#include "core/wallet.hpp"
+#include "config/config.hpp"
+#include "core/security.hpp"
+#include "utils/tech_utils.hpp"
 #include <iostream>
-#include <mutex>
-#include <string>
+
 
 Wallet::~Wallet() {
   OPENSSL_cleanse(priv_key.data(), priv_key.size());
