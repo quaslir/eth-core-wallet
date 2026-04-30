@@ -1,5 +1,5 @@
-#include "ui/cli.hpp"
 #include "config/config.hpp"
+#include "ui/cli.hpp"
 #include "utils/crypto_utils.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>

@@ -10,14 +10,18 @@ private:
 
   static bytes_data createMnemonic(bytes_data &randNumber,
                                    bytes_data &checkSum);
-  static bytes_data createSalt(bytes_data &passphrase);
+  static bytes_data createSalt(const bytes_data &passphrase);
 
 public:
   MnemonicGenerator();
-  bytes_data generateSeed(bytes_data &mnemonic, bytes_data &passphrase) const;
+  bytes_data generateSeed(bytes_data &mnemonic,
+                          const bytes_data &passphrase = {}) const;
   bytes_data generateMnemonic(Config &conf) const;
   bool mnemonic_is_correct(std::string_view mnemonic) const;
   bytes_data handle_extra_entropy_from_user(bytes_data &entropy,
                                             bytes_data &extra_entropy,
                                             int target_bits) const;
+
+  // Folowing function was created only for tests, it isn't used in the main application.
+   bytes_data __generateMnemonic(bytes_data& entropy) const;
 };

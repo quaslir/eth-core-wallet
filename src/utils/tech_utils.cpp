@@ -5,8 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <openssl/crypto.h>
 #include <fmt/core.h>
+#include <openssl/crypto.h>
 #include <string>
 namespace tech_utils {
 
@@ -126,17 +126,20 @@ bool to_double(const std::string &str, double &val) {
 double eth_to_usd(double eth, double price) { return eth * price; }
 
 bool contains_only_lowercase(std::string_view string) {
-    if(string.empty() || string.front() == ' ' || string.back() == ' ') return false;
+  if (string.empty() || string.front() == ' ' || string.back() == ' ')
+    return false;
 
-    for(size_t i = 0; i < string.size(); i++) {
-        char c = string[i];
-        if(c == ' ') {
+  for (size_t i = 0; i < string.size(); i++) {
+    char c = string[i];
+    if (c == ' ') {
 
-            if(string[i + 1] == ' ') return false;
+      if (string[i + 1] == ' ')
+        return false;
 
-        } else if(c < 'a' || c > 'z') return false;
-    }
+    } else if (c < 'a' || c > 'z')
+      return false;
+  }
 
-    return true;
+  return true;
 }
 } // namespace tech_utils

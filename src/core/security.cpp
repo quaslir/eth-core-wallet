@@ -1,8 +1,8 @@
 #include "core/security.hpp"
 #include "Keccak256.hpp"
-#include "ui/cli.hpp"
 #include "api/json.hpp"
 #include "core/wallet.hpp"
+#include "ui/cli.hpp"
 #include <string>
 #define ITERATIONS 262144
 using json = nlohmann::json;

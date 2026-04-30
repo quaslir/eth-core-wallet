@@ -1,9 +1,9 @@
 #include "drivers/blockchain_client.hpp"
-#include "config/configuration.hpp"
 #include "api/http.hpp"
 #include "api/json.hpp"
-#include "utils/tech_utils.hpp"
+#include "config/configuration.hpp"
 #include "core/uint256.hpp"
+#include "utils/tech_utils.hpp"
 #include <exception>
 
 double BlockchainClient::get_balance(const std::string &eth_addr) const {

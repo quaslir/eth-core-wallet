@@ -1,6 +1,6 @@
 #pragma once
-#include "drivers/blockchain_client.hpp"
 #include "core/wallet_info.hpp"
+#include "drivers/blockchain_client.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <string>

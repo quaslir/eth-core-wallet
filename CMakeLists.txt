@@ -124,6 +124,5 @@ endif()
 
 add_subdirectory(tests)
 
-
-
-
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tests/core/bip39-tests.json"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")

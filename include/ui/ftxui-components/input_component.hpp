@@ -1,6 +1,6 @@
 #pragma once
-#include "utils/tech_utils.hpp"
 #include "text_component.hpp"
+#include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>

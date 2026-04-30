@@ -1,6 +1,6 @@
-#include <vector>
-#include <string>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 extern "C" {
 #include <openssl/bn.h>

@@ -4,7 +4,6 @@
 #include "utils/tech_utils.hpp"
 #include <iostream>
 
-
 Wallet::~Wallet() {
   OPENSSL_cleanse(priv_key.data(), priv_key.size());
   OPENSSL_cleanse(eth_address.data(), eth_address.size());

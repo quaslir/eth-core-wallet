@@ -1,0 +1,48 @@
+{
+  "english": [
+    {
+      "entropy": "00000000000000000000000000000000",
+      "seed_phrase": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+      "seed": "5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc19a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4",
+      "root_key": "xprv9s21ZrQH143K3GJpoapnV8SFfukcVBSfeCficPSGfubmSFDxo1kuHnLisriDvSnRRuL2Qrg5ggqHKNVpxR86QEC8w35uxmGoggxtQTPvfUu",
+      "first_eth_addr": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94",
+      "first_eth_private_key": "0x1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727"
+    },
+
+    {
+      "entropy": "7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f",
+      "seed_phrase": "legal winner thank year wave sausage worth useful legal winner thank yellow",
+      "seed": "878386efb78845b3355bd15ea4d39ef97d179cb712b77d5c12b6be415fffeffe5f377ba02bf3f8544ab800b955e51fbff09828f682052a20faa6addbbddfb096",
+      "root_key": "xprv9s21ZrQH143K2x4gnzRB1eZDq92Uuvy9CXbvgQGdvykXZ9mkkot6LBjzDpgaAfvzkuxJe9JKJXQ38VoPutxvACA5MsyoBs5UyQ4HZKGshGs",
+      "first_eth_addr": "0x58A57ed9d8d624cBD12e2C467D34787555bB1b25",
+      "first_eth_private_key": "0x33fa40f84e854b941c2b0436dd4a256e1df1cb41b9c1c0ccc8446408c19b8bf9"
+    },
+
+    {
+      "entropy": "80808080808080808080808080808080",
+      "seed_phrase": "letter advice cage absurd amount doctor acoustic avoid letter advice cage above",
+      "seed": "77d6be9708c8218738934f84bbbb78a2e048ca007746cb764f0673e4b1812d176bbb173e1a291f31cf633f1d0bad7d3cf071c30e98cd0688b5bcce65ecaceb36",
+      "root_key": "xprv9s21ZrQH143K44Ed4QRTf937zLBakERjDRwqdMirEN9K5GjGedDM4zZSzCTuKSfTRw6b9c6AfNpnLi5ZA6ZWpQ1cmmt86pq8AE2yqeTB6Xm",
+      "first_eth_addr": "0x3061750d3dF69ef7B8d4407CB7f3F879Fd9d2398",
+      "first_eth_private_key": "0x24d2034316d5deb53ff8d6d56c103b3de38d64e867709b3d8c6a295ba6d06c9b"
+    },
+
+    {
+      "entropy": "ffffffffffffffffffffffffffffffff",
+      "seed_phrase": "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong",
+      "seed": "b6a6d8921942dd9806607ebc2750416b289adea669198769f2e15ed926c3aa92bf88ece232317b4ea463e84b0fcd3b53577812ee449ccc448eb45e6f544e25b6",
+      "root_key": "xprv9s21ZrQH143K2PfMvkNViFc1fgumGqBew45JD8SxA59Jc5M66n3diqb92JjvaR61zT9P89Grys12kdtV4EFVo6tMwER7U2hcUmZ9VfMYPLC",
+      "first_eth_addr": "0xfc2077CA7F403cBECA41B1B0F62D91B5EA631B5E",
+      "first_eth_private_key": "0x7af65ba4dd53f23495dcb04995e96f47c243217fc279f10795871b725cd009ae"
+    },
+
+    {
+      "entropy": "000000000000000000000000000000000000000000000000",
+      "seed_phrase": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon agent",
+      "seed": "4975bb3d1faf5308c86a30893ee903a976296609db223fd717e227da5a813a34dc1428b71c84a787fc51f3b9f9dc28e9459f48c08bd9578e9d1b170f2d7ea506",
+      "root_key": "xprv9s21ZrQH143K48UaviLRexBBQSB7EmGa5J9hjUf91xP9RSr2e9BrBZ67ks4jLKuXXSzw1gYXmX9vtbYBcANxztsb2yWCQXYyEBtrv88EXDw",
+      "first_eth_addr": "0x197A1bEE163923815Ba58EaD0F14B3Fcd8C5926d",
+      "first_eth_private_key": "0x7baa95e968e65395b2b4cc341885bcfbc0d820571af180c65cc9c5019551c669"
+    }
+  ]
+}
