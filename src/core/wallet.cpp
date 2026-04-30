@@ -17,7 +17,7 @@ bytes_data Wallet::prepare_mnemonic(Config &conf) const {
 }
 
 void Wallet::sync_derive_path(std::vector<uint32_t> &derive_path) const {
-  derive_path.back() = this->index;
+  derive_path.back() = this->index; //!
 }
 bool Wallet::update_index() const {
 
@@ -37,7 +37,7 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
   }
 
   eth_address =
-      "0x" + tech_utils::to_hex(devk.generate_address(keys.parent_key));
+      devk.generate_address(keys.parent_key);
 
   priv_key = keys.parent_key;
   OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());

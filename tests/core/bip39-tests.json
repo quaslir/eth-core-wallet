@@ -43,6 +43,24 @@
       "root_key": "xprv9s21ZrQH143K48UaviLRexBBQSB7EmGa5J9hjUf91xP9RSr2e9BrBZ67ks4jLKuXXSzw1gYXmX9vtbYBcANxztsb2yWCQXYyEBtrv88EXDw",
       "first_eth_addr": "0x197A1bEE163923815Ba58EaD0F14B3Fcd8C5926d",
       "first_eth_private_key": "0x7baa95e968e65395b2b4cc341885bcfbc0d820571af180c65cc9c5019551c669"
+    },
+
+    {
+      "entropy": "7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f",
+      "seed_phrase": "legal winner thank year wave sausage worth useful legal winner thank year wave sausage worth useful legal will",
+      "seed": "b059400ce0f55498a5527667e77048bb482ff6daa16c37b4b9e8af70c85b3f4df588004f19812a1a027c9a51e5e94259a560268e91cd10e206451a129826e740",
+      "root_key": "xprv9s21ZrQH143K4Vgw4mbHCunAxHVRuR1irqSiqXVGpSuca7rczLU2w6hiPkA1HW7GEUZTNtsFJrwggFJZNGRhmRP1e6y8BYH98xMnYDavzB4",
+      "first_eth_addr": "0x633F85F91B904540Ede9CaaC759ce46ECc44EbbB",
+      "first_eth_private_key": "0xd27d4a695225fdf22bfbeb495d7b319fb1b40d6f8ac50dd63ceaef0a0e171966"
+    },
+
+    {
+      "entropy": "808080808080808080808080808080808080808080808080",
+      "seed_phrase": "letter advice cage absurd amount doctor acoustic avoid letter advice cage absurd amount doctor acoustic avoid letter always",
+      "seed": "04d5f77103510c41d610f7f5fb3f0badc77c377090815cee808ea5d2f264fdfabf7c7ded4be6d4c6d7cdb021ba4c777b0b7e57ca8aa6de15aeb9905dba674d66",
+      "root_key": "xprv9s21ZrQH143K2Z2MAexszKEd4vm8bHh9vdxreb2KFq2deUv57Xd8winRtRaRFAvbixr43BhviFF9mSQ2TyGHuwKKRAmeVc17wxFKEbrvKh2",
+      "first_eth_addr": "0x8D93934aB91e2417A21F25f3F862EFcBcEa85f9e",
+      "first_eth_private_key": "0x29f8cdaef54e6e8e4f9f3fdb98119122818e2166ddd889240d65f1339a7551d0"
     }
   ]
 }

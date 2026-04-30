@@ -5,6 +5,7 @@
 #include <exception>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <string_view>
 #include <vector>
 #include <iostream>
 using namespace nlohmann;
@@ -43,7 +44,8 @@ namespace core_test_utils {
                    test.entropy = tech_utils::from_hex_to_bytes(item.at("entropy").get<std::string>());
                    test.seed_phrase = item["seed_phrase"].get<std::string>();
                    test.seed = tech_utils::from_hex_to_bytes(item["seed"].get<std::string>());
-                   //test.master_node = tech_utils::from_hex_to_bytes(item["root_key"].get<std::string>());
+                   std::string master_node = item["root_key"].get<std::string>();
+                   //test.master_node = bytes_data(master_node.begin(), master_node.end());
 
                    test.first_eth_addr = item["first_eth_addr"].get<std::string>();
                    test.first_eth_private_key = tech_utils::from_hex_to_bytes(item["first_eth_private_key"].get<std::string>());
