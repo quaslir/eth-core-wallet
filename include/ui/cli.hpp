@@ -8,8 +8,6 @@
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 
-#include <vector>
-using bytes_data = std::vector<uint8_t>;
 using namespace ftxui;
 
 enum state_t {

@@ -1,5 +1,5 @@
 #include <cstdint>
-#include <span>
+#include "core/secure_bytes_data.hpp"
 #include <string>
 #include <vector>
 extern "C" {
@@ -7,7 +7,6 @@ extern "C" {
 #include <secp256k1.h>
 }
 
-using bytes_data = std::vector<uint8_t>;
 
 struct KEY_PAIR {
   bytes_data parent_key, chain_key;

@@ -6,9 +6,7 @@
 #include <string_view>
 
 Wallet::~Wallet() {
-  OPENSSL_cleanse(priv_key.data(), priv_key.size());
-  OPENSSL_cleanse(eth_address.data(), eth_address.size());
-  OPENSSL_cleanse(master_node.data(), master_node.size());
+// handle
 }
 
 int Wallet::get_number_of_bits(void) const { return 0; }
@@ -26,7 +24,7 @@ bool Wallet::update_index() const {
     return false;
   return true;
 }
-void Wallet::save(bytes_data &password, const std::string &filename) const {
+void Wallet::save(const bytes_data &password, const std::string &filename) const {
   security_manager::first_time_save(*this, password, filename);
 }
 void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
@@ -40,20 +38,15 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
   eth_address = devk.generate_address(keys.parent_key);
 
   priv_key = keys.parent_key;
-  OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
-  OPENSSL_cleanse(keys.chain_key.data(), keys.chain_key.size());
 }
 
-void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
-                                    bytes_data &passphrase,
+void Wallet::finalize_from_mnemonic(const bytes_data &mnemonic,
+                                    const bytes_data &passphrase,
                                     const std::vector<uint32_t> &path_deriv) {
   bytes_data seed = mem.generateSeed(mnemonic, passphrase);
 
-  OPENSSL_cleanse(passphrase.data(), passphrase.size());
-
   std::string_view key = "Bitcoin seed";
   master_node = crypto_utils::HMAC_SHA512(key, seed);
-  OPENSSL_cleanse(seed.data(), seed.size());
 
   derive(path_deriv);
 }
@@ -80,7 +73,6 @@ bool Wallet::derive_next(void) {
   try {
     std::vector<uint32_t> next_path_deriv =
         crypto_utils::change_derive_path(index + 1);
-    OPENSSL_cleanse(priv_key.data(), priv_key.size());
     derive(next_path_deriv);
     index++;
   } catch (const std::exception &err) {
@@ -99,7 +91,7 @@ bool Wallet::derive_prev(void) {
   try {
     std::vector<uint32_t> prev_path_deriv =
         crypto_utils::change_derive_path(index - 1);
-    OPENSSL_cleanse(priv_key.data(), priv_key.size());
+
     derive(prev_path_deriv);
     index--;
   } catch (const std::exception &err) {
@@ -125,10 +117,8 @@ bool Wallet::correct_mnemonic(std::string_view mnemonic) const {
   return mem.mnemonic_is_correct(mnemonic);
 }
 
-void Wallet::import_wallet(bytes_data &mnemonic, bytes_data &passphrase) {
+void Wallet::import_wallet(const bytes_data &mnemonic, const bytes_data &passphrase) {
   finalize_from_mnemonic(mnemonic, passphrase, crypto_utils::path_deriv);
-  OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
-  OPENSSL_cleanse(passphrase.data(), passphrase.size());
 }
 
 bool Wallet::is_loaded(void) const { return !eth_address.empty(); }

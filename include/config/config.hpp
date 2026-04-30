@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
 #include <string_view>
-#include <vector>
-using bytes_data = std::vector<uint8_t>;
+#include <cstdint>
+#include "core/secure_bytes_data.hpp"
+
 struct Config {
 public:
   bytes_data extra_entropy;

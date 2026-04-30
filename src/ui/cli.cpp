@@ -6,7 +6,6 @@
 #include "ui/ftxui-components/input_component.hpp"
 #include "ui/ftxui-components/paragraph.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
-#include "ui/ftxui-components/text_component.hpp"
 #include "utils/tech_utils.hpp"
 #include <atomic>
 #include <chrono>

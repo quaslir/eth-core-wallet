@@ -8,7 +8,7 @@
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
 #include "iwallet_actions.hpp"
-
+#include "core/secure_bytes_data.hpp"
 class UserInterface : public IWalletActions {
 public:
   void load(void);

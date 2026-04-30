@@ -1,5 +1,6 @@
 #include "core/derive.hpp"
 #include "Keccak256.hpp"
+
 #include "utils/crypto_utils.hpp"
 #include "utils/tech_utils.hpp"
 #include <algorithm>
@@ -7,7 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <ranges>
-#include <span>
+
 #include <stdexcept>
 #include <string>
 extern "C" {
@@ -49,28 +50,28 @@ bytes_data Key_Derive::derive_public_key(bytes_data &private_key) const {
 }
 
 void Key_Derive::derive_child(KEY_PAIR &keys, uint32_t index) {
-  std::vector<uint8_t> data;
+  bytes_data data;
   data.reserve(37);
   if (index >= 0x80000000) {
 
     data.push_back(0x00);
     data.insert(data.end(), keys.parent_key.begin(), keys.parent_key.end());
   } else {
-    std::vector<uint8_t> pub_key = derive_public_key(keys.parent_key);
+    bytes_data pub_key = derive_public_key(keys.parent_key);
     data.insert(data.end(), pub_key.begin(), pub_key.end());
   }
   uint32_t be_index = htonl(index);
   const uint8_t *index_ptr = reinterpret_cast<const uint8_t *>(&be_index);
 
   data.insert(data.end(), index_ptr, index_ptr + 4);
-  std::vector<uint8_t> I = crypto_utils::HMAC_SHA512(keys.chain_key, data);
+  bytes_data I = crypto_utils::HMAC_SHA512(keys.chain_key, data);
 
-  keys.parent_key = add_mod_n(std::vector<uint8_t>(I.begin(), I.begin() + 32),
+  keys.parent_key = add_mod_n(bytes_data(I.begin(), I.begin() + 32),
                               keys.parent_key);
   keys.chain_key.assign(I.begin() + 32, I.end());
 }
 
-std::vector<uint8_t> Key_Derive::add_mod_n(const bytes_data &IL,
+bytes_data Key_Derive::add_mod_n(const bytes_data &IL,
                                            const bytes_data &k_parent) const {
 
   BN_CTX *bn_ctx = BN_CTX_new();
@@ -85,7 +86,7 @@ std::vector<uint8_t> Key_Derive::add_mod_n(const bytes_data &IL,
     throw std::runtime_error("mod addition failed");
   }
 
-  std::vector<uint8_t> child_priv(32);
+  bytes_data child_priv(32);
 
   BN_bn2binpad(bn_res, child_priv.data(), 32);
 

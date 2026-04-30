@@ -2,7 +2,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-using bytes_data = std::vector<uint8_t>;
+#include "core/secure_bytes_data.hpp"
 using json = nlohmann::json;
 struct EncryptedKeystore {
   bytes_data ciphertext;

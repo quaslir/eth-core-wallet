@@ -108,7 +108,6 @@ Component CLI::handle_extra_entropy(void) {
     if (event == Event::Return) {
       actions->set_extra_entropy(*user_input);
 
-      OPENSSL_cleanse(user_input->data(), user_input->size()); // fix
       user_input->clear();
       set_active_tab(CONFIG_MENU);
       *active_sub_tab = 0;
@@ -202,7 +201,6 @@ Component CLI::handle_passphrase(void) {
       actions->add_passphrase(
           bytes_data(user_input->begin(), user_input->end()));
 
-      OPENSSL_cleanse(user_input->data(), user_input->size()); // fix
       user_input->clear();
       set_active_tab(CONFIG_MENU);
       *active_sub_tab = 0;

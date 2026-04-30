@@ -1,5 +1,4 @@
 #pragma once
-#include <charconv>
 #include <cstdint>
 #include <memory>
 #include <stdint.h>
@@ -8,7 +7,7 @@ extern "C" {
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 }
-using bytes_data = std::vector<uint8_t>;
+#include "core/secure_bytes_data.hpp"
 namespace crypto_utils {
 
 struct EVPMDCTXDeleter {

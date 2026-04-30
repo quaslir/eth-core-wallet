@@ -47,7 +47,6 @@ bytes_data PBKDF2_HMAC_SHA512(const bytes_data &data, const bytes_data &salt,
                         static_cast<int>(out.size()),
                         reinterpret_cast<unsigned char *>(out.data()));
   if (res == 0) {
-    OPENSSL_cleanse(out.data(), out.size());
     throw std::runtime_error("OpenSSL: PBKDF2_HMAC_SHA512 failed");
   }
   return out;

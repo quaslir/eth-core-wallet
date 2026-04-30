@@ -1,6 +1,7 @@
 #pragma once
 #include "config/configuration.hpp"
 #include "utils/tech_utils.hpp"
+#include "core/secure_bytes_data.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <ftxui/dom/node.hpp>
@@ -8,7 +9,7 @@
 #include <memory>
 #include <vector>
 using namespace ftxui;
-using bytes_data = std::vector<uint8_t>;
+
 
 class ParagraphNode : public Node {
 private:

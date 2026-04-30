@@ -1,13 +1,13 @@
 #pragma once
 #include "utils/tech_utils.hpp"
-#include <cstdint>
+
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <memory>
-#include <vector>
 
+#include "core/secure_bytes_data.hpp"
 using namespace ftxui;
-using bytes_data = std::vector<uint8_t>;
+
 
 class TextNode : public Node {
 private:

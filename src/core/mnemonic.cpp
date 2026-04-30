@@ -1,12 +1,13 @@
 #include "core/mnemonic.hpp"
+#include "api/json.hpp"
 #include "config/config.hpp"
 #include "core/bip39.hpp"
 #include "utils/tech_utils.hpp"
 #include <ranges>
 MnemonicGenerator::MnemonicGenerator() {}
 
-bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
-                                             bytes_data &checkSum) {
+bytes_data MnemonicGenerator::createMnemonic(const bytes_data &randNumber,
+                                             const bytes_data &checkSum) {
   bytes_data seed;
   seed.reserve(randNumber.size() * 8 + checkSum.size());
 
@@ -16,8 +17,7 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
     }
   }
   seed.insert(seed.end(), checkSum.begin(), checkSum.end());
-  OPENSSL_cleanse(randNumber.data(), randNumber.size());
-  OPENSSL_cleanse(checkSum.data(), checkSum.size());
+
   std::vector<uint16_t> indexes;
 
   for (size_t i = 0; i < seed.size(); i += 11) {
@@ -29,7 +29,6 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
 
     indexes.push_back(index);
   }
-  OPENSSL_cleanse(seed.data(), seed.size());
   bytes_data mnemonic;
 
   for (size_t i = 0; i < indexes.size(); i++) {
@@ -39,8 +38,6 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
       mnemonic.push_back(static_cast<uint8_t>(' '));
     }
   }
-
-  OPENSSL_cleanse(indexes.data(), indexes.size() * sizeof(uint16_t));
   return mnemonic;
 }
 
@@ -55,20 +52,17 @@ bytes_data MnemonicGenerator::generateMnemonic(const Config &conf) const {
   bytes_data hash = hashes.sha256(randNumber);
 
   bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
-  OPENSSL_cleanse(hash.data(), hash.size());
   bytes_data mnemonic = createMnemonic(randNumber, checksum);
   return mnemonic;
 }
 
-bytes_data MnemonicGenerator::generateSeed(bytes_data &mnemonic,
+bytes_data MnemonicGenerator::generateSeed(const bytes_data &mnemonic,
                                            const bytes_data &passphrase) const {
   bytes_data salt = createSalt(passphrase);
 
   bytes_data masterseed =
       crypto_utils::PBKDF2_HMAC_SHA512(mnemonic, salt, 2048);
 
-  // OPENSSL_cleanse(passphrase.data(), passphrase.size());
-  OPENSSL_cleanse(salt.data(), salt.size());
   return masterseed;
 }
 
@@ -110,8 +104,7 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
   checkSum = static_cast<int>(mnemonic_indexes.size() / 3);
 
   bytes_data mnemonic_in_binary = tech_utils::to_bits(mnemonic_indexes);
-  OPENSSL_cleanse(mnemonic_indexes.data(),
-                  mnemonic_indexes.size() * sizeof(uint16_t));
+
   bytes_data check_sum_from_mnemonic(checkSum);
 
   check_sum_from_mnemonic.assign(mnemonic_in_binary.end() - checkSum,
@@ -122,39 +115,35 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
 
   bytes_data hash =
       hashes.sha256(tech_utils::to_bytes_from_bits(mnemonic_in_binary));
-  OPENSSL_cleanse(mnemonic_in_binary.data(), mnemonic_in_binary.size());
+
 
   bytes_data check_sum_sha256 = crypto_utils::getCheckSum(hash[0], checkSum);
 
   bool result = check_sum_sha256 == check_sum_from_mnemonic;
 
-  OPENSSL_cleanse(check_sum_from_mnemonic.data(),
-                  check_sum_from_mnemonic.size());
-  OPENSSL_cleanse(check_sum_sha256.data(), check_sum_sha256.size());
-
   return result;
 }
 
 bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
-    bytes_data &entropy, const bytes_data &extra_entropy,
+    const bytes_data &entropy, const bytes_data &extra_entropy,
     int target_bits) const {
-  entropy.insert(entropy.end(), extra_entropy.begin(), extra_entropy.end());
+  
+      bytes_data combined;
+      combined.reserve(entropy.size() + extra_entropy.size());
+      combined.insert(combined.end(), entropy.begin(), entropy.end());
+      combined.insert(combined.end(),  extra_entropy.begin(),  extra_entropy.end());
 
-  bytes_data new_entropy = hashes.sha256(entropy);
-
-  OPENSSL_cleanse(entropy.data(), entropy.size());
+  bytes_data new_entropy = hashes.sha256(combined);
 
   int target_bytes = target_bits / 8;
 
   bytes_data final_entropy(new_entropy.begin(),
                            new_entropy.begin() + target_bytes);
 
-  OPENSSL_cleanse(new_entropy.data(), new_entropy.size());
-
   return final_entropy;
 }
 
-bytes_data MnemonicGenerator::__generateMnemonic(bytes_data &entropy) const {
+bytes_data MnemonicGenerator::__generateMnemonic(const bytes_data &entropy) const {
   bytes_data hash = hashes.sha256(entropy);
   int checkSumBits = entropy.size() * 8 / 32;
   bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);

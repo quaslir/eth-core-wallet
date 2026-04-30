@@ -27,10 +27,6 @@ bool first_time_save(const Wallet &wallet, const bytes_data &password,
                    encrypted_masternode.end());
   Keccak256::getHash(mac_input.data(), mac_input.size(), mac.data());
 
-  OPENSSL_cleanse(hash_key.data(), hash_key.size());
-  OPENSSL_cleanse(encryption_key.data(), encryption_key.size());
-  OPENSSL_cleanse(mac_key.data(), mac_key.size());
-
   EncryptedKeystore encrp(encrypted_masternode, mac, iv, salt, ITERATIONS,
                           wallet.getIndex());
 
@@ -73,11 +69,6 @@ bool load_wallet(Wallet &wallet, const bytes_data &password,
   auth_failed = mac != encrp.mac;
 
   if (auth_failed) {
-    OPENSSL_cleanse(hash_key.data(), hash_key.size());
-    OPENSSL_cleanse(mac.data(), mac.size());
-    OPENSSL_cleanse(encryption_key.data(), encryption_key.size());
-    OPENSSL_cleanse(mac_input.data(), mac_input.size());
-    OPENSSL_cleanse(mac_key.data(), mac_key.size());
     return false;
   }
 
@@ -85,12 +76,6 @@ bool load_wallet(Wallet &wallet, const bytes_data &password,
       crypto_utils::AES_256_CTR(encryption_key, encrp.ciphertext, encrp.iv);
   wallet.set_master_node(decrypted_masternode);
   wallet.set_index(encrp.index);
-  OPENSSL_cleanse(hash_key.data(), hash_key.size());
-  OPENSSL_cleanse(mac.data(), mac.size());
-  OPENSSL_cleanse(encryption_key.data(), encryption_key.size());
-  OPENSSL_cleanse(mac_input.data(), mac_input.size());
-  OPENSSL_cleanse(mac_key.data(), mac_key.size());
-  OPENSSL_cleanse(decrypted_masternode.data(), decrypted_masternode.size());
   return true;
 }
 } // namespace security_manager

@@ -1,9 +1,9 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include <string>
-#include <vector>
+#include "core/secure_bytes_data.hpp"
 class Wallet;
-using bytes_data = std::vector<uint8_t>;
+
 namespace security_manager {
 bool first_time_save(const Wallet &wallet, const bytes_data &password,
                      const std::string &filename = "session.json");

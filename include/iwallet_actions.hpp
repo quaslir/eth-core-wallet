@@ -2,12 +2,10 @@
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
 #include <cstddef>
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
 struct TransactionRecord;
-using bytes_data = std::vector<uint8_t>;
 
 struct Config;
 
