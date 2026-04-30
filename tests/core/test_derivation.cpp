@@ -1,7 +1,9 @@
 #include <catch2/catch_all.hpp>
+#include <cstdint>
 #include "api/json.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "core/wallet.hpp"
+#include "utils/tech_utils.hpp"
 #include "utils/utils.hpp"
 #include "core/bip39.hpp"
 
@@ -16,7 +18,9 @@ TEST_CASE("Derivation from seed tests", "[derivaion]") {
             bytes_data passphrase = {};
             wallet.finalize_from_mnemonic(mnemonic, passphrase, PATH_DERIVE);
             REQUIRE(wallet.get_eth_address() == entry.first_eth_addr);
-            //REQUIRE(wallet.get_private_key() == entry.first_eth_private_key);
+            std::string private_key = wallet.__get_private_key_hex();
+
+            REQUIRE(private_key == entry.first_eth_private_key);
         }
     }
 

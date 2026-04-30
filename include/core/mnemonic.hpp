@@ -16,12 +16,13 @@ public:
   MnemonicGenerator();
   bytes_data generateSeed(bytes_data &mnemonic,
                           const bytes_data &passphrase = {}) const;
-  bytes_data generateMnemonic(Config &conf) const;
+  bytes_data generateMnemonic(const Config &conf) const;
   bool mnemonic_is_correct(std::string_view mnemonic) const;
   bytes_data handle_extra_entropy_from_user(bytes_data &entropy,
-                                            bytes_data &extra_entropy,
+                                            const bytes_data &extra_entropy,
                                             int target_bits) const;
 
-  // Folowing function was created only for tests, it isn't used in the main application.
-   bytes_data __generateMnemonic(bytes_data& entropy) const;
+  // Folowing function was created only for tests, it isn't used in the main
+  // application.
+  bytes_data __generateMnemonic(bytes_data &entropy) const;
 };

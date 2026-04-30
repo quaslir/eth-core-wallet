@@ -44,7 +44,7 @@ bytes_data MnemonicGenerator::createMnemonic(bytes_data &randNumber,
   return mnemonic;
 }
 
-bytes_data MnemonicGenerator::generateMnemonic(Config &conf) const {
+bytes_data MnemonicGenerator::generateMnemonic(const Config &conf) const {
   size_t bytes = conf.bit_length / 8;
   int checkSumBits = conf.bit_length / 32;
   bytes_data randNumber = crypto_utils::gen_number(bytes);
@@ -136,12 +136,12 @@ bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
 }
 
 bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
-    bytes_data &entropy, bytes_data &extra_entropy, int target_bits) const {
+    bytes_data &entropy, const bytes_data &extra_entropy,
+    int target_bits) const {
   entropy.insert(entropy.end(), extra_entropy.begin(), extra_entropy.end());
 
   bytes_data new_entropy = hashes.sha256(entropy);
 
-  OPENSSL_cleanse(extra_entropy.data(), extra_entropy.size());
   OPENSSL_cleanse(entropy.data(), entropy.size());
 
   int target_bytes = target_bits / 8;
@@ -154,11 +154,11 @@ bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
   return final_entropy;
 }
 
-bytes_data MnemonicGenerator::__generateMnemonic(bytes_data& entropy) const {
-    bytes_data hash = hashes.sha256(entropy);
-    int checkSumBits = entropy.size() * 8 / 32;
-    bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
+bytes_data MnemonicGenerator::__generateMnemonic(bytes_data &entropy) const {
+  bytes_data hash = hashes.sha256(entropy);
+  int checkSumBits = entropy.size() * 8 / 32;
+  bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
 
-    bytes_data mnemonic = createMnemonic(entropy, checksum);
-    return mnemonic;
+  bytes_data mnemonic = createMnemonic(entropy, checksum);
+  return mnemonic;
 }

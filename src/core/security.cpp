@@ -7,7 +7,7 @@
 #define ITERATIONS 262144
 using json = nlohmann::json;
 namespace security_manager {
-bool first_time_save(const Wallet &wallet, bytes_data &password,
+bool first_time_save(const Wallet &wallet, const bytes_data &password,
                      const std::string &filename) {
 
   bytes_data salt = crypto_utils::gen_number(16);
@@ -27,7 +27,6 @@ bool first_time_save(const Wallet &wallet, bytes_data &password,
                    encrypted_masternode.end());
   Keccak256::getHash(mac_input.data(), mac_input.size(), mac.data());
 
-  OPENSSL_cleanse(password.data(), password.size());
   OPENSSL_cleanse(hash_key.data(), hash_key.size());
   OPENSSL_cleanse(encryption_key.data(), encryption_key.size());
   OPENSSL_cleanse(mac_key.data(), mac_key.size());
@@ -53,7 +52,7 @@ bool update(const Wallet &wallet, const std::string &filename) {
   return true;
 }
 
-bool load_wallet(Wallet &wallet, bytes_data &password,
+bool load_wallet(Wallet &wallet, const bytes_data &password,
                  const std::string &filename) {
   EncryptedKeystore encrp;
   if (!encrp.load(filename))

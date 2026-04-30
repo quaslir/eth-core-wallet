@@ -114,7 +114,8 @@ std::string Key_Derive::generate_address(const bytes_data &private_key) const {
   bytes_data raw_addr(full_hash + 12, full_hash + 32);
   std::string eth_address = tech_utils::to_hex(raw_addr);
 
-  std::transform(eth_address.begin(), eth_address.end(), eth_address.begin(), ::tolower);
+  std::transform(eth_address.begin(), eth_address.end(), eth_address.begin(),
+                 ::tolower);
   return to_checksum_address(eth_address);
 }
 
@@ -145,31 +146,32 @@ Key_Derive::parse_derive_path(const std::string &path) {
   return derivation_indexes;
 }
 
-std::string Key_Derive::to_checksum_address(const std::string & addr) const {
-std::string result = "0x";
+std::string Key_Derive::to_checksum_address(const std::string &addr) const {
+  std::string result = "0x";
 
-uint8_t hash[32];
+  uint8_t hash[32];
 
-Keccak256::getHash(reinterpret_cast<const uint8_t *>(addr.data()), addr.size(), hash);
-for(size_t i = 0; i < addr.size(); i++) {
+  Keccak256::getHash(reinterpret_cast<const uint8_t *>(addr.data()),
+                     addr.size(), hash);
+  for (size_t i = 0; i < addr.size(); i++) {
     char c = addr[i];
 
-    if(c >= '0' && c <= '9') {
-        result += c;
-        continue;
+    if (c >= '0' && c <= '9') {
+      result += c;
+      continue;
     }
 
     uint8_t b = hash[i / 2];
 
-
     int nibble = (i % 2 == 0) ? (b >> 4) : (b & 0x0F);
 
-    if(nibble >= 8) {
-        result += std::toupper(c);
+    if (nibble >= 8) {
+      result += std::toupper(c);
     }
 
-    else result += c;
-}
+    else
+      result += c;
+  }
 
-return result;
+  return result;
 }

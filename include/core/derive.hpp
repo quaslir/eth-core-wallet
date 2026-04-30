@@ -1,7 +1,7 @@
 #include <cstdint>
+#include <span>
 #include <string>
 #include <vector>
-#include <span>
 extern "C" {
 #include <openssl/bn.h>
 #include <secp256k1.h>
@@ -32,5 +32,5 @@ public:
 private:
   bytes_data add_mod_n(const bytes_data &IL, const bytes_data &k_parent) const;
   bytes_data derive_public_key(bytes_data &private_key) const;
-  std::string to_checksum_address(const std::string& addr) const;
+  std::string to_checksum_address(const std::string &addr) const;
 };

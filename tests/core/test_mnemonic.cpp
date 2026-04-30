@@ -1,5 +1,4 @@
 #include <catch2/catch_all.hpp>
-#include "catch2/catch_message.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "utils/tech_utils.hpp"
 #include "utils/utils.hpp"

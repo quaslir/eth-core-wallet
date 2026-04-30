@@ -3,6 +3,7 @@
 #include "core/security.hpp"
 #include "utils/tech_utils.hpp"
 #include <iostream>
+#include <string_view>
 
 Wallet::~Wallet() {
   OPENSSL_cleanse(priv_key.data(), priv_key.size());
@@ -12,7 +13,7 @@ Wallet::~Wallet() {
 
 int Wallet::get_number_of_bits(void) const { return 0; }
 
-bytes_data Wallet::prepare_mnemonic(Config &conf) const {
+bytes_data Wallet::prepare_mnemonic(const Config &conf) const {
   return mem.generateMnemonic(conf);
 }
 
@@ -36,8 +37,7 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
     devk.derive_child(keys, path_deriv[i]);
   }
 
-  eth_address =
-      devk.generate_address(keys.parent_key);
+  eth_address = devk.generate_address(keys.parent_key);
 
   priv_key = keys.parent_key;
   OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
@@ -60,6 +60,11 @@ void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
 
 std::string Wallet::get_eth_address(void) const { return this->eth_address; }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }
+
+std::string Wallet::__get_private_key_hex(
+    void) const { // Used only in tests, this method is insecure and dangerous
+  return "0x" + tech_utils::to_hex(priv_key);
+}
 const long long &Wallet::getIndex(void) const { return this->index; }
 const bytes_data &Wallet::get_master_node(void) const {
   return this->master_node;
