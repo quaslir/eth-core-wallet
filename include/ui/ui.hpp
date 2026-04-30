@@ -1,13 +1,13 @@
-#include "async_eth_usd_update.hpp"
-#include "async_manager.hpp"
-#include "async_transactions_history_manager.hpp"
-#include "blockchain_client.hpp"
+#include "api/json.hpp"
+#include "async-managers/async_eth_usd_update.hpp"
+#include "async-managers/async_manager.hpp"
+#include "async-managers/async_transactions_history_manager.hpp"
 #include "cli.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
+#include "core/wallet.hpp"
+#include "core/wallet_info.hpp"
+#include "drivers/blockchain_client.hpp"
 #include "iwallet_actions.hpp"
-#include "json.hpp"
-#include "wallet.hpp"
-#include "wallet_info.hpp"
 
 class UserInterface : public IWalletActions {
 public:

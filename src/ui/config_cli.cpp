@@ -1,6 +1,6 @@
-#include "cli.hpp"
-#include "config.hpp"
-#include "crypto_utils.hpp"
+#include "config/config.hpp"
+#include "ui/cli.hpp"
+#include "utils/crypto_utils.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>

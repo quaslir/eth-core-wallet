@@ -1,12 +1,11 @@
-#include "blockchain_client.hpp"
-#include "configuration.hpp"
-#include "http.hpp"
-#include "json.hpp"
-#include "tech_utils.hpp"
-#include "uint256.hpp"
+#include "drivers/blockchain_client.hpp"
+#include "api/http.hpp"
+#include "api/json.hpp"
+#include "config/configuration.hpp"
+#include "core/uint256.hpp"
+#include "utils/tech_utils.hpp"
 #include <exception>
-#include <string>
-#include <vector>
+
 double BlockchainClient::get_balance(const std::string &eth_addr) const {
 
   try {

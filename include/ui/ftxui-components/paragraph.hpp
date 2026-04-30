@@ -1,6 +1,6 @@
 #pragma once
-#include "configuration.hpp"
-#include "tech_utils.hpp"
+#include "config/configuration.hpp"
+#include "utils/tech_utils.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <ftxui/dom/node.hpp>

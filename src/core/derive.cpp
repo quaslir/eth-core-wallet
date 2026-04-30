@@ -1,9 +1,15 @@
-#include "derive.hpp"
+#include "core/derive.hpp"
 #include "Keccak256.hpp"
-#include "crypto_utils.hpp"
-#include "tech_utils.hpp"
+#include "utils/crypto_utils.hpp"
+#include "utils/tech_utils.hpp"
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
 #include <ranges>
+#include <span>
 #include <stdexcept>
+#include <string>
 extern "C" {
 #include <arpa/inet.h>
 #include <openssl/bn.h>
@@ -91,7 +97,7 @@ std::vector<uint8_t> Key_Derive::add_mod_n(const bytes_data &IL,
   return child_priv;
 }
 
-bytes_data Key_Derive::generate_address(const bytes_data &private_key) const {
+std::string Key_Derive::generate_address(const bytes_data &private_key) const {
   secp256k1_pubkey public_key;
   bytes_data uncompressed_public_key(65);
   size_t len = 65;
@@ -105,9 +111,12 @@ bytes_data Key_Derive::generate_address(const bytes_data &private_key) const {
 
   uint8_t full_hash[32];
   Keccak256::getHash(uncompressed_public_key.data() + 1, len - 1, full_hash);
-  bytes_data eth_address(full_hash + 12, full_hash + 32);
+  bytes_data raw_addr(full_hash + 12, full_hash + 32);
+  std::string eth_address = tech_utils::to_hex(raw_addr);
 
-  return eth_address;
+  std::transform(eth_address.begin(), eth_address.end(), eth_address.begin(),
+                 ::tolower);
+  return to_checksum_address(eth_address);
 }
 
 const std::vector<uint32_t>
@@ -135,4 +144,34 @@ Key_Derive::parse_derive_path(const std::string &path) {
   }
 
   return derivation_indexes;
+}
+
+std::string Key_Derive::to_checksum_address(const std::string &addr) const {
+  std::string result = "0x";
+
+  uint8_t hash[32];
+
+  Keccak256::getHash(reinterpret_cast<const uint8_t *>(addr.data()),
+                     addr.size(), hash);
+  for (size_t i = 0; i < addr.size(); i++) {
+    char c = addr[i];
+
+    if (c >= '0' && c <= '9') {
+      result += c;
+      continue;
+    }
+
+    uint8_t b = hash[i / 2];
+
+    int nibble = (i % 2 == 0) ? (b >> 4) : (b & 0x0F);
+
+    if (nibble >= 8) {
+      result += std::toupper(c);
+    }
+
+    else
+      result += c;
+  }
+
+  return result;
 }

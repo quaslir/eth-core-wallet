@@ -1,6 +1,6 @@
-#include "async_eth_usd_update.hpp"
-#include "blockchain_client.hpp"
-#include "configuration.hpp"
+#include "async-managers/async_eth_usd_update.hpp"
+#include "config/configuration.hpp"
+#include "drivers/blockchain_client.hpp"
 void Async_ETH_USD_Currency::request_eth_price(void) {
 
   if (updating)

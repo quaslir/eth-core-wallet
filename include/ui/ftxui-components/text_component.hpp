@@ -1,5 +1,5 @@
 #pragma once
-#include "tech_utils.hpp"
+#include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
