@@ -2,9 +2,11 @@
 #include "api/http.hpp"
 #include "api/json.hpp"
 #include "config/configuration.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "utils/tech_utils.hpp"
 #include <exception>
+#include <string>
 
 double BlockchainClient::get_balance(const std::string &eth_addr) const {
 

@@ -1,19 +1,18 @@
 #include "core/wallet.hpp"
 #include "config/config.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
 #include "utils/tech_utils.hpp"
 #include <iostream>
 #include <string_view>
 
 Wallet::~Wallet() {
-  OPENSSL_cleanse(priv_key.data(), priv_key.size());
-  OPENSSL_cleanse(eth_address.data(), eth_address.size());
-  OPENSSL_cleanse(master_node.data(), master_node.size());
+// handle
 }
 
 int Wallet::get_number_of_bits(void) const { return 0; }
 
-bytes_data Wallet::prepare_mnemonic(const Config &conf) const {
+secure_string Wallet::prepare_mnemonic(const Config &conf) const {
   return mem.generateMnemonic(conf);
 }
 
@@ -26,7 +25,7 @@ bool Wallet::update_index() const {
     return false;
   return true;
 }
-void Wallet::save(bytes_data &password, const std::string &filename) const {
+void Wallet::save(const secure_string &password, const std::string &filename) const {
   security_manager::first_time_save(*this, password, filename);
 }
 void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
@@ -40,30 +39,28 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
   eth_address = devk.generate_address(keys.parent_key);
 
   priv_key = keys.parent_key;
-  OPENSSL_cleanse(keys.parent_key.data(), keys.parent_key.size());
-  OPENSSL_cleanse(keys.chain_key.data(), keys.chain_key.size());
 }
 
-void Wallet::finalize_from_mnemonic(bytes_data &mnemonic,
-                                    bytes_data &passphrase,
+void Wallet::finalize_from_mnemonic(const secure_string &mnemonic,
+                                    const secure_string &passphrase,
                                     const std::vector<uint32_t> &path_deriv) {
   bytes_data seed = mem.generateSeed(mnemonic, passphrase);
 
-  OPENSSL_cleanse(passphrase.data(), passphrase.size());
-
   std::string_view key = "Bitcoin seed";
   master_node = crypto_utils::HMAC_SHA512(key, seed);
-  OPENSSL_cleanse(seed.data(), seed.size());
 
   derive(path_deriv);
 }
 
-std::string Wallet::get_eth_address(void) const { return this->eth_address; }
+secure_string Wallet::get_eth_address(void) const { return this->eth_address; }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }
 
-std::string Wallet::__get_private_key_hex(
+secure_string Wallet::__get_private_key_hex(
     void) const { // Used only in tests, this method is insecure and dangerous
-  return "0x" + tech_utils::to_hex(priv_key);
+  secure_string private_key = "0x";
+  private_key.append(tech_utils::to_hex(priv_key));
+
+  return private_key;
 }
 const long long &Wallet::getIndex(void) const { return this->index; }
 const bytes_data &Wallet::get_master_node(void) const {
@@ -80,7 +77,6 @@ bool Wallet::derive_next(void) {
   try {
     std::vector<uint32_t> next_path_deriv =
         crypto_utils::change_derive_path(index + 1);
-    OPENSSL_cleanse(priv_key.data(), priv_key.size());
     derive(next_path_deriv);
     index++;
   } catch (const std::exception &err) {
@@ -99,7 +95,7 @@ bool Wallet::derive_prev(void) {
   try {
     std::vector<uint32_t> prev_path_deriv =
         crypto_utils::change_derive_path(index - 1);
-    OPENSSL_cleanse(priv_key.data(), priv_key.size());
+
     derive(prev_path_deriv);
     index--;
   } catch (const std::exception &err) {
@@ -119,16 +115,14 @@ void Wallet::set_master_node(const bytes_data &master_n) {
 }
 void Wallet::set_index(const int i) { this->index = i; }
 
-bool Wallet::correct_mnemonic(std::string_view mnemonic) const {
+bool Wallet::correct_mnemonic(const secure_string& mnemonic) const {
   if (mnemonic.empty())
     return false;
   return mem.mnemonic_is_correct(mnemonic);
 }
 
-void Wallet::import_wallet(bytes_data &mnemonic, bytes_data &passphrase) {
+void Wallet::import_wallet(const secure_string &mnemonic, const secure_string &passphrase) {
   finalize_from_mnemonic(mnemonic, passphrase, crypto_utils::path_deriv);
-  OPENSSL_cleanse(mnemonic.data(), mnemonic.size());
-  OPENSSL_cleanse(passphrase.data(), passphrase.size());
 }
 
 bool Wallet::is_loaded(void) const { return !eth_address.empty(); }

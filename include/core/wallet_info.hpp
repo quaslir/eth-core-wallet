@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
+#include "core/secure_bytes_data.hpp"
 struct WalletInfo {
-  std::string addr;
+  secure_string addr;
   double balance;
 };

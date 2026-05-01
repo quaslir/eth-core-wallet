@@ -1,4 +1,5 @@
 #include "utils/tech_utils.hpp"
+#include "core/secure_bytes_data.hpp"
 
 #include <cctype>
 #include <charconv>
@@ -10,8 +11,8 @@
 #include <string>
 namespace tech_utils {
 
-std::string to_hex(const bytes_data &data) {
-  std::string hex_format;
+secure_string to_hex(const bytes_data &data) {
+  secure_string hex_format;
   hex_format.reserve(data.size());
 
   for (const auto &byte : data) {

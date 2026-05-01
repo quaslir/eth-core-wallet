@@ -8,7 +8,7 @@
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
 #include "iwallet_actions.hpp"
-
+#include "core/secure_bytes_data.hpp"
 class UserInterface : public IWalletActions {
 public:
   void load(void);
@@ -22,31 +22,31 @@ private:
       AsyncTransactionsHistoryManager(block_client);
   Async_ETH_USD_Currency eth_price_manager;
   struct TEMP_DATA {
-    bytes_data password_for_wallet_unlocking;
-    bytes_data mnemonic, passphrase;
+    secure_string password_for_wallet_unlocking;
+    secure_string mnemonic, passphrase;
   };
   TEMP_DATA temp;
   CLI cli;
 
   void apply_choice_from_wallet_ui(int choice) override;
 
-  bytes_data get_mnemonic(void) override;
+  secure_string get_mnemonic(void) override;
   const Config &get_config(void) override;
   WalletInfo get_wallet(void) override;
   void on_main_menu(int choice) override;
-  void add_passphrase(const bytes_data &passphrase) override;
-  void set_password_for_wallet(bytes_data password) override;
-  bytes_data get_password_for_wallet(void) override;
-  bool check_mnemonic(std::string_view mnemonic) override;
-  void set_mnemonic(std::string_view mnemonic) override;
-  void set_passphrase(std::string_view passphrase) override;
+  void add_passphrase(secure_string &&passphrase) override;
+  void set_password_for_wallet(const secure_string& password) override;
+  secure_string get_password_for_wallet(void) override;
+  bool check_mnemonic(const secure_string& mnemonic) override;
+  void set_mnemonic(secure_string&& mnemonic) override;
+  void set_passphrase(secure_string&& passphrase) override;
   void import_wallet(void) override;
-  bool check_password(bytes_data &password) override;
+  bool check_password(const secure_string& password) override;
   void load_wallet(void) override;
   void save_wallet(void) override;
   void change_bit_length(int new_bit_length) override;
-  void set_extra_entropy(std::string_view entropy) override;
-  void change_derivation_path(std::string_view derive_path) override;
+  void set_extra_entropy(bytes_data&& extra_entropy) override;
+  void change_derivation_path(secure_string&& derive_path) override;
   void create_wallet(void) override;
   void update_balance(void) override;
   void copy_address(void) override;

@@ -1,4 +1,4 @@
-#include "config/config.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "ui/cli.hpp"
 #include "utils/crypto_utils.hpp"
 #include <ftxui/component/component.hpp>
@@ -8,7 +8,8 @@
 #include <memory>
 #include <openssl/crypto.h>
 #include <string>
-#include <string_view>
+
+#include "ui/ftxui-components/input_component.hpp"
 
 Component CLI::set_bit_length(void) {
   static int selected = 0;
@@ -77,13 +78,13 @@ Component CLI::handle_extra_entropy(void) {
   auto menu = Menu(&entries, &selected);
 
   auto component = CatchEvent(menu, [=, this](Event event) {
-    if (event == Event::Character('b') || event == Event::Character('B') ||
+    if (
         event == Event::Escape) {
       set_active_tab(CONFIG_MENU);
       return true;
     } else if (event == Event::Return) {
       if (selected == 0) {
-        actions->set_extra_entropy(std::string_view{});
+        actions->set_extra_entropy(bytes_data{});
         set_active_tab(CONFIG_MENU);
       }
 
@@ -96,20 +97,18 @@ Component CLI::handle_extra_entropy(void) {
     return false;
   });
 
-  auto user_input = std::make_shared<std::string>("");
+  auto user_input = std::make_shared<secure_string>("");
 
   auto input_option = InputOption();
   input_option.multiline = false;
   input_option.password = true;
-  auto field = Input(user_input.get(), "Enter extra entropy...", input_option);
+  auto field = input_(*user_input);
   field->TakeFocus();
 
   auto text_box = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      actions->set_extra_entropy(*user_input);
+      actions->set_extra_entropy(bytes_data(user_input->begin(), user_input->end()));
 
-      OPENSSL_cleanse(user_input->data(), user_input->size()); // fix
-      user_input->clear();
       set_active_tab(CONFIG_MENU);
       *active_sub_tab = 0;
       return true;
@@ -189,21 +188,18 @@ Component CLI::handle_passphrase(void) {
     return false;
   });
 
-  auto user_input = std::make_shared<std::string>("");
+  auto user_input = std::make_shared<secure_string>("");
 
   auto input_option = InputOption();
   input_option.multiline = false;
   input_option.password = true;
-  auto field = Input(user_input.get(), "Enter passphrase...", input_option);
+  auto field = input_(*user_input);
   field->TakeFocus();
 
   auto text_box = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      actions->add_passphrase(
-          bytes_data(user_input->begin(), user_input->end()));
+      actions->add_passphrase(std::move(*user_input));
 
-      OPENSSL_cleanse(user_input->data(), user_input->size()); // fix
-      user_input->clear();
       set_active_tab(CONFIG_MENU);
       *active_sub_tab = 0;
       return true;
@@ -286,23 +282,22 @@ Component CLI::handle_derivation_path(void) {
     return false;
   });
 
-  auto user_input = std::make_shared<std::string>("");
+  auto user_input = std::make_shared<secure_string>("");
 
   auto input_option = InputOption();
   input_option.multiline = false;
 
   auto field =
-      Input(user_input.get(), "Enter derivation path...", input_option);
+      input_(*user_input);
   field->TakeFocus();
 
   auto text_box = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      if (!crypto_utils::is_valid_derive_path(*user_input)) {
+      if (!crypto_utils::is_valid_derive_path(std::string{*user_input})) {
         *invalid_path = true;
       } else {
-        actions->change_derivation_path(*user_input);
+        actions->change_derivation_path(std::move(*user_input));
 
-        user_input->clear();
         set_active_tab(CONFIG_MENU);
         *active_sub_tab = 0;
         *invalid_path = false;

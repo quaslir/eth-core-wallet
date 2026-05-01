@@ -1,26 +1,23 @@
 #pragma once
 #include "config/configuration.hpp"
 #include "utils/tech_utils.hpp"
+#include "core/secure_bytes_data.hpp"
 #include <cstddef>
-#include <cstdint>
+
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <memory>
-#include <vector>
+
 using namespace ftxui;
-using bytes_data = std::vector<uint8_t>;
+
 
 class ParagraphNode : public Node {
 private:
-  bytes_data data_;
+  secure_string data_;
 
 public:
-  explicit ParagraphNode(bytes_data data) : data_(std::move(data)) {}
-  ~ParagraphNode() {
-    if (!data_.empty()) {
-      tech_utils::clear(data_);
-    }
-  }
+  explicit ParagraphNode(secure_string data) : data_(std::move(data)) {}
+
   void ComputeRequirement(void) override {
     requirement_.min_x = data_.size();
     requirement_.min_y = MIN_Y;
@@ -52,6 +49,6 @@ public:
   }
 };
 
-inline Element paragraph_(const bytes_data &data) {
+inline Element paragraph_(const secure_string &data) {
   return std::make_shared<ParagraphNode>(data);
 }
