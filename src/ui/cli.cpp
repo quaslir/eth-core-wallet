@@ -1,5 +1,6 @@
 #include "ui/cli.hpp"
 #include "config/config.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/supported_networks.hpp"
 #include "core/wallet_info.hpp"
 #include "iwallet_actions.hpp"
@@ -118,14 +119,10 @@ Component CLI::create_main_menu(void) {
 }
 
 Component CLI::render_mnemonic_element(void) {
-  auto mnemonic = std::make_shared<bytes_data>(actions->get_mnemonic());
+  auto mnemonic = std::make_shared<secure_string>(actions->get_mnemonic());
   auto button = Button(
       " [ PRESS ENTER TO CONTINUE ] ",
       [this, mnemonic] {
-        if (!mnemonic->empty()) {
-          tech_utils::clear(*mnemonic);
-          mnemonic->clear();
-        }
 
         this->set_active_tab(MNEMONIC_WIPING);
       },
@@ -226,7 +223,7 @@ Component CLI::render_mnemonic_wiping(void) {
 
 Component CLI::render_import_mnemonic_component(void) {
   auto is_incorrect = std::make_shared<bool>(0);
-  auto user_input = std::make_shared<bytes_data>();
+  auto user_input = std::make_shared<secure_string>();
 
   auto input_option = InputOption();
   input_option.multiline = false;
@@ -237,13 +234,10 @@ Component CLI::render_import_mnemonic_component(void) {
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
       if (!user_input->empty()) {
-        std::string_view view_mnemonic{
-            reinterpret_cast<const char *>(user_input->data()),
-            user_input->size()};
-        if (actions->check_mnemonic(view_mnemonic)) {
-          actions->set_mnemonic(view_mnemonic);
-          tech_utils::clear(*user_input);
-          user_input->clear();
+
+        if (actions->check_mnemonic(*user_input)) {
+          actions->set_mnemonic(std::move(*user_input));
+
           set_active_tab(ENTER_OPTIONAL_PASSPHRASE_MENU);
         } else
           *is_incorrect = true;
@@ -320,7 +314,7 @@ Component CLI::render_import_mnemonic_component(void) {
 }
 
 Component CLI::render_input_optional_passphrase_component(void) {
-  auto user_input = std::make_shared<bytes_data>();
+  auto user_input = std::make_shared<secure_string>();
 
   auto input_option = InputOption();
   input_option.multiline = false;
@@ -331,11 +325,7 @@ Component CLI::render_input_optional_passphrase_component(void) {
 
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      actions->set_passphrase(
-          std::string_view{reinterpret_cast<const char *>(user_input->data()),
-                           user_input->size()});
-
-      tech_utils::clear(*user_input);
+      actions->set_passphrase(std::move(*user_input));
 
       actions->import_wallet();
       set_active_tab(SET_PASSWORD);
@@ -382,7 +372,7 @@ Component CLI::render_config_menu(void) {
             std::string{(!cfg.passphrase.empty() ? "ENABLED (BIP-39 SALT)"
                                                  : "DISABLED")} +
             " ]",
-        " 4. DERIVATION     : [ " + cfg.derivation_path + " ]",
+        " 4. DERIVATION     : [ " + std::string{cfg.derivation_path} + " ]",
     };
 
     auto box =
@@ -490,8 +480,8 @@ Component CLI::print_wallet_ui(void) {
                               "~ " + fmt::format("{:.2f}", balance_in_usd) +
                               " USD",
                           Color::Yellow),
-                info_line(" ADDRESS: ", wallet_info.addr,
-                          Color::DarkSlateGray1),
+                          text(" ADDRESS: "),
+                text_(wallet_info.addr),
                 info_line(" NETWORK: ", actions->get_current_network(),
                           Color::Green),
 
@@ -530,15 +520,13 @@ Component CLI::render_password_setup(void) {
   auto input_option = InputOption();
   input_option.multiline = false;
   input_option.password = true;
-  auto pass_str = std::make_shared<bytes_data>();
+  auto pass_str = std::make_shared<secure_string>();
   auto field = input_(*pass_str, true);
-
+  field->TakeFocus();
   auto first_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !pass_str->empty()) {
-      actions->set_password_for_wallet(*pass_str);
+      actions->set_password_for_wallet(std::move(*pass_str));
 
-      tech_utils::clear(*pass_str);
-      pass_str->clear();
       set_active_tab(CONFIRM_PASSWORD);
       return true;
     }
@@ -579,25 +567,20 @@ Component CLI::render_confirm_password_setup(void) {
   input_option.multiline = false;
   input_option.password = true;
 
-  auto second_pass = std::make_shared<bytes_data>();
+  auto second_pass = std::make_shared<secure_string>();
   auto field = input_(*second_pass, true);
 
   auto is_incorrect = std::make_shared<bool>(0);
   auto second_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      auto first_pass =
-          std::make_shared<bytes_data>(actions->get_password_for_wallet());
+      auto first_pass = actions->get_password_for_wallet();
 
-      if (*first_pass == *second_pass) {
-        tech_utils::clear(*first_pass);
-        tech_utils::clear(*second_pass);
-        first_pass->clear();
-        second_pass->clear();
+      if (first_pass == *second_pass) {
+
         actions->save_wallet();
         actions->update_balance();
         set_active_tab(WALLET_UI);
       } else {
-        second_pass->clear();
         *is_incorrect = true;
       }
 
@@ -646,7 +629,7 @@ Component CLI::render_request_unlock_password(void) {
   auto input_option = InputOption();
   auto attempts = std::make_shared<std::size_t>(0);
   constexpr static size_t max_attempts = 3;
-  auto user_input = std::make_shared<bytes_data>();
+  auto user_input = std::make_shared<secure_string>();
   input_option.multiline = false;
   input_option.password = true;
   auto field = input_(*user_input, true);
@@ -655,8 +638,7 @@ Component CLI::render_request_unlock_password(void) {
     if (event == Event::Return && !user_input->empty()) {
 
       if (actions->check_password(*user_input)) {
-        tech_utils::clear(*user_input);
-        user_input->clear();
+
         actions->load_wallet();
         actions->update_balance();
         set_active_tab(WALLET_UI);

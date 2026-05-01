@@ -1,6 +1,7 @@
 #include "utils/crypto_utils.hpp"
 #include <cstdint>
 #include <regex>
+#include <span>
 #include <stdexcept>
 extern "C" {
 #include <openssl/rand.h>
@@ -36,7 +37,7 @@ bytes_data Hashes::sha256(const bytes_data &msg) const {
 
   return hash;
 }
-bytes_data PBKDF2_HMAC_SHA512(const bytes_data &data, const bytes_data &salt,
+bytes_data PBKDF2_HMAC_SHA512(std::span<const char> data, const bytes_data &salt,
                               int iter) {
   bytes_data out(64);
   int res =

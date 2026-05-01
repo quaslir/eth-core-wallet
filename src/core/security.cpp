@@ -1,13 +1,14 @@
 #include "core/security.hpp"
 #include "Keccak256.hpp"
 #include "api/json.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/wallet.hpp"
 #include "ui/cli.hpp"
 #include <string>
 #define ITERATIONS 262144
 using json = nlohmann::json;
 namespace security_manager {
-bool first_time_save(const Wallet &wallet, const bytes_data &password,
+bool first_time_save(const Wallet &wallet, const secure_string &password,
                      const std::string &filename) {
 
   bytes_data salt = crypto_utils::gen_number(16);
@@ -48,7 +49,7 @@ bool update(const Wallet &wallet, const std::string &filename) {
   return true;
 }
 
-bool load_wallet(Wallet &wallet, const bytes_data &password,
+bool load_wallet(Wallet &wallet, const secure_string &password,
                  const std::string &filename) {
   EncryptedKeystore encrp;
   if (!encrp.load(filename))

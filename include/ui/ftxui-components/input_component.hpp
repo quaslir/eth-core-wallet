@@ -14,11 +14,11 @@ using namespace ftxui;
 
 class SecureInput : public ComponentBase {
 private:
-  bytes_data &data_;
+  secure_string& data_;
   bool password_ = false;
 
 public:
-  explicit SecureInput(bytes_data &data, bool password)
+  explicit SecureInput(secure_string &data, bool password)
       : data_(data), password_(password) {}
 
   bool Focusable(void) const override { return true; }
@@ -40,7 +40,7 @@ public:
   Element Render(void) override {
     Element content;
     if (password_) {
-      bytes_data hidden_input(data_.size(), static_cast<uint8_t>('*'));
+      secure_string hidden_input(data_.size(), static_cast<uint8_t>('*'));
       content = text_(hidden_input);
     } else {
       content = text_(data_);
@@ -52,6 +52,6 @@ public:
   }
 };
 
-inline Component input_(bytes_data &data, bool password = false) {
+inline Component input_(secure_string &data, bool password = false) {
   return std::make_shared<SecureInput>(data, password);
 }

@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
+#include <string>
 #include "catch2/catch_test_macros.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "utils/tech_utils.hpp"
 #include "utils/utils.hpp"
 #include "core/mnemonic.hpp"
@@ -9,17 +11,17 @@ TEST_CASE("Mnemonic generation basic flow", "[mnemonic][crypto]") {
     SECTION("128-bit entropy (12 words)") {
         Config config{};
         config.bit_length = 128;
-        bytes_data seed_phrase = mnem_gen.generateMnemonic(config);
+        secure_string seed_phrase = mnem_gen.generateMnemonic(config);
         REQUIRE(!seed_phrase.empty());
-        REQUIRE(mnem_gen.mnemonic_is_correct(std::string_view{reinterpret_cast<const char *>(seed_phrase.data()), seed_phrase.size()}));
+        REQUIRE(mnem_gen.mnemonic_is_correct(seed_phrase));
     }
 
     SECTION("256-bit entropy (24 words)"){
         Config config{};
         config.bit_length = 256 ;
-        bytes_data seed_phrase = mnem_gen.generateMnemonic(config);
+        secure_string seed_phrase = mnem_gen.generateMnemonic(config);
         REQUIRE(!seed_phrase.empty());
-        REQUIRE(mnem_gen.mnemonic_is_correct(std::string_view{reinterpret_cast<const char *>(seed_phrase.data()), seed_phrase.size()}));
+        REQUIRE(mnem_gen.mnemonic_is_correct(seed_phrase));
     }
 }
 
@@ -34,8 +36,8 @@ MnemonicGenerator mnemgen;
 
 for(auto& entry : test_data) {
     SECTION("Vector " + entry.seed_phrase.substr(0, 20) + "...") {
-        bytes_data seed_phrase = mnemgen.__generateMnemonic(entry.entropy);
-        REQUIRE(seed_phrase == bytes_data(entry.seed_phrase.begin(), entry.seed_phrase.end()));
+        secure_string seed_phrase = mnemgen.__generateMnemonic(entry.entropy);
+        REQUIRE(std::string{seed_phrase}  == entry.seed_phrase);
         auto res = mnemgen.generateSeed(seed_phrase);
         REQUIRE(res == entry.seed);
     }

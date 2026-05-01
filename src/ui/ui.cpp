@@ -2,6 +2,7 @@
 
 #include "api/json.hpp"
 #include "config/config.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
 #include "drivers/blockchain_client.hpp"
 #include "iwallet_actions.hpp"
@@ -9,7 +10,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <string>
-#include <string_view>
 
 void UserInterface::load(void) {
   cli.set_actions(this);
@@ -58,7 +58,7 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
 const Config &UserInterface::get_config(void) { return this->config; }
 
-bytes_data UserInterface::get_mnemonic(void) { return temp.mnemonic; }
+secure_string UserInterface::get_mnemonic(void) { return temp.mnemonic; }
 
 void UserInterface::create_wallet(void) {
   temp.mnemonic = wallet.prepare_mnemonic(config);
@@ -88,30 +88,30 @@ void UserInterface::on_main_menu(int choice) {
   }
 }
 
-void UserInterface::set_password_for_wallet(bytes_data password) {
+void UserInterface::set_password_for_wallet(const secure_string& password) {
   this->temp.password_for_wallet_unlocking = password;
 }
-bytes_data UserInterface::get_password_for_wallet(void) {
+secure_string UserInterface::get_password_for_wallet(void) {
   return this->temp.password_for_wallet_unlocking;
 }
 
-bool UserInterface::check_mnemonic(std::string_view mnemonic) {
+bool UserInterface::check_mnemonic(const secure_string& mnemonic) {
   return wallet.correct_mnemonic(mnemonic);
 }
 
-void UserInterface::set_mnemonic(std::string_view mnemonic) {
-  temp.mnemonic = bytes_data(mnemonic.begin(), mnemonic.end());
+void UserInterface::set_mnemonic(secure_string&& mnemonic) {
+  temp.mnemonic = std::move(mnemonic);
 }
 
-void UserInterface::set_passphrase(std::string_view passphrase) {
-  temp.passphrase = bytes_data(passphrase.begin(), passphrase.end());
+void UserInterface::set_passphrase(secure_string&& passphrase) {
+  temp.passphrase = std::move(passphrase);
 }
 
 void UserInterface::import_wallet(void) {
   wallet.import_wallet(temp.mnemonic, temp.passphrase);
 }
 
-bool UserInterface::check_password(bytes_data &password) {
+bool UserInterface::check_password(const secure_string &password) {
   return security_manager::load_wallet(wallet, password);
 }
 void UserInterface::load_wallet(void) {
@@ -128,16 +128,16 @@ void UserInterface::save_wallet(void) {
 void UserInterface::change_bit_length(int new_bit_length) {
   config.set_bit_length(new_bit_length);
 }
-void UserInterface::set_extra_entropy(std::string_view entropy) {
-  config.set_extra_entropy(entropy);
+void UserInterface::set_extra_entropy(bytes_data&& entropy) {
+  config.set_extra_entropy(std::move(entropy));
 }
 
-void UserInterface::add_passphrase(const bytes_data &pass) {
-  config.set_passphrase(pass);
+void UserInterface::add_passphrase(secure_string &&passphrase) {
+  config.set_passphrase(std::move(passphrase));
 }
 
-void UserInterface::change_derivation_path(std::string_view derive_path) {
-  config.change_derivation_path(derive_path);
+void UserInterface::change_derivation_path(secure_string&& derive_path) {
+  config.change_derivation_path(std::move(derive_path));
 }
 void UserInterface::update_balance(void) {
   if (!wallet.is_loaded())
@@ -146,7 +146,7 @@ void UserInterface::update_balance(void) {
   if (!balance_manager.get_status()) {
     wallet.set_balance(balance_manager.get_balance());
 
-    balance_manager.request_balance(wallet.get_eth_address());
+    balance_manager.request_balance(std::string{wallet.get_eth_address()});
   }
 
   balance_manager.update();
@@ -165,7 +165,7 @@ void UserInterface::update_eth_price(void) {
 
 void UserInterface::copy_address(void) {
 #ifdef __APPLE__
-  std::string command = "echo " + wallet.get_eth_address() + "| pbcopy";
+  secure_string command = "echo " + wallet.get_eth_address() + "| pbcopy";
   std::system(command.c_str());
 #else
 // handle
@@ -175,7 +175,7 @@ void UserInterface::copy_address(void) {
 void UserInterface::copy_private_key(void) {
 
 #ifdef __APPLE__
-  std::string command =
+  secure_string command =
       "echo " + tech_utils::to_hex(wallet.get_private_key()) + "| pbcopy";
   std::system(command.c_str());
 #else

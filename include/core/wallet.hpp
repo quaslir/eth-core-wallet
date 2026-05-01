@@ -9,7 +9,7 @@
 class Wallet {
 private:
   bytes_data priv_key;
-  std::string eth_address;
+  secure_string eth_address;
   bytes_data master_node;
   double current_balance;
   MnemonicGenerator mem;
@@ -18,13 +18,13 @@ private:
 
 public:
   ~Wallet();
-  bytes_data prepare_mnemonic(const Config &conf) const;
-  void finalize_from_mnemonic(const bytes_data &mnemonic,const  bytes_data &passphrase,
+  secure_string prepare_mnemonic(const Config &conf) const;
+  void finalize_from_mnemonic(const secure_string &mnemonic,const secure_string &passphrase,
                               const std::vector<uint32_t> &path_deriv);
-  std::string get_eth_address(void) const;
+  secure_string get_eth_address(void) const;
   const bytes_data &get_private_key(void) const;
   const bytes_data &get_master_node(void) const;
-  std::string __get_private_key_hex(void) const;
+  secure_string __get_private_key_hex(void) const;
 
   double get_balance(void) const;
   void sync_derive_path(std::vector<uint32_t> &derive_path) const;
@@ -36,12 +36,12 @@ public:
   bool derive_next(void);
   bool derive_prev(void);
   void derive(const std::vector<uint32_t> &path_deriv);
-  bool correct_mnemonic(std::string_view mnemonic) const;
-  void import_wallet(const bytes_data &mnemonic, const bytes_data &passphrase);
+  bool correct_mnemonic(const secure_string& mnemonic) const;
+  void import_wallet(const secure_string &mnemonic, const secure_string &passphrase);
   const long long &getIndex(void) const;
 
   bool update_index(void) const;
-  void save(const bytes_data &password,
+  void save(const secure_string &password,
             const std::string &filename = "session.json") const;
   bool is_loaded(void) const;
 };

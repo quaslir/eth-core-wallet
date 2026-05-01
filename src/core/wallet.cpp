@@ -1,5 +1,6 @@
 #include "core/wallet.hpp"
 #include "config/config.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
 #include "utils/tech_utils.hpp"
 #include <iostream>
@@ -11,7 +12,7 @@ Wallet::~Wallet() {
 
 int Wallet::get_number_of_bits(void) const { return 0; }
 
-bytes_data Wallet::prepare_mnemonic(const Config &conf) const {
+secure_string Wallet::prepare_mnemonic(const Config &conf) const {
   return mem.generateMnemonic(conf);
 }
 
@@ -24,7 +25,7 @@ bool Wallet::update_index() const {
     return false;
   return true;
 }
-void Wallet::save(const bytes_data &password, const std::string &filename) const {
+void Wallet::save(const secure_string &password, const std::string &filename) const {
   security_manager::first_time_save(*this, password, filename);
 }
 void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
@@ -40,8 +41,8 @@ void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
   priv_key = keys.parent_key;
 }
 
-void Wallet::finalize_from_mnemonic(const bytes_data &mnemonic,
-                                    const bytes_data &passphrase,
+void Wallet::finalize_from_mnemonic(const secure_string &mnemonic,
+                                    const secure_string &passphrase,
                                     const std::vector<uint32_t> &path_deriv) {
   bytes_data seed = mem.generateSeed(mnemonic, passphrase);
 
@@ -51,12 +52,15 @@ void Wallet::finalize_from_mnemonic(const bytes_data &mnemonic,
   derive(path_deriv);
 }
 
-std::string Wallet::get_eth_address(void) const { return this->eth_address; }
+secure_string Wallet::get_eth_address(void) const { return this->eth_address; }
 const bytes_data &Wallet::get_private_key(void) const { return this->priv_key; }
 
-std::string Wallet::__get_private_key_hex(
+secure_string Wallet::__get_private_key_hex(
     void) const { // Used only in tests, this method is insecure and dangerous
-  return "0x" + tech_utils::to_hex(priv_key);
+  secure_string private_key = "0x";
+  private_key.append(tech_utils::to_hex(priv_key));
+
+  return private_key;
 }
 const long long &Wallet::getIndex(void) const { return this->index; }
 const bytes_data &Wallet::get_master_node(void) const {
@@ -111,13 +115,13 @@ void Wallet::set_master_node(const bytes_data &master_n) {
 }
 void Wallet::set_index(const int i) { this->index = i; }
 
-bool Wallet::correct_mnemonic(std::string_view mnemonic) const {
+bool Wallet::correct_mnemonic(const secure_string& mnemonic) const {
   if (mnemonic.empty())
     return false;
   return mem.mnemonic_is_correct(mnemonic);
 }
 
-void Wallet::import_wallet(const bytes_data &mnemonic, const bytes_data &passphrase) {
+void Wallet::import_wallet(const secure_string &mnemonic, const secure_string &passphrase) {
   finalize_from_mnemonic(mnemonic, passphrase, crypto_utils::path_deriv);
 }
 

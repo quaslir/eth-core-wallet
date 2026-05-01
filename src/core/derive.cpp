@@ -1,6 +1,7 @@
 #include "core/derive.hpp"
 #include "Keccak256.hpp"
 
+#include "core/secure_bytes_data.hpp"
 #include "utils/crypto_utils.hpp"
 #include "utils/tech_utils.hpp"
 #include <algorithm>
@@ -98,7 +99,7 @@ bytes_data Key_Derive::add_mod_n(const bytes_data &IL,
   return child_priv;
 }
 
-std::string Key_Derive::generate_address(const bytes_data &private_key) const {
+secure_string Key_Derive::generate_address(const bytes_data &private_key) const {
   secp256k1_pubkey public_key;
   bytes_data uncompressed_public_key(65);
   size_t len = 65;
@@ -113,7 +114,7 @@ std::string Key_Derive::generate_address(const bytes_data &private_key) const {
   uint8_t full_hash[32];
   Keccak256::getHash(uncompressed_public_key.data() + 1, len - 1, full_hash);
   bytes_data raw_addr(full_hash + 12, full_hash + 32);
-  std::string eth_address = tech_utils::to_hex(raw_addr);
+  secure_string eth_address = tech_utils::to_hex(raw_addr);
 
   std::transform(eth_address.begin(), eth_address.end(), eth_address.begin(),
                  ::tolower);
@@ -121,7 +122,7 @@ std::string Key_Derive::generate_address(const bytes_data &private_key) const {
 }
 
 const std::vector<uint32_t>
-Key_Derive::parse_derive_path(const std::string &path) {
+Key_Derive::parse_derive_path(const secure_string &path) {
   auto paths = path | std::views::split('/');
   std::vector<uint32_t> derivation_indexes;
   bool start = true;
@@ -147,8 +148,8 @@ Key_Derive::parse_derive_path(const std::string &path) {
   return derivation_indexes;
 }
 
-std::string Key_Derive::to_checksum_address(const std::string &addr) const {
-  std::string result = "0x";
+secure_string Key_Derive::to_checksum_address(const secure_string &addr) const {
+  secure_string result = "0x";
 
   uint8_t hash[32];
 

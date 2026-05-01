@@ -2,11 +2,12 @@
 #include "api/json.hpp"
 #include "config/config.hpp"
 #include "core/bip39.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "utils/tech_utils.hpp"
 #include <ranges>
 MnemonicGenerator::MnemonicGenerator() {}
 
-bytes_data MnemonicGenerator::createMnemonic(const bytes_data &randNumber,
+secure_string MnemonicGenerator::createMnemonic(const bytes_data &randNumber,
                                              const bytes_data &checkSum) {
   bytes_data seed;
   seed.reserve(randNumber.size() * 8 + checkSum.size());
@@ -29,19 +30,19 @@ bytes_data MnemonicGenerator::createMnemonic(const bytes_data &randNumber,
 
     indexes.push_back(index);
   }
-  bytes_data mnemonic;
+  secure_string mnemonic;
 
   for (size_t i = 0; i < indexes.size(); i++) {
     std::string_view word = bip_39::bip_39_words[indexes[i]];
     mnemonic.insert(mnemonic.end(), word.begin(), word.end());
     if (i + 1 < indexes.size()) {
-      mnemonic.push_back(static_cast<uint8_t>(' '));
+      mnemonic.append(" ");
     }
   }
   return mnemonic;
 }
 
-bytes_data MnemonicGenerator::generateMnemonic(const Config &conf) const {
+secure_string MnemonicGenerator::generateMnemonic(const Config &conf) const {
   size_t bytes = conf.bit_length / 8;
   int checkSumBits = conf.bit_length / 32;
   bytes_data randNumber = crypto_utils::gen_number(bytes);
@@ -52,12 +53,11 @@ bytes_data MnemonicGenerator::generateMnemonic(const Config &conf) const {
   bytes_data hash = hashes.sha256(randNumber);
 
   bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
-  bytes_data mnemonic = createMnemonic(randNumber, checksum);
-  return mnemonic;
+return  createMnemonic(randNumber, checksum);
 }
 
-bytes_data MnemonicGenerator::generateSeed(const bytes_data &mnemonic,
-                                           const bytes_data &passphrase) const {
+bytes_data MnemonicGenerator::generateSeed(const secure_string &mnemonic,
+                                           const secure_string &passphrase) const {
   bytes_data salt = createSalt(passphrase);
 
   bytes_data masterseed =
@@ -66,7 +66,7 @@ bytes_data MnemonicGenerator::generateSeed(const bytes_data &mnemonic,
   return masterseed;
 }
 
-bytes_data MnemonicGenerator::createSalt(const bytes_data &passphrase) {
+bytes_data MnemonicGenerator::createSalt(const secure_string &passphrase) {
   std::string_view view = "mnemonic";
   bytes_data salt;
 
@@ -77,7 +77,7 @@ bytes_data MnemonicGenerator::createSalt(const bytes_data &passphrase) {
   return salt;
 }
 
-bool MnemonicGenerator::mnemonic_is_correct(std::string_view mnemonic) const {
+bool MnemonicGenerator::mnemonic_is_correct(const secure_string& mnemonic) const {
   if (!tech_utils::contains_only_lowercase(mnemonic))
     return false;
   std::vector<uint16_t> mnemonic_indexes;
@@ -143,11 +143,10 @@ bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
   return final_entropy;
 }
 
-bytes_data MnemonicGenerator::__generateMnemonic(const bytes_data &entropy) const {
+secure_string MnemonicGenerator::__generateMnemonic(const bytes_data &entropy) const {
   bytes_data hash = hashes.sha256(entropy);
   int checkSumBits = entropy.size() * 8 / 32;
   bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
 
-  bytes_data mnemonic = createMnemonic(entropy, checksum);
-  return mnemonic;
+  return createMnemonic(entropy, checksum);
 }

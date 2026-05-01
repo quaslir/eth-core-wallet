@@ -57,6 +57,6 @@ struct SecureAllocator {
 };
 
 using bytes_data = std::vector<uint8_t, SecureAllocator<uint8_t>>;
-using secure_string = std::basic_string<char, std::allocator_traits<char>, SecureAllocator<char>>;
+using secure_string = std::basic_string<char, std::char_traits<char>, SecureAllocator<char>>;
 
 

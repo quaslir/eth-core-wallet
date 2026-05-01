@@ -1,5 +1,5 @@
 #pragma once
-#include "utils/tech_utils.hpp"
+
 
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
@@ -11,15 +11,11 @@ using namespace ftxui;
 
 class TextNode : public Node {
 private:
-  bytes_data data_;
+  secure_string data_;
 
 public:
-  explicit TextNode(bytes_data data) : data_(std::move(data)) {}
-  ~TextNode() {
-    if (!data_.empty()) {
-      tech_utils::clear(data_);
-    }
-  }
+  explicit TextNode(secure_string data) : data_(std::move(data)) {}
+
   void ComputeRequirement(void) override {
     requirement_.min_x = 2 + data_.size() * 2;
     requirement_.min_y = 1;
@@ -40,6 +36,6 @@ public:
   }
 };
 
-inline Element text_(const bytes_data &data) {
+inline Element text_(const secure_string &data) {
   return std::make_shared<TextNode>(data);
 }
