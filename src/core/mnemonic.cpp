@@ -8,7 +8,7 @@
 MnemonicGenerator::MnemonicGenerator() {}
 
 secure_string MnemonicGenerator::createMnemonic(const bytes_data &randNumber,
-                                             const bytes_data &checkSum) {
+                                                const bytes_data &checkSum) {
   bytes_data seed;
   seed.reserve(randNumber.size() * 8 + checkSum.size());
 
@@ -53,11 +53,12 @@ secure_string MnemonicGenerator::generateMnemonic(const Config &conf) const {
   bytes_data hash = hashes.sha256(randNumber);
 
   bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);
-return  createMnemonic(randNumber, checksum);
+  return createMnemonic(randNumber, checksum);
 }
 
-bytes_data MnemonicGenerator::generateSeed(const secure_string &mnemonic,
-                                           const secure_string &passphrase) const {
+bytes_data
+MnemonicGenerator::generateSeed(const secure_string &mnemonic,
+                                const secure_string &passphrase) const {
   bytes_data salt = createSalt(passphrase);
 
   bytes_data masterseed =
@@ -77,7 +78,8 @@ bytes_data MnemonicGenerator::createSalt(const secure_string &passphrase) {
   return salt;
 }
 
-bool MnemonicGenerator::mnemonic_is_correct(const secure_string& mnemonic) const {
+bool MnemonicGenerator::mnemonic_is_correct(
+    const secure_string &mnemonic) const {
   if (!tech_utils::contains_only_lowercase(mnemonic))
     return false;
   std::vector<uint16_t> mnemonic_indexes;
@@ -116,7 +118,6 @@ bool MnemonicGenerator::mnemonic_is_correct(const secure_string& mnemonic) const
   bytes_data hash =
       hashes.sha256(tech_utils::to_bytes_from_bits(mnemonic_in_binary));
 
-
   bytes_data check_sum_sha256 = crypto_utils::getCheckSum(hash[0], checkSum);
 
   bool result = check_sum_sha256 == check_sum_from_mnemonic;
@@ -127,11 +128,11 @@ bool MnemonicGenerator::mnemonic_is_correct(const secure_string& mnemonic) const
 bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
     const bytes_data &entropy, const bytes_data &extra_entropy,
     int target_bits) const {
-  
-      bytes_data combined;
-      combined.reserve(entropy.size() + extra_entropy.size());
-      combined.insert(combined.end(), entropy.begin(), entropy.end());
-      combined.insert(combined.end(),  extra_entropy.begin(),  extra_entropy.end());
+
+  bytes_data combined;
+  combined.reserve(entropy.size() + extra_entropy.size());
+  combined.insert(combined.end(), entropy.begin(), entropy.end());
+  combined.insert(combined.end(), extra_entropy.begin(), extra_entropy.end());
 
   bytes_data new_entropy = hashes.sha256(combined);
 
@@ -143,7 +144,8 @@ bytes_data MnemonicGenerator::handle_extra_entropy_from_user(
   return final_entropy;
 }
 
-secure_string MnemonicGenerator::__generateMnemonic(const bytes_data &entropy) const {
+secure_string
+MnemonicGenerator::__generateMnemonic(const bytes_data &entropy) const {
   bytes_data hash = hashes.sha256(entropy);
   int checkSumBits = entropy.size() * 8 / 32;
   bytes_data checksum = crypto_utils::getCheckSum(hash[0], checkSumBits);

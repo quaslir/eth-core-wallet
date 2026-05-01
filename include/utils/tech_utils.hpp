@@ -1,9 +1,9 @@
 #pragma once
+#include "core/secure_bytes_data.hpp"
 #include <stdint.h>
 #include <string>
 #include <string_view>
 #include <vector>
-#include "core/secure_bytes_data.hpp"
 namespace tech_utils {
 secure_string to_hex(const bytes_data &data);
 bytes_data to_hex_bytes(const bytes_data &data);

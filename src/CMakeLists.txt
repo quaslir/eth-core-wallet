@@ -14,6 +14,10 @@ set(UI_SOURCES
 ui/cli.cpp
 ui/config_cli.cpp
 ui/ui.cpp
+ui/supported_functions_cli.cpp
+ui/main_wallet_ui.cpp
+ui/wallet_setup_ui.cpp
+ui/passwords_ui.cpp
 )
 
 set(UTILS_SOURCES

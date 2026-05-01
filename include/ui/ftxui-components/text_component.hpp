@@ -1,13 +1,11 @@
 #pragma once
 
-
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <memory>
 
 #include "core/secure_bytes_data.hpp"
 using namespace ftxui;
-
 
 class TextNode : public Node {
 private:

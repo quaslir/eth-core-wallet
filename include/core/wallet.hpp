@@ -1,10 +1,10 @@
 #pragma once
 #include "config/config.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "derive.hpp"
 #include "mnemonic.hpp"
 #include "security.hpp"
 #include <string>
-#include "core/secure_bytes_data.hpp"
 
 class Wallet {
 private:
@@ -19,7 +19,8 @@ private:
 public:
   ~Wallet();
   secure_string prepare_mnemonic(const Config &conf) const;
-  void finalize_from_mnemonic(const secure_string &mnemonic,const secure_string &passphrase,
+  void finalize_from_mnemonic(const secure_string &mnemonic,
+                              const secure_string &passphrase,
                               const std::vector<uint32_t> &path_deriv);
   secure_string get_eth_address(void) const;
   const bytes_data &get_private_key(void) const;
@@ -36,8 +37,9 @@ public:
   bool derive_next(void);
   bool derive_prev(void);
   void derive(const std::vector<uint32_t> &path_deriv);
-  bool correct_mnemonic(const secure_string& mnemonic) const;
-  void import_wallet(const secure_string &mnemonic, const secure_string &passphrase);
+  bool correct_mnemonic(const secure_string &mnemonic) const;
+  void import_wallet(const secure_string &mnemonic,
+                     const secure_string &passphrase);
   const long long &getIndex(void) const;
 
   bool update_index(void) const;

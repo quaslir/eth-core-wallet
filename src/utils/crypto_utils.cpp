@@ -37,8 +37,8 @@ bytes_data Hashes::sha256(const bytes_data &msg) const {
 
   return hash;
 }
-bytes_data PBKDF2_HMAC_SHA512(std::span<const char> data, const bytes_data &salt,
-                              int iter) {
+bytes_data PBKDF2_HMAC_SHA512(std::span<const char> data,
+                              const bytes_data &salt, int iter) {
   bytes_data out(64);
   int res =
       PKCS5_PBKDF2_HMAC(reinterpret_cast<const char *>(data.data()),

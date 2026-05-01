@@ -1,7 +1,7 @@
 #pragma once
+#include "core/secure_bytes_data.hpp"
 #include <nlohmann/json.hpp>
 #include <string>
-#include "core/secure_bytes_data.hpp"
 class Wallet;
 
 namespace security_manager {

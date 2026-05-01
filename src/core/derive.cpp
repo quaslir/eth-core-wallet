@@ -67,13 +67,13 @@ void Key_Derive::derive_child(KEY_PAIR &keys, uint32_t index) {
   data.insert(data.end(), index_ptr, index_ptr + 4);
   bytes_data I = crypto_utils::HMAC_SHA512(keys.chain_key, data);
 
-  keys.parent_key = add_mod_n(bytes_data(I.begin(), I.begin() + 32),
-                              keys.parent_key);
+  keys.parent_key =
+      add_mod_n(bytes_data(I.begin(), I.begin() + 32), keys.parent_key);
   keys.chain_key.assign(I.begin() + 32, I.end());
 }
 
 bytes_data Key_Derive::add_mod_n(const bytes_data &IL,
-                                           const bytes_data &k_parent) const {
+                                 const bytes_data &k_parent) const {
 
   BN_CTX *bn_ctx = BN_CTX_new();
 
@@ -99,7 +99,8 @@ bytes_data Key_Derive::add_mod_n(const bytes_data &IL,
   return child_priv;
 }
 
-secure_string Key_Derive::generate_address(const bytes_data &private_key) const {
+secure_string
+Key_Derive::generate_address(const bytes_data &private_key) const {
   secp256k1_pubkey public_key;
   bytes_data uncompressed_public_key(65);
   size_t len = 65;

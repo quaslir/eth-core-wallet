@@ -45,8 +45,8 @@ public:
   Hashes();
   bytes_data sha256(const bytes_data &msg) const;
 };
-bytes_data PBKDF2_HMAC_SHA512(std::span<const char> data, const bytes_data &salt,
-                              int iter);
+bytes_data PBKDF2_HMAC_SHA512(std::span<const char> data,
+                              const bytes_data &salt, int iter);
 bytes_data HMAC_SHA512(std::string_view key, const bytes_data &data);
 bytes_data HMAC_SHA512(const bytes_data &key, const bytes_data &data);
 bytes_data AES_256_CTR(const bytes_data &key, const bytes_data &data,

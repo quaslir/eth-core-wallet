@@ -1,8 +1,8 @@
 #pragma once
+#include "core/secure_bytes_data.hpp"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-#include "core/secure_bytes_data.hpp"
 using json = nlohmann::json;
 struct EncryptedKeystore {
   bytes_data ciphertext;

@@ -1,4 +1,5 @@
 #pragma once
+#include "core/secure_bytes_data.hpp"
 #include "text_component.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstdint>
@@ -8,13 +9,12 @@
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <memory>
-#include "core/secure_bytes_data.hpp"
 
 using namespace ftxui;
 
 class SecureInput : public ComponentBase {
 private:
-  secure_string& data_;
+  secure_string &data_;
   bool password_ = false;
 
 public:

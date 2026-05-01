@@ -76,34 +76,34 @@ WalletInfo UserInterface::get_wallet(void) {
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {
 
-  case 1:
+  case 0:
     cli.set_active_tab(CONFIG_MENU);
     break;
-  case 2:
+  case 1:
     cli.set_active_tab(IMPORT_MENU);
     // handle_wallet_import();
     break;
-  case 3:
+  case 2:
     exit(0);
   }
 }
 
-void UserInterface::set_password_for_wallet(const secure_string& password) {
+void UserInterface::set_password_for_wallet(const secure_string &password) {
   this->temp.password_for_wallet_unlocking = password;
 }
 secure_string UserInterface::get_password_for_wallet(void) {
   return this->temp.password_for_wallet_unlocking;
 }
 
-bool UserInterface::check_mnemonic(const secure_string& mnemonic) {
+bool UserInterface::check_mnemonic(const secure_string &mnemonic) {
   return wallet.correct_mnemonic(mnemonic);
 }
 
-void UserInterface::set_mnemonic(secure_string&& mnemonic) {
+void UserInterface::set_mnemonic(secure_string &&mnemonic) {
   temp.mnemonic = std::move(mnemonic);
 }
 
-void UserInterface::set_passphrase(secure_string&& passphrase) {
+void UserInterface::set_passphrase(secure_string &&passphrase) {
   temp.passphrase = std::move(passphrase);
 }
 
@@ -128,7 +128,7 @@ void UserInterface::save_wallet(void) {
 void UserInterface::change_bit_length(int new_bit_length) {
   config.set_bit_length(new_bit_length);
 }
-void UserInterface::set_extra_entropy(bytes_data&& entropy) {
+void UserInterface::set_extra_entropy(bytes_data &&entropy) {
   config.set_extra_entropy(std::move(entropy));
 }
 
@@ -136,7 +136,7 @@ void UserInterface::add_passphrase(secure_string &&passphrase) {
   config.set_passphrase(std::move(passphrase));
 }
 
-void UserInterface::change_derivation_path(secure_string&& derive_path) {
+void UserInterface::change_derivation_path(secure_string &&derive_path) {
   config.change_derivation_path(std::move(derive_path));
 }
 void UserInterface::update_balance(void) {

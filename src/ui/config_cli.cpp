@@ -78,8 +78,7 @@ Component CLI::handle_extra_entropy(void) {
   auto menu = Menu(&entries, &selected);
 
   auto component = CatchEvent(menu, [=, this](Event event) {
-    if (
-        event == Event::Escape) {
+    if (event == Event::Escape) {
       set_active_tab(CONFIG_MENU);
       return true;
     } else if (event == Event::Return) {
@@ -107,7 +106,8 @@ Component CLI::handle_extra_entropy(void) {
 
   auto text_box = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      actions->set_extra_entropy(bytes_data(user_input->begin(), user_input->end()));
+      actions->set_extra_entropy(
+          bytes_data(user_input->begin(), user_input->end()));
 
       set_active_tab(CONFIG_MENU);
       *active_sub_tab = 0;
@@ -287,8 +287,7 @@ Component CLI::handle_derivation_path(void) {
   auto input_option = InputOption();
   input_option.multiline = false;
 
-  auto field =
-      input_(*user_input);
+  auto field = input_(*user_input);
   field->TakeFocus();
 
   auto text_box = CatchEvent(field, [=, this](Event event) {
