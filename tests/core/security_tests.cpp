@@ -4,7 +4,7 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet.hpp"
 #include "core/security.hpp"
-#include "utils/crypto_utils.hpp"
+
 
 TEST_CASE("Testing wallet saving into a secure keystore", "[wallet][security]") {
 Wallet wallet;

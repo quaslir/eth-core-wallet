@@ -15,15 +15,15 @@ TEST_CASE("Derivation from seed tests", "[derivaion]") {
     static const std::vector<uint32_t> PATH_DERIVE =
         Key_Derive::parse_derive_path("m/44'/60'/0'/0/0");
     for(auto& entry : test_cases ) {
-        SECTION("Vector " + entry.seed_phrase.substr(0, 20) + "...") {
+        SECTION("Vector " + std::string{entry.seed_phrase.substr(0, 20)} + "...") {
             Wallet wallet;
             secure_string mnemonic(entry.seed_phrase.begin(), entry.seed_phrase.end());
 
             wallet.finalize_from_mnemonic(mnemonic, secure_string{}, PATH_DERIVE);
-            REQUIRE(std::string{wallet.get_eth_address()} == entry.first_eth_addr);
+            REQUIRE(wallet.get_eth_address() == entry.first_eth_addr);
             secure_string private_key = wallet.__get_private_key_hex();
 
-            REQUIRE(std::string{private_key} == entry.first_eth_private_key);
+            REQUIRE(private_key == entry.first_eth_private_key);
         }
     }
 

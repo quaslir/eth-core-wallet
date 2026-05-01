@@ -2,7 +2,6 @@
 #include <string>
 #include "catch2/catch_test_macros.hpp"
 #include "core/secure_bytes_data.hpp"
-#include "utils/tech_utils.hpp"
 #include "utils/utils.hpp"
 #include "core/mnemonic.hpp"
 
@@ -35,9 +34,9 @@ REQUIRE_FALSE(test_data.empty());
 MnemonicGenerator mnemgen;
 
 for(auto& entry : test_data) {
-    SECTION("Vector " + entry.seed_phrase.substr(0, 20) + "...") {
+    SECTION("Vector " + std::string{entry.seed_phrase.substr(0, 20)} + "...") {
         secure_string seed_phrase = mnemgen.__generateMnemonic(entry.entropy);
-        REQUIRE(std::string{seed_phrase}  == entry.seed_phrase);
+        REQUIRE(seed_phrase  == entry.seed_phrase);
         auto res = mnemgen.generateSeed(seed_phrase);
         REQUIRE(res == entry.seed);
     }
