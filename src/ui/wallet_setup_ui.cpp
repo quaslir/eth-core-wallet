@@ -82,39 +82,50 @@ Component CLI::create_main_menu(void) {
 
 Component CLI::render_mnemonic_element(void) {
   auto mnemonic = std::make_shared<secure_string>(actions->get_mnemonic());
+
+
   auto button = Button(
-      " [ PRESS ENTER TO CONTINUE ] ",
+      " [ I HAVE WRITTEN IT DOWN ] ",
       [this, mnemonic] { this->set_active_tab(MNEMONIC_WIPING); },
       ButtonOption::Ascii());
+
   return Renderer(button, [this, button, mnemonic] {
-    auto box = vbox({
 
-                   vbox({
-                       text(" YOUR RECOVERY PHRASE (SEED) ") | bold | center,
+    if(mnemonic->empty()) {
+      *mnemonic = actions->get_mnemonic();
+    }
 
-                   }) | borderDouble |
-                       color(Color::Yellow),
+    auto header = vbox({
+      text(" 🔐 SECURITY: RECOVERY PHRASE ") | bold | hcenter | color(Color::Yellow),
+      text(" Keep this phrase private and offline! ") | dim | hcenter
+    });
 
-                   separator(),
+    auto phrase_display = vbox({
+      filler(),
+      paragraph_(*mnemonic) | bold | hcenter | color(Color::White),
+      filler()
+    }) | borderRounded | color(Color::Cyan) | size(HEIGHT, EQUAL, 6);
 
-                   paragraph_(actions->get_mnemonic()) | hcenter |
-                       color(Color::White) | bold,
+    auto warning_box = vbox({
+        text(" ⚠️  CRITICAL WARNING  ⚠️ ") | bold | hcenter,
+        separator(),
+        text(" • DO NOT take a screenshot or digital copy.") | hcenter,
+        text(" • Anyone with these words can STEAL your money.") | hcenter,
+          text(" • There is NO 'Forgot Phrase' option.") | hcenter
+    }) | borderDouble | color(Color::Red);
 
-                   separator(),
+    auto content = vbox({
+      header,
+      filler(),
+      phrase_display,
+      filler(),
+      warning_box,
+      filler(),
+      button->Render() | hcenter | bold | focus | color(Color::Green)
+    });
 
-                   vbox({
-                       text(" WARNING: DO NOT SCREENSHOT! ") | center,
-                       text(" WRITE IT DOWN ON PAPER NOW! ") | center,
-                   }) | border |
-                       color(Color::Red),
+    return to_center(content | border | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22));
 
-                   separator(), button->Render() | hcenter | bold | focus
-
-               }) |
-               border | center | size(WIDTH, EQUAL, 60) |
-               size(HEIGHT, EQUAL, 15);
-
-    return to_center(box);
   });
 }
 
@@ -133,6 +144,8 @@ Component CLI::render_mnemonic_wiping(void) {
 
   input_option.on_enter = [=, this] {
     if (*user_input == "I AM RESPONSIBLE") {
+      actions->wipe_mnemonic();
+      std::cerr << actions->get_mnemonic().c_str() << std::endl;
       set_active_tab(SET_PASSWORD);
     }
   };
@@ -144,39 +157,49 @@ Component CLI::render_mnemonic_wiping(void) {
     bool is_correct = (*user_input == "I AM RESPONSIBLE");
     auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
 
-    auto box =
-        vbox({vbox({text(" [!!!] FINAL LEGAL & SECURITY WARNING [!!!] ") |
-                    bold | center}) |
-                  borderDouble | color(Color::Red),
+    auto warning_header = vbox({
+      text(" ⚠️  LEGAL & SECURITY TERMINATION  ⚠️ ") | bold | hcenter
+    }) | borderDouble | color(Color::Red);
 
-              separator(),
+    auto warning_list = vbox({
+      text(" 1. This app will NOW WIPE the mnemonic from memory.") | color(Color::GrayLight),
+      
+      text(" 2. We have ZERO copies. No database, no logs, no backups.") |  color(Color::GrayLight),
+      text(" 3. If you didn't write it down, your funds are ALREADY LOST.") |  color(Color::Red) | bold,
+      text("")
+    }) | hcenter;
+    
 
-              text(" 1. This app will NOW WIPE the mnemonic from memory."),
-              text(" 2. We have ZERO copies. No database, no logs, no "
-                   "backups."),
-              text(" 3. If you didn't write it down, your funds are ALREADY "
-                   "LOST."),
+    auto input_box = vbox({
+      text(" To proceed, type exactly: ") | hcenter | dim,
+      text(""),
+      text(" I AM RESPONSIBLE ") | bold | hcenter | inverted | color(Color::Yellow),
 
-              separator(),
+      separator(),
 
-              text(" To proceed, type exactly: ") | hcenter,
-              text(" I AM RESPONSIBLE ") | bold | hcenter | inverted,
+      hbox({
+        text(" >>> "),
+        field->Render() | size(WIDTH, EQUAL, 30)
+      }) | hcenter
+    }) | borderRounded | color(is_correct ? Color::Green : Color::GrayDark);
 
-              separator(),
+    auto status_msg = is_correct ? text(" [ READY TO WIPE: PRESS ENTER ] ") | bold | color(Color::Green) :
+    text(" [ WAITING FOR CORRECT INPUT ] ") | dim | hcenter;
 
-              hbox({
-                  text(" >>> "),
-                  field->Render() | input_style | border,
-              }) | hcenter,
+    auto content = vbox({
+      warning_header,
+      warning_list,
+      filler(),
+      input_box,
+      filler(),
+            text(""),
+      status_msg | hcenter,
 
-              separator(),
+    });
 
-              text(is_correct ? " [ PRESS ENTER TO WIPE MEMORY ] "
-                              : " [ WAITING FOR CORRECT INPUT ] ") |
-                  bold | hcenter | blink}) |
-        border | center | size(WIDTH, LESS_THAN, 70);
+    return to_center(content) | border | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22) | center;
 
-    return to_center(box);
+   
   });
 }
 

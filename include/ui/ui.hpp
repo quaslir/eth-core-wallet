@@ -1,4 +1,4 @@
-#include "api/json.hpp"
+
 #include "async-managers/async_eth_usd_update.hpp"
 #include "async-managers/async_manager.hpp"
 #include "async-managers/async_transactions_history_manager.hpp"
@@ -59,4 +59,5 @@ private:
   void change_network(size_t index) override;
   void update_eth_price(void) override;
   double get_current_eth_price(void) override;
+  void wipe_mnemonic(void) override;
 };

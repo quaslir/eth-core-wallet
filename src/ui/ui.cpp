@@ -9,6 +9,7 @@
 #include "utils/tech_utils.hpp"
 #include <cstddef>
 #include <cstdlib>
+#include <openssl/crypto.h>
 #include <string>
 
 void UserInterface::load(void) {
@@ -222,4 +223,8 @@ void UserInterface::change_network(size_t index) {
 
 double UserInterface::get_current_eth_price(void) {
   return eth_price_manager.get_current_eth_price();
+}
+
+void UserInterface::wipe_mnemonic(void) {
+OPENSSL_cleanse(temp.mnemonic.data(), temp.mnemonic.size());
 }

@@ -1,4 +1,5 @@
 #include "ui/cli.hpp"
+#include <ftxui/dom/elements.hpp>
 
 void CLI::set_actions(IWalletActions *act) { actions = act; }
 
@@ -22,7 +23,12 @@ ButtonOption CLI::create_button(const std::string &label, Color c) const {
 
   opt.transform = [label, c](const EntryState &state) {
     auto t = text(" " + label + " ");
-    return state.focused ? (t | inverted | color(c)) : (t | color(c));
+    
+    if(state.focused) {
+      return t | bold | inverted | color(c);
+    }
+
+    return t | color(Color::DarkSlateGray1) | dim;
   };
 
   return opt;
