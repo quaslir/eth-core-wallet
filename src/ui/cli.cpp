@@ -15,6 +15,7 @@
 #include <ftxui/dom/node.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/color.hpp>
+#include <ftxui/screen/screen.hpp>
 
 void CLI::load(void) {
   auto main_menu = create_main_menu();
@@ -53,6 +54,9 @@ void CLI::load(void) {
       screen.PostEvent(Event::Custom);
     }
   });
+  Screen::Cursor cursor;
+  cursor.shape = Screen::Cursor::Shape::Hidden;
+  screen.SetCursor(cursor);
   screen.Loop(root_container);
 
   refresh_ui = false;
@@ -60,6 +64,3 @@ void CLI::load(void) {
     refresh_thread.join();
   }
 }
-
-
-

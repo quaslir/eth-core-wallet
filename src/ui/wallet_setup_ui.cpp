@@ -1,7 +1,7 @@
-#include "ui/cli.hpp"
-#include "ui/ftxui-components/paragraph.hpp"
-#include "ui/ftxui-components/input_component.hpp"
 #include "config/config.hpp"
+#include "ui/cli.hpp"
+#include "ui/ftxui-components/input_component.hpp"
+#include "ui/ftxui-components/paragraph.hpp"
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -12,21 +12,21 @@
 Component CLI::create_main_menu(void) {
 
   static std::vector<std::string> entries = {" ⚡ GENERATE NEW WALLET ",
-      " 📂 IMPORT EXISTING    ",
-      " ❌ EXIT                "};
+                                             " 📂 IMPORT EXISTING    ",
+                                             " ❌ EXIT                "};
   static int selected = 0;
 
-    MenuOption menu_option;
+  MenuOption menu_option;
 
-    menu_option.entries_option.transform = [](const EntryState& state) {
-      auto t = text(state.label);
+  menu_option.entries_option.transform = [](const EntryState &state) {
+    auto t = text(state.label);
 
-      if(state.focused) {
-        return t | bold | color(Color::Cyan) | inverted;
-      }
+    if (state.focused) {
+      return t | bold | color(Color::Cyan) | inverted;
+    }
 
-      return t | dim;
-    };  
+    return t | dim;
+  };
 
   auto menu = Menu(&entries, &selected, menu_option);
 
@@ -35,7 +35,7 @@ Component CLI::create_main_menu(void) {
         event == ftxui::Event::Character('Q')) {
       actions->on_main_menu(2);
       return true;
-    } else if(event == Event::Return) {
+    } else if (event == Event::Return) {
       actions->on_main_menu(selected);
     }
     return false;
@@ -43,50 +43,42 @@ Component CLI::create_main_menu(void) {
 
   return Renderer(component, [=, this] {
     auto header = vbox({
-        text(" ╔══════════════════════════════════════════╗ ") | hcenter | color(Color::Cyan),
-        text(" ║        ETH CORE WALLET v1.0 [PRO]        ║ ") | bold | hcenter | color(Color::Cyan),
-        text(" ╚══════════════════════════════════════════╝ ") | hcenter | color(Color::Cyan),
+        text(" ╔══════════════════════════════════════════╗ ") | hcenter |
+            color(Color::Cyan),
+        text(" ║        ETH CORE WALLET v1.0 [PRO]        ║ ") | bold |
+            hcenter | color(Color::Cyan),
+        text(" ╚══════════════════════════════════════════╝ ") | hcenter |
+            color(Color::Cyan),
     });
-
 
     auto menu_render = vbox({
-        text(" MAIN OPERATIONS ") | hcenter | bold,
-        separator(),
-        menu->Render() | center,
-    }) | borderRounded | color(Color::GrayLight) | size(WIDTH, EQUAL, 80) | hcenter;
+                           text(" MAIN OPERATIONS ") | hcenter | bold,
+                           separator(),
+                           menu->Render() | center,
+                       }) |
+                       borderRounded | color(Color::GrayLight) |
+                       size(WIDTH, EQUAL, 80) | hcenter;
 
     auto info = hbox({
-      text(" [STATUS]: ") | dim,
-      text("READY") | color(Color::Green) | bold,
-      filler(),
+                    text(" [STATUS]: ") | dim,
+                    text("READY") | color(Color::Green) | bold,
+                    filler(),
 
-    }) | borderLight;
+                }) |
+                borderLight;
 
-    auto footer = vbox({
-      text(" Q: Quit ") | dim,
-        filler(),
-        text(" Arrows: Navigate | Enter: Select ") | dim
-    });
-
+    auto footer = vbox({text(" Q: Quit ") | dim, filler(),
+                        text(" Arrows: Navigate | Enter: Select ") | dim});
 
     return to_center(
-      vbox({
-        header,
-        filler(),
-        menu_render,
-        filler(), 
-        info,
-        footer
-      }) | borderDouble | size(HEIGHT, LESS_THAN, 25) | size(WIDTH, LESS_THAN, 90)
-    );
-
-
+        vbox({header, filler(), menu_render, filler(), info, footer}) |
+        borderDouble | size(HEIGHT, LESS_THAN, 25) |
+        size(WIDTH, LESS_THAN, 90));
   });
 }
 
 Component CLI::render_mnemonic_element(void) {
   auto mnemonic = std::make_shared<secure_string>(actions->get_mnemonic());
-
 
   auto button = Button(
       " [ I HAVE WRITTEN IT DOWN ] ",
@@ -94,42 +86,35 @@ Component CLI::render_mnemonic_element(void) {
       ButtonOption::Ascii());
 
   return Renderer(button, [this, button, mnemonic] {
-
-    if(mnemonic->empty()) {
+    if (mnemonic->empty()) {
       *mnemonic = actions->get_mnemonic();
     }
 
-    auto header = vbox({
-      text(" 🔐 SECURITY: RECOVERY PHRASE ") | bold | hcenter | color(Color::Yellow),
-      text(" Keep this phrase private and offline! ") | dim | hcenter
-    });
+    auto header =
+        vbox({text(" 🔐 SECURITY: RECOVERY PHRASE ") | bold | hcenter |
+                  color(Color::Yellow),
+              text(" Keep this phrase private and offline! ") | dim | hcenter});
 
-    auto phrase_display = vbox({
-      filler(),
-      paragraph_(*mnemonic) | bold | hcenter | color(Color::White),
-      filler()
-    }) | borderRounded | color(Color::Cyan) | size(HEIGHT, EQUAL, 6);
+    auto phrase_display =
+        vbox({filler(),
+              paragraph_(*mnemonic) | bold | hcenter | color(Color::White),
+              filler()}) |
+        borderRounded | color(Color::Cyan) | size(HEIGHT, EQUAL, 6);
 
-    auto warning_box = vbox({
-        text(" ⚠️  CRITICAL WARNING  ⚠️ ") | bold | hcenter,
-        separator(),
-        text(" • DO NOT take a screenshot or digital copy.") | hcenter,
-        text(" • Anyone with these words can STEAL your money.") | hcenter,
-          text(" • There is NO 'Forgot Phrase' option.") | hcenter
-    }) | borderDouble | color(Color::Red);
+    auto warning_box =
+        vbox(
+            {text(" ⚠️  CRITICAL WARNING  ⚠️ ") | bold | hcenter, separator(),
+             text(" • DO NOT take a screenshot or digital copy.") | hcenter,
+             text(" • Anyone with these words can STEAL your money.") | hcenter,
+             text(" • There is NO 'Forgot Phrase' option.") | hcenter}) |
+        borderDouble | color(Color::Red);
 
-    auto content = vbox({
-      header,
-      filler(),
-      phrase_display,
-      filler(),
-      warning_box,
-      filler(),
-      button->Render() | hcenter | bold | focus | color(Color::Green)
-    });
+    auto content =
+        vbox({header, filler(), phrase_display, filler(), warning_box, filler(),
+              button->Render() | hcenter | bold | focus | color(Color::Green)});
 
-    return to_center(content | border | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22));
-
+    return to_center(content | border | size(WIDTH, EQUAL, 70) |
+                     size(HEIGHT, EQUAL, 22));
   });
 }
 
@@ -161,49 +146,53 @@ Component CLI::render_mnemonic_wiping(void) {
     bool is_correct = (*user_input == "I AM RESPONSIBLE");
     auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
 
-    auto warning_header = vbox({
-      text(" ⚠️  LEGAL & SECURITY TERMINATION  ⚠️ ") | bold | hcenter
-    }) | borderDouble | color(Color::Red);
+    auto warning_header =
+        vbox({text(" ⚠️  LEGAL & SECURITY TERMINATION  ⚠️ ") | bold | hcenter}) |
+        borderDouble | color(Color::Red);
 
-    auto warning_list = vbox({
-      text(" 1. This app will NOW WIPE the mnemonic from memory.") | color(Color::GrayLight),
-      
-      text(" 2. We have ZERO copies. No database, no logs, no backups.") |  color(Color::GrayLight),
-      text(" 3. If you didn't write it down, your funds are ALREADY LOST.") |  color(Color::Red) | bold,
-      text("")
-    }) | hcenter;
-    
+    auto warning_list =
+        vbox(
+            {text(" 1. This app will NOW WIPE the mnemonic from memory.") |
+                 color(Color::GrayLight),
 
-    auto input_box = vbox({
-      text(" To proceed, type exactly: ") | hcenter | dim,
-      text(""),
-      text(" I AM RESPONSIBLE ") | bold | hcenter | inverted | color(Color::Yellow),
+             text(
+                 " 2. We have ZERO copies. No database, no logs, no backups.") |
+                 color(Color::GrayLight),
+             text(" 3. If you didn't write it down, your funds are ALREADY "
+                  "LOST.") |
+                 color(Color::Red) | bold,
+             text("")}) |
+        hcenter;
 
-      separator(),
+    auto input_box =
+        vbox({text(" To proceed, type exactly: ") | hcenter | dim, text(""),
+              text(" I AM RESPONSIBLE ") | bold | hcenter | inverted |
+                  color(Color::Yellow),
 
-      hbox({
-        text(" >>> "),
-        field->Render() | size(WIDTH, EQUAL, 30)
-      }) | hcenter
-    }) | borderRounded | color(is_correct ? Color::Green : Color::GrayDark);
+              separator(),
 
-    auto status_msg = is_correct ? text(" [ READY TO WIPE: PRESS ENTER ] ") | bold | color(Color::Green) :
-    text(" [ WAITING FOR CORRECT INPUT ] ") | dim | hcenter;
+              hbox({text(" >>> "), field->Render() | size(WIDTH, EQUAL, 30)}) |
+                  hcenter}) |
+        borderRounded | color(is_correct ? Color::Green : Color::GrayDark);
+
+    auto status_msg =
+        is_correct ? text(" [ READY TO WIPE: PRESS ENTER ] ") | bold |
+                         color(Color::Green)
+                   : text(" [ WAITING FOR CORRECT INPUT ] ") | dim | hcenter;
 
     auto content = vbox({
-      warning_header,
-      warning_list,
-      filler(),
-      input_box,
-      filler(),
-            text(""),
-      status_msg | hcenter,
+        warning_header,
+        warning_list,
+        filler(),
+        input_box,
+        filler(),
+        text(""),
+        status_msg | hcenter,
 
     });
 
-    return to_center(content) | border | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22) | center;
-
-   
+    return to_center(content) | border | size(WIDTH, EQUAL, 70) |
+           size(HEIGHT, EQUAL, 22) | center;
   });
 }
 
@@ -214,10 +203,7 @@ Component CLI::render_import_mnemonic_component(void) {
   auto input_option = InputOption();
   input_option.multiline = true;
 
-  input_option.on_change = [is_incorrect] {
-    *is_incorrect = false;
-  };
-
+  input_option.on_change = [is_incorrect] { *is_incorrect = false; };
 
   auto field = input_(*user_input, false, input_option.on_change);
   field->TakeFocus();
@@ -248,75 +234,62 @@ Component CLI::render_import_mnemonic_component(void) {
   return Renderer(component, [=, this] {
     Element error_box = emptyElement();
     if (*is_incorrect) {
-      error_box = vbox({
-        text(" ⚠  VERIFICATION FAILED ") | bold | hcenter | color(Color::Red),
+      error_box = vbox({text(" ⚠  VERIFICATION FAILED ") | bold | hcenter |
+                            color(Color::Red),
 
+                        vbox({
+
+                            text("• Check for typos or word order."),
+                            text("• Ensure words are from BIP-39 list."),
+                            text("• Check count (12/15/18/21/24).")}) |
+                            hcenter | dim,
+                        separatorLight() | color(Color::Red)}) |
+                  borderRounded | color(Color::Red);
+    }
+
+    auto input_box =
         vbox({
 
-          text("• Check for typos or word order."),
-          text("• Ensure words are from BIP-39 list."),
-          text("• Check count (12/15/18/21/24).")
-        }) | hcenter | dim,
- separatorLight() | color(Color::Red)
-        }) | borderRounded | color(Color::Red);
-         
-      }
+            hbox({text(" SEED PHRASE ") | bold | color(Color::Cyan), filler(),
+                  text(std::to_string(user_input->length()) + " chars") | dim}),
 
-      auto input_box = vbox({
+            separator(),
 
-        hbox({
-          text(" SEED PHRASE ") | bold | color(Color::Cyan),
-          filler(),
-          text(std::to_string(user_input->length()) + " chars") | dim
-        }),
+            text(""),
 
-        separator(),
+            hbox(
+                {text(" >>> ") | bold | color(Color::Yellow), field->Render()}),
 
-        text(""),
+            text("")
 
-        hbox({
-          text(" >>> ") | bold | color(Color::Yellow),
-          field->Render()
-        }),
+        }) |
+        borderRounded | color(*is_incorrect ? Color::Red : Color::GrayDark);
 
-        text("")
+    auto footer =
+        vbox({text(" ESC: Cancel ") | dim, filler(),
+              text(user_input->empty() ? "[ EMPTY ]" : "[ ENTER TO VERIFY ]") |
+                  color(user_input->empty() ? Color::GrayDark : Color::Green)});
 
-      }) | borderRounded | color(*is_incorrect ? Color::Red : Color::GrayDark);
+    auto content = vbox({
 
-      auto footer = vbox({
-        text(" ESC: Cancel ") | dim,
-        filler(),
-        text(user_input->empty() ? "[ EMPTY ]" : "[ ENTER TO VERIFY ]") |
-        color(user_input->empty() ? Color::GrayDark : Color::Green)
-      });
-
-      auto content = vbox({
-
-        vbox({
-          text(" 📥  IMPORT WALLET  ") | bold | hcenter | color(Color::Cyan),
-          text(" Recovery phase is the master key to your funds ") | dim | hcenter
-        }),
+        vbox(
+            {text(" 📥  IMPORT WALLET  ") | bold | hcenter | color(Color::Cyan),
+             text(" Recovery phase is the master key to your funds ") | dim |
+                 hcenter}),
 
         filler(),
 
-        error_box,
-        filler(),
-        input_box,
-        filler(),
-        footer
+        error_box, filler(), input_box, filler(), footer
 
-      });
+    });
 
-      return to_center(content | borderDouble | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22));
+    return to_center(content | borderDouble | size(WIDTH, EQUAL, 70) |
+                     size(HEIGHT, EQUAL, 22));
   });
 }
 
 Component CLI::render_input_optional_passphrase_component(void) {
   auto user_input = std::make_shared<secure_string>();
-
-  auto input_option = InputOption();
-  input_option.multiline = false;
-  input_option.password = true;
 
   auto field = input_(*user_input, true);
   field->TakeFocus();
@@ -328,25 +301,46 @@ Component CLI::render_input_optional_passphrase_component(void) {
       actions->import_wallet();
       set_active_tab(SET_PASSWORD);
       return true;
+    } else if (event == Event::Escape) {
+      set_active_tab(IMPORT_MENU);
+      return true;
     }
 
     return false;
   });
 
   return Renderer(component, [=, this] {
-    auto box = vbox({
-        text("STEP 2: ENTER PASSPHRASE (OPTIONAL)") | color(Color::Cyan) | bold,
-        separator(),
-        text("This is an additional security layer"),
-        text("If you didn't use a passphrase before, leave it empty."),
-        text("WARNING: If you forget it, your funds are LOST FOREVER.") |
-            color(Color::Red) | bold,
-        separator(),
+    auto header =
+        vbox({text(" 🔑  STEP 2: BIP-39 PASSPHRASE ") | bold | hcenter |
+                  color(Color::Cyan),
+              text(" Extra security layer (25th word) ") | dim | hcenter
 
-        component->Render() | border,
-    });
+        });
 
-    return to_center(box);
+    auto warning_box =
+        vbox(
+            {text(" ⚠  WARNING ") | bold | hcenter,
+             text(
+                 " This is NOT your wallet password. It's part of the seed. ") |
+                 hcenter,
+             text(" If you used a passphrase before, you MUST enter it now. ") |
+                 hcenter,
+             text(" Wrong passphrase = EMPTY WALLET ") | bold | hcenter}) |
+        border | color(Color::Red);
+
+    auto input_box =
+        vbox({text(" ENTER PASSPHRASE (LEAVE EMPTY IF NONE): ") | bold,
+              text(""), field->Render() | hcenter});
+
+    auto footer = hbox(
+        {text(" [ESC] Back ") | dim, filler(),
+         text(" [ENTER] Confirm and Import ") | color(Color::Green) | bold});
+
+    auto content = vbox(
+        {header, filler(), warning_box, filler(), input_box, filler(), footer});
+
+    return to_center(content | borderDouble | size(WIDTH, EQUAL, 70) |
+                     size(HEIGHT, EQUAL, 22) | center);
   });
 }
 
@@ -356,15 +350,12 @@ Component CLI::render_config_menu(void) {
   auto entries = std::make_shared<std::vector<std::string>>();
   auto selected = std::make_shared<int>(0);
 
-  auto target_tabs = std::make_shared<std::vector<state_t>>(std::vector<state_t>{
-    EXTRA_ENTROPY_CONFIG, 
-      BIT_LENGTH_CONFIG,
-      PASSPHRASE_CONFIG, 
-      DERIVE_PATH_CONFIG
-  });
-    
+  auto target_tabs = std::make_shared<std::vector<state_t>>(
+      std::vector<state_t>{EXTRA_ENTROPY_CONFIG, BIT_LENGTH_CONFIG,
+                           PASSPHRASE_CONFIG, DERIVE_PATH_CONFIG});
+
   auto update_entries = [entries, &cfg]() {
-*entries  = {
+    *entries = {
         " 1. ENTROPY SOURCE : [ " +
             std::string{(!cfg.extra_entropy.empty() ? "OS CSPRNG + USER MIX"
                                                     : "OS CSPRNG ONLY")} +
@@ -384,59 +375,53 @@ Component CLI::render_config_menu(void) {
 
   MenuOption menu_option;
 
-  menu_option.entries_option.transform = [selected](const EntryState& state) {
+  menu_option.entries_option.transform = [selected](const EntryState &state) {
     auto element = text(state.label);
 
-    if(state.focused) {
-      return hbox({
-        text(" > "),
-        element
-      }) | inverted | color(Color::Yellow) | bold;
+    if (state.focused) {
+      return hbox({text(" > "), element}) | inverted | color(Color::Yellow) |
+             bold;
     }
 
-    return hbox({
-        text("   "),
-        element
-      }) | color(Color::GrayLight);
+    return hbox({text("   "), element}) | color(Color::GrayLight);
   };
-
 
   auto menu = Menu(entries.get(), selected.get(), menu_option);
 
-  auto component = Renderer(menu, [=,&cfg, this] {
-update_entries();
+  auto component = Renderer(menu, [=, &cfg, this] {
+    update_entries();
 
-auto header = vbox({
-  text(" ⚙  CONFIGURATION SETTINGS ") | bold | hcenter | color(Color::Cyan),
-  text(" Adjust hardware-level entropy and derivation paths ") | dim | hcenter
-});
+    auto header =
+        vbox({text(" ⚙  CONFIGURATION SETTINGS ") | bold | hcenter |
+                  color(Color::Cyan),
+              text(" Adjust hardware-level entropy and derivation paths ") |
+                  dim | hcenter});
 
-auto footer = vbox({
-  separator(),
+    auto footer =
+        vbox({separator(),
 
-  hbox({
-    text(" [ENTER] Edit ") | dim,
-    filler(),
+              hbox({
+                  text(" [ENTER] Edit ") | dim,
+                  filler(),
 
-        text(" [G] Generate ") | bold | color(Color::LightCyan1Bis),
-        filler(),
-              text(" [B] Back") | bold | color(Color::DarkCyan),
-  })
-}) | flex;
+                  text(" [G] Generate ") | bold | color(Color::LightCyan1Bis),
+                  filler(),
+                  text(" [B] Back") | bold | color(Color::DarkCyan),
+              })}) |
+        flex;
 
-auto content = vbox({
-  header,
-  filler(),
-  menu->Render() | borderRounded | color(Color::GrayDark),
-  text(""),
-  footer
+    auto content =
+        vbox({header, filler(),
+              menu->Render() | borderRounded | color(Color::GrayDark), text(""),
+              footer
 
-});
-    return to_center(content | borderDouble | size(WIDTH, GREATER_THAN, 100) | size(HEIGHT, GREATER_THAN, 20) | center);
+        });
+    return to_center(content | borderDouble | size(WIDTH, GREATER_THAN, 100) |
+                     size(HEIGHT, GREATER_THAN, 20) | center);
   });
   return CatchEvent(component, [=, this](ftxui::Event event) {
     if (event == ftxui::Event::Return) {
-      if(*selected < static_cast<int>(target_tabs->size())) {
+      if (*selected < static_cast<int>(target_tabs->size())) {
         set_active_tab((*target_tabs)[*selected]);
       }
 

@@ -23,8 +23,8 @@ ButtonOption CLI::create_button(const std::string &label, Color c) const {
 
   opt.transform = [label, c](const EntryState &state) {
     auto t = text(" " + label + " ");
-    
-    if(state.focused) {
+
+    if (state.focused) {
       return t | bold | inverted | color(c);
     }
 

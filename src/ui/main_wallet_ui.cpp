@@ -1,8 +1,8 @@
-#include "ui/cli.hpp"
-#include "utils/tech_utils.hpp"
 #include "fmt/core.h"
-#include "ui/ftxui-components/text_component.hpp"
+#include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
+#include "ui/ftxui-components/text_component.hpp"
+#include "utils/tech_utils.hpp"
 #include <ftxui/dom/table.hpp>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
@@ -74,7 +74,6 @@ Component CLI::print_wallet_ui(void) {
     return false;
   });
 }
-
 
 Component CLI::display_private_key(void) {
   auto active_sub_tab = std::make_shared<int>(0);

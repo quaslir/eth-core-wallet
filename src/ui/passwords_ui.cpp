@@ -1,10 +1,8 @@
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/input_component.hpp"
+#include <ftxui/dom/elements.hpp>
 Component CLI::render_password_setup(void) {
 
-  auto input_option = InputOption();
-  input_option.multiline = false;
-  input_option.password = true;
   auto pass_str = std::make_shared<secure_string>();
   auto field = input_(*pass_str, true);
   field->TakeFocus();
@@ -14,36 +12,46 @@ Component CLI::render_password_setup(void) {
 
       set_active_tab(CONFIRM_PASSWORD);
       return true;
+    } else if(event == Event::Escape) {
+      set_active_tab(MAIN_MENU);
+      return true;
     }
 
     return false;
   });
 
   return Renderer(first_stage, [=, this] {
-    auto box =
-        vbox({text("CREATE PASSWORD") | bold | center | borderDouble |
-                  color(Color::Cyan),
-              separator(),
-              vbox({
-                  text("This password will encrypt your wallet on disk.") |
-                      hcenter,
-                  text("INPUT IS HIDDEN: No characters will be displayed.") |
-                      hcenter | dim,
-                  text("WARNING: If you forget it, your funds are LOST "
-                       "FOREVER.") |
-                      color(Color::Red) | hcenter | bold,
-              }),
 
-              separator(),
-              hbox({
-                  text(" >>> "),
-                  field->Render() | border | size(WIDTH, EQUAL, 30),
-              }),
-              separator(),
-              text(" Press [ENTER] to continue ") | hcenter | dim}) |
-        border | size(WIDTH, EQUAL, 60);
+    auto header = vbox({
+      text(" 🛡️  CREATE MASTER PASSWORD ") | bold | hcenter | color(Color::Cyan),
+      text(" This password protects your private keys ") | dim | hcenter
+    });
 
-    return to_center(box);
+    auto warning_box = vbox({
+      text(" ⚠️  CRITICAL WARNING ") | bold | hcenter | color(Color::Yellow2),
+      text(""),
+      text(" This password will encrypt your wallet on disk. ") | hcenter,
+      text(" If you forget it, your funds are LOST FOREVER. ") | hcenter | bold,
+      text(" There is no 'Reset Password' in crypto. ") | hcenter | dim
+    }) | border | color(Color::Red);
+
+    auto input_box = hbox({
+      text(" >>> ") | bold | color(Color::Yellow),
+      field->Render() | flex
+    }) | border | color(Color::GrayDark);
+
+
+    auto content = vbox({
+      header,
+      separatorDouble(),
+      filler(),
+      warning_box,
+      filler(),
+      text(" INPUT IS HIDDEN FOR YOUR SECURITY ") | hcenter | dim,
+      input_box
+    });
+
+    return to_center(content | borderHeavy | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22));
   });
 }
 
@@ -111,12 +119,10 @@ Component CLI::render_confirm_password_setup(void) {
 }
 
 Component CLI::render_request_unlock_password(void) {
-  auto input_option = InputOption();
   auto attempts = std::make_shared<std::size_t>(0);
   constexpr static size_t max_attempts = 3;
   auto user_input = std::make_shared<secure_string>();
-  input_option.multiline = false;
-  input_option.password = true;
+
   auto field = input_(*user_input, true);
 
   auto component = CatchEvent(field, [=, this](Event event) {
@@ -129,6 +135,7 @@ Component CLI::render_request_unlock_password(void) {
         set_active_tab(WALLET_UI);
       } else {
         *attempts += 1;
+        user_input->clear();
         if (*attempts == max_attempts) {
           tech_utils::rm_file();
           screen.Exit();
@@ -144,51 +151,45 @@ Component CLI::render_request_unlock_password(void) {
     int remaining = max_attempts - *attempts;
     Elements status_info;
     if (*attempts > 0) {
-      status_info.push_back(text("[!] INVALID PASSWORD") | bold |
+      status_info.push_back(text("[!] ACCESS DENIED: INVALID PASSWORD") | bold |
                             color(Color::Red) | hcenter);
-    }
 
     if (remaining == 1) {
-      status_info.push_back(text("[WARNING] FINAL ATTEMPT. NEXT FAILURE WILL "
-                                 "WIPE DATA.") |
+      status_info.push_back(text("!!! FINAL ATTEMPT: WIPE ON FAILURE !!!") |
                             bold | color(Color::RedLight) | blink | hcenter);
-    } else if (remaining > 0 && attempts > 0) {
-      status_info.push_back(text("Careful: " + std::to_string(remaining) +
-                                 " attempts remaining.") |
+    } else  {
+      status_info.push_back(text("Remaining attempts: " + std::to_string(remaining)) |
                             dim | hcenter);
     }
-    auto box =
-        vbox({text(" Unlock Wallet ") | bold | hcenter | borderDouble |
-                  color(Color::Cyan),
+  }
 
-              separator(),
+  auto header = vbox({
+    text(" 🔒 UNLOCK WALLET ") | bold | hcenter | color(Color::Cyan),
+    separatorDouble(),
+    text(" Encryption active. Enter master password to access private keys. ") | dim | hcenter
+  });
 
-              vbox({
-                  text(" Please enter your password to decrypt the local "
-                       "storage. ") |
-                      hcenter,
-                  text(" Your keys remain encrypted until a valid password "
-                       "is provided. ") |
-                      hcenter | dim,
-              }),
+  auto status_box = vbox({
+    text(""),
+    vbox(std::move(status_info)),
 
-              separator() | color(Color::DarkSlateGray1),
+  });
 
-              vbox(std::move(status_info)) | hcenter,
+  auto input_box = vbox({
+    text(" PASSWORD >>> ") | bold | color(Color::Cyan),
+    field->Render() | flex | border | color(Color::GrayDark) | focus
+  }) | size(HEIGHT, EQUAL, 6);
 
-              hbox({
-                  text(" >>> ") | color(Color::Cyan),
-                  field->Render() | border | flex | size(WIDTH, LESS_THAN, 70),
-              }) | hcenter |
-                  size(WIDTH, EQUAL, 60),
 
-              separator(),
+    auto content = vbox({
+      header,
+      filler(),
+      status_box,
+      filler(),
+      input_box,
+      filler(),
+    });
 
-              text(" Press [ENTER] to unlock") | hcenter | dim
-
-        }) |
-        border | size(WIDTH, LESS_THAN, 70);
-
-    return to_center(box);
+    return to_center(content | borderHeavy | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 14));
   });
 }

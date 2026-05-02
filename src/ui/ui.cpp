@@ -226,5 +226,5 @@ double UserInterface::get_current_eth_price(void) {
 }
 
 void UserInterface::wipe_mnemonic(void) {
-OPENSSL_cleanse(temp.mnemonic.data(), temp.mnemonic.size());
+  OPENSSL_cleanse(temp.mnemonic.data(), temp.mnemonic.size());
 }

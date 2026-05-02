@@ -21,8 +21,9 @@ private:
   std::function<void()> on_change_;
 
 public:
-  explicit SecureInput(secure_string &data, bool password, std::function<void()> on_change)
-      : data_(data), password_(password), on_change_(on_change){}
+  explicit SecureInput(secure_string &data, bool password,
+                       std::function<void()> on_change)
+      : data_(data), password_(password), on_change_(on_change) {}
 
   bool Focusable(void) const override { return true; }
 
@@ -31,7 +32,10 @@ public:
     bool changed = false;
 
     if (event.is_character()) {
-      data_.push_back(static_cast<uint8_t>(event.character()[0]));
+
+      for(auto c : event.character()) {
+        data_.push_back(static_cast<uint8_t>(c));
+      }
       changed = true;
     }
 
@@ -40,7 +44,7 @@ public:
       changed = true;
     }
 
-    if(changed && on_change_) {
+    if (changed && on_change_) {
       on_change_();
     }
 
@@ -50,9 +54,7 @@ public:
   Element Render(void) override {
     Element content;
 
-    auto cursor = text("|") | blink;
-
-
+    auto cursor = text("|") | blink | focus;
 
     if (password_) {
       secure_string hidden_input(data_.size(), static_cast<uint8_t>('*'));
@@ -61,22 +63,16 @@ public:
       content = text_(data_);
     }
 
-    Element content_el = Focused() ? (
-      hbox({
-        content,
-        cursor
-      })
-    ) : (
-      content
-    );
+    Element content_el = Focused() ? (hbox({content, cursor})) : (content);
 
-
-    auto decorator = Focused() ? (borderHeavy | color(Color::Cyan)) : border | color(Color::GrayDark);
+    auto decorator = Focused() ? (borderHeavy | color(Color::Cyan))
+                               : border | color(Color::GrayDark);
 
     return content_el | decorator | size(WIDTH, EQUAL, 50);
   }
 };
 
-inline Component input_(secure_string &data, bool password = false, std::function<void()> on_change = nullptr) {
+inline Component input_(secure_string &data, bool password = false,
+                        std::function<void()> on_change = nullptr) {
   return std::make_shared<SecureInput>(data, password, on_change);
 }
