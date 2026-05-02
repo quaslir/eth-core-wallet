@@ -3,61 +3,123 @@
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
 #include "utils/tech_utils.hpp"
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
-  static std::vector<std::string> entries;
-  auto menu = Menu(&entries, &selected);
-  entries = {" 1. Send Transaction ", " 2. Transaction history",
-             " 3. Change Network",    " 4. Next Address",
-             " 5. Previous Address",  " 6. Export Key",
-             " 7. Lock & Exit"};
+  static std::vector<std::string> entries =  {" 💸 SEND FUNDS     ", " 📜 HISTORY        ", " 🌐 NETWORK        ",
+      " ➡  NEXT ADDR      ", " ⬅  PREV ADDR      ", " 🔑 EXPORT KEY     ",
+      " 🚪 LOCK & EXIT    "};
 
-  auto walletUI = Renderer(menu, [=, this] {
+
+       auto menu = Menu(&entries, &selected);
+
+    auto menu_renderer = Renderer(menu, [=] {
+      return menu->Render() | color(Color::CyanLight);
+    });
+
+  auto walletUI = Renderer(menu_renderer, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
 
     double balance_in_usd = tech_utils::eth_to_usd(
         wallet_info.balance, actions->get_current_eth_price());
 
-    auto info_line = [](const std::string &label, const std::string &value,
-                        Color color_) {
-      return hbox(
-          {text(label) | size(WIDTH, EQUAL, 12), text(value) | color(color_)});
-    };
-    auto box =
-        vbox({
 
-            vbox({
-                text("ETH CORE WALLET ") | bold | hcenter,
-                text("SESSION ACTIVE ") | dim | hcenter,
-            }) | borderDouble |
-                color(Color::Cyan),
 
-            vbox({
-                info_line(" STATUS: ", "Online (Syncing...)", Color::Green),
-                info_line(" BALANCE: ",
-                          fmt::format("{:.5f}", wallet_info.balance) + " ETH " +
-                              "~ " + fmt::format("{:.2f}", balance_in_usd) +
-                              " USD",
-                          Color::Yellow),
-                text(" ADDRESS: "),
-                text_(wallet_info.addr),
-                info_line(" NETWORK: ", actions->get_current_network(),
-                          Color::Green),
+      auto asset_panel = vbox({
+        text(" 💰 ASSETS ") | bold | color(Color::Yellow),
+        separatorDouble() | color(Color::Yellow),
 
-            }),
+        hbox({
+          text(" ETH: ") | bold,
+          text(fmt::format("{:.5f}", wallet_info.balance)) | color(Color::White) | bold
+        }),
 
+        hbox({
+          text(" USD: ") | bold,
+          text(fmt::format("{:.2f}", balance_in_usd)) | color(Color::Green)
+        }),
+
+        filler(),
+
+        text(" ADDRESS: ") | dim,
+        text_(wallet_info.addr) | color(Color::Cyan) | flex,
+        text(" (Press 'C' to copy) ") | dim | hcenter,
+      }) | borderHeavy | size(WIDTH, EQUAL, 38);
+
+      float sync_progress = 0.85f; //!!!
+
+      auto network_info = vbox({
+        text(" 🌐 NETWORK & NODES ") | bold | color(Color::Magenta),
+        separator(),
+
+        hbox({
+          text(" TARGET: "),
+          text(actions->get_current_network()) | color(Color::Green)
+        }),
+        hbox({
+          text(" GAS:    "),
+          text("24 Gwei") | color(Color::Yellow)
+        }),
+
+        text(""),
+
+        hbox({
+           text(" SYNC PROGRESS: ") | dim,
+           gauge(sync_progress) | color(Color::Cyan) | flex,
+           text(fmt::format(" {:.0f} ", sync_progress * 100)) | dim
+        })
+
+      }) | borderHeavy;
+
+
+      auto log_activity = vbox({
+        text(" 📑 RECENT ACTIVITY ") | bold | dim,
+        separator(),
+        text(" • Connected to Infura/Alchemy node") | dim,
+        text(" • Block 19283745 synced") | dim,
+        text(" • Mempool monitor active") | dim
+      }) | flex;
+
+      auto footer = hbox({
+        text(" [ENTER] EXECUTE ") | bold | hcenter | color(Color::Black) | bgcolor(Color::Cyan),
+  
+        text(" [C] COPY ADDRESS ") | dim,
+        filler(),
+        text(" [Q] LOCK ") | color(Color::RedLight),
+        text("  Build: v1.0-alpha ") | dim
+      });
+
+      auto dashboard = vbox({
+        hbox({
+          text(" 💠 ETH-CORE WALLET v1.0 ") | bold | color(Color::Cyan),
+          filler(),
+          text(" SESSION: ACTIVE ") | color(Color::Green) | dim
+        }),
+
+        hbox({
+          asset_panel,
+          vbox({
+            network_info,
+            hbox({
+
+          vbox({
+            text(" AVAILABLE OPERATIONS ") | bold | color(Color::CyanLight),
             separator(),
-            vbox({
-                text(" SELECT OPERATION: ") | bold | color(Color::CyanLight),
-                menu->Render() | color(Color::BlueLight),
-            }) | border,
-            filler(),
-            text(">>> Use Arrows to navigate, Enter to select") | dim | hcenter,
-        }) |
-        border | center | size(WIDTH, EQUAL, 62);
+            menu_renderer->Render()
+          }) | borderHeavy | size(WIDTH, EQUAL, 30),
+          log_activity | borderHeavy | flex
+        }) | flex
+      }) | flex
+    }) | flex,
+        footer
 
-    return to_center(box);
+      });
+
+   return to_center(dashboard | size(WIDTH, EQUAL, 100
+) | size(HEIGHT, EQUAL, 28) | center);
   });
 
   return CatchEvent(walletUI, [=, this](Event event) {
@@ -69,7 +131,12 @@ Component CLI::print_wallet_ui(void) {
                event == Event::Character('C')) {
       actions->copy_address();
       return true;
-    }
+    } 
+    else if(event == Event::Character('q') || 
+  event == Event::Character('Q')) {
+    // handle exitting
+    return true;
+  }
 
     return false;
   });

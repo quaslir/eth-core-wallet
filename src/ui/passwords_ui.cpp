@@ -1,5 +1,6 @@
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/input_component.hpp"
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 Component CLI::render_password_setup(void) {
 
@@ -56,9 +57,6 @@ Component CLI::render_password_setup(void) {
 }
 
 Component CLI::render_confirm_password_setup(void) {
-  auto input_option = InputOption();
-  input_option.multiline = false;
-  input_option.password = true;
 
   auto second_pass = std::make_shared<secure_string>();
   auto field = input_(*second_pass, true);
@@ -66,55 +64,65 @@ Component CLI::render_confirm_password_setup(void) {
   auto is_incorrect = std::make_shared<bool>(0);
   auto second_stage = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return) {
-      auto first_pass = actions->get_password_for_wallet();
 
-      if (first_pass == *second_pass) {
+      if (actions->get_password_for_wallet() == *second_pass) {
 
         actions->save_wallet();
         actions->update_balance();
         set_active_tab(WALLET_UI);
       } else {
         *is_incorrect = true;
+        second_pass->clear();
       }
 
+      return true;
+    } else if(event == Event::Escape) {
+      set_active_tab(SET_PASSWORD);
       return true;
     }
 
     return false;
   });
   return Renderer(second_stage, [=, this] {
-    std::vector<std::string> password_text = !*is_incorrect ? std::vector<std::string>{
-    "CONFIRM MASTER PASSWORD",
-    "Please re-enter your password to verify.",
-    "If it doesn't match, you will have to restart.",
-  } : std::vector<std::string> {
-    "[!] ERROR: PASSWORDS DO NOT MATCH",
-    "Please try again to ensure your funds are safe."
-  };
+        Color text_color = !*is_incorrect ? Color::Cyan : Color::Red;
 
-    Color text_color = !*is_incorrect ? Color::Cyan : Color::Red;
+    auto header = vbox({
+      text(" 🔒 VERIFY MASTER PASSWORD ") | bold | hcenter | color(text_color),
+      text(" Repeat the password to finalize encryption ") | dim | hcenter
+    });
 
-    Elements elements;
+    Elements info_lines;
 
-    for (const auto &line : password_text) {
-      elements.push_back(text(line) | hcenter);
+    if(!*is_incorrect) {
+      info_lines = {
+        text("Please re-enter your password to verify."),
+        text("If it doesn't match, you will have to restart.") | dim
+      };
+    } else {
+      info_lines = {
+        text(" [!] ERROR: PASSWORDS DO NOT MATCH ") | bold | color(Color::Red),
+        text(" Verification failed. Please try again. ") | color(Color::Red)
+      };
     }
 
-    auto box =
-        vbox({vbox(std::move(elements)) | color(text_color) | bold, separator(),
-              hbox({
-                  filler(),
-                  text(" >>> "),
-                  field->Render() | border | size(WIDTH, EQUAL, 30),
-                  filler(),
-              }),
+    auto input_box = vbox({
+      text(" CONFIRM >>> ") | bold | color(text_color),
+      field->Render() | flex | border | color(Color::GrayDark) | focus
+    });
 
-              separator(), text("Press [ENTER] to confirm") | dim | hcenter
+    auto content = vbox({
+      header,
+      separatorDouble(),
+      filler(),
+      vbox(std::move(info_lines)) | hcenter,
+      filler(),
+      input_box,
+      filler(),
+      separator(),
+      text(" [ENTER] Confirm | [ESC] Restart ") | hcenter | dim
+    });
 
-        }) |
-        border | size(WIDTH, EQUAL, 60);
-
-    return to_center(box);
+   return to_center(content | borderHeavy | size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22) | center);
   });
 }
 
