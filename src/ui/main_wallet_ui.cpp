@@ -134,7 +134,7 @@ Component CLI::print_wallet_ui(void) {
     } 
     else if(event == Event::Character('q') || 
   event == Event::Character('Q')) {
-    // handle exitting
+    screen.Exit();
     return true;
   }
 
@@ -314,7 +314,10 @@ Component CLI::change_network_render(void) {
 
   auto menu_opts = MenuOption::Vertical();
   auto selected = std::make_shared<int>(0);
-  menu_opts.on_enter = [=, this] { actions->change_network(*selected); };
+  menu_opts.on_enter = [=, this] { 
+    actions->change_network(*selected); 
+    set_active_tab(WALLET_UI);
+  };
 
   const static std::vector<std::string> networks =
       networks::get_network_names();
@@ -322,26 +325,33 @@ Component CLI::change_network_render(void) {
   auto menu = Menu(&networks, selected.get(), menu_opts);
 
   auto component = Renderer(menu, [this, menu] {
+
+    auto menu_render = menu->Render() | vscroll_indicator | frame | size(HEIGHT, LESS_THAN, 10) |
+    color(Color::CyanLight);
+
     auto box =
-        vbox({text(" 🌐 SELECT NETWORK ") | bold | hcenter | color(Color::Cyan),
-              separatorDouble(),
-              menu->Render() | frame | size(HEIGHT, ftxui::LESS_THAN, 10) |
-                  hcenter,
+        vbox({text(" 🌐 NETWORK SELECTION ") | bold | hcenter | color(Color::Cyan),
+              separatorDouble() | color(Color::Cyan),
+
+              text(" Select target provider: ") | dim | hcenter,
+              text(""),
+              menu_render,
               filler(), separatorLight(),
 
-              hbox({text(" CURRENT: ") | bold,
+              hbox({text(" ACTIVE: ") | bold,
                     text(actions->get_current_network()) |
                         color(Color::GreenLight)}) |
                   hcenter,
 
               separatorLight(),
 
-              hbox({text(" Press "), text("[B]") | bold | color(Color::Yellow),
-                    text(" to return to main menu")}) |
-                  hcenter | color(Color::GrayLight)}) |
-        borderDouble | center | size(WIDTH, ftxui::EQUAL, 60);
+              text(" [ENTER] Select | [B] Back ") | hcenter | dim
+              });
 
-    return to_center(box);
+
+                
+
+    return to_center(box | borderHeavy | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 16));
   });
 
   return CatchEvent(component, [this](Event event) {

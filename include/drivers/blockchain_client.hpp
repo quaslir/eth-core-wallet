@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+
 struct TransactionRecord {
   std::string hash;
   double value;
@@ -17,6 +18,9 @@ struct TransactionRecord {
 
 class BlockchainClient {
 public:
+  std::function<void(bool)> set_error;
+
+
   double get_balance(const std::string &eth_addr) const;
   std::vector<TransactionRecord>
   get_transaction_history(const std::string &eth_addr) const;

@@ -9,18 +9,16 @@ class AsyncTransactionsHistoryManager {
 private:
   std::future<std::vector<TransactionRecord>> worker;
   bool updating = false;
-  const BlockchainClient &block_client;
+  BlockchainClient &block_client;
   std::chrono::steady_clock::time_point last_update_time;
   std::vector<TransactionRecord> current_transactions_history;
-
+  bool error = false;
 public:
-  AsyncTransactionsHistoryManager(const BlockchainClient &client)
-      : block_client(client),
-        last_update_time(std::chrono::steady_clock::now() -
-                         std::chrono::milliseconds(TIMER)) {}
+  AsyncTransactionsHistoryManager(BlockchainClient &client);
 
   void request_transactions_data(const std::string &eth_addr);
   void update(void);
   bool get_status(void) const;
+  bool get_error(void) const;
   std::vector<TransactionRecord> get_transactions_history(void) const;
 };

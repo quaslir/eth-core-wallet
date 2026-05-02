@@ -284,9 +284,6 @@ Component CLI::handle_derivation_path(void) {
 
   auto user_input = std::make_shared<secure_string>("");
 
-  auto input_option = InputOption();
-  input_option.multiline = false;
-
   auto field = input_(*user_input);
   field->TakeFocus();
 
@@ -301,6 +298,9 @@ Component CLI::handle_derivation_path(void) {
         *active_sub_tab = 0;
         *invalid_path = false;
       }
+      return true;
+    } else if(event == Event::Escape) {
+      set_active_tab(CONFIG_MENU);
       return true;
     }
 

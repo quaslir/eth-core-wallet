@@ -1,5 +1,15 @@
 #include "async-managers/async_transactions_history_manager.hpp"
 
+AsyncTransactionsHistoryManager::AsyncTransactionsHistoryManager(BlockchainClient &client)
+      : block_client(client),
+        last_update_time(std::chrono::steady_clock::now() -
+                         std::chrono::milliseconds(TIMER)) {
+                          block_client.set_error = [this](bool error_) -> void {
+                            error = error_;
+                          };
+                         }
+
+
 void AsyncTransactionsHistoryManager::request_transactions_data(
     const std::string &eth_addr) {
   if (updating)
@@ -39,4 +49,8 @@ bool AsyncTransactionsHistoryManager::get_status(void) const {
 std::vector<TransactionRecord>
 AsyncTransactionsHistoryManager::get_transactions_history(void) const {
   return this->current_transactions_history;
+}
+
+bool AsyncTransactionsHistoryManager::get_error(void) const {
+  return error;
 }

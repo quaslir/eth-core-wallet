@@ -80,7 +80,9 @@ BlockchainClient::parse_transactions(const json &j, bool incoming) {
 
 std::vector<TransactionRecord>
 BlockchainClient::get_transaction_history(const std::string &eth_addr) const {
-
+  if(set_error) {
+        set_error(false);
+      }
   json request_body_1 = transactions_history::form_receives(eth_addr);
   json request_body_2 = transactions_history::form_sends(eth_addr);
 
@@ -91,6 +93,9 @@ BlockchainClient::get_transaction_history(const std::string &eth_addr) const {
       json res = json::parse(buffer);
       return res;
     } catch (const std::exception &err) {
+      if(set_error) {
+        set_error(true);
+      }
       return json::object();
     }
   };
