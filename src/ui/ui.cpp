@@ -11,10 +11,14 @@
 #include <cstdlib>
 #include <openssl/crypto.h>
 #include <string>
+#include <unistd.h>
 
 void UserInterface::load(void) {
   cli.set_actions(this);
   EncryptedKeystore encrp;
+  block_client.get_current_eth_addr = [this]() -> secure_string {
+      return wallet.get_eth_address();
+  };
   if (encrp.load()) {
     cli.set_active_tab(UNLOCK_PASSWORD);
   }
@@ -28,7 +32,8 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
     break; // send transaction
   case 2:
-    request_transactions_data();
+  update_transactions_data();
+
     cli.set_active_tab(TRANSACTION_HISTORY);
     break;
   case 3:
@@ -36,13 +41,13 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     break;
   case 4:
     wallet.derive_next();
-    balance_manager.clear();
+    //balance_manager.clear();
     break;
 
   case 5:
     if (wallet.derive_prev()) {
 
-      balance_manager.clear_timer();
+      //balance_manager.clear_timer();
       wallet.set_balance(0.0);
       update_balance();
     }
@@ -72,7 +77,7 @@ void UserInterface::create_wallet(void) {
 }
 
 WalletInfo UserInterface::get_wallet(void) {
-  return WalletInfo(wallet.get_eth_address(), balance_manager.get_balance());
+  return WalletInfo(wallet.get_eth_address(), block_client.get_balance());
 }
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {
@@ -82,7 +87,7 @@ void UserInterface::on_main_menu(int choice) {
     break;
   case 1:
     cli.set_active_tab(IMPORT_MENU);
-    // handle_wallet_import();
+
     break;
   case 2:
     exit(0);
@@ -141,27 +146,11 @@ void UserInterface::change_derivation_path(secure_string &&derive_path) {
   config.change_derivation_path(std::move(derive_path));
 }
 void UserInterface::update_balance(void) {
-  if (!wallet.is_loaded())
-    return;
-
-  if (!balance_manager.get_status()) {
-    wallet.set_balance(balance_manager.get_balance());
-
-    balance_manager.request_balance(std::string{wallet.get_eth_address()});
-  }
-
-  balance_manager.update();
+    block_client.update_balance_manager();
 }
 
 void UserInterface::update_eth_price(void) {
-  if (!wallet.is_loaded())
-    return;
-
-  if (!eth_price_manager.get_status()) {
-    eth_price_manager.request_eth_price();
-  }
-
-  eth_price_manager.update();
+    block_client.update_price_manager();
 }
 
 void UserInterface::copy_address(void) {
@@ -185,27 +174,12 @@ void UserInterface::copy_private_key(void) {
 }
 
 std::vector<TransactionRecord> UserInterface::get_transactions_history(void) {
-  return history_manager.get_transactions_history();
+  return block_client.get_transaction_history();
 }
 
-void UserInterface::request_transactions_data(void) {
-  std::string addr{};
-  if (history_manager.get_status())
-    return;
-
-  addr = wallet.get_eth_address();
-
-  if (addr.empty())
-    return;
-  history_manager.request_transactions_data(addr);
-}
 
 void UserInterface::update_transactions_data(void) {
-  if (!wallet.is_loaded())
-    return;
-  if (history_manager.get_status()) {
-    history_manager.update();
-  }
+    block_client.update_history_manager();
 }
 
 const bytes_data &UserInterface::get_private_key(void) {
@@ -222,7 +196,7 @@ void UserInterface::change_network(size_t index) {
 }
 
 double UserInterface::get_current_eth_price(void) {
-  return eth_price_manager.get_current_eth_price();
+  return block_client.get_eth_price();
 }
 
 void UserInterface::wipe_mnemonic(void) {

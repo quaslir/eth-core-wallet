@@ -1,119 +1,25 @@
 #include "drivers/blockchain_client.hpp"
-#include "api/http.hpp"
-#include "api/json.hpp"
-#include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
-#include "core/uint256.hpp"
-#include "utils/tech_utils.hpp"
-#include <exception>
 #include <string>
 
-double BlockchainClient::get_balance(const std::string &eth_addr) const {
+BlockchainClient::BlockchainClient(void) {
+auto form_url_callback = [this](void) -> std::string {
+    return form_url();
+};
 
-  try {
-    GetBalanceMethod alchm("2.0", "eth_getBalance", {eth_addr, "latest"}, 1);
-
-    std::string data = alchm.to_string();
-
-    std::string buffer = http::post_request(form_url(), data);
-    if (buffer.empty())
-      return 0.0;
-
-    alchm.parse(buffer);
-
-    Uint256 uint256_t(alchm.get_result(), 1);
-
-    std::string res = uint256_t.from_wei_to_eth();
-
-    double value;
-
-    if (!tech_utils::to_double(res, value))
-      return 0.0;
-
-    return value;
-
-  } catch (const std::exception &err) { // handle in the future
-                                        // handle
-    return 0.0;
-  }
+history_manager.form_url = form_url_callback;
+price_manager.form_url = form_url_callback;
+balance_manager.form_url = form_url_callback;
 }
 
-std::vector<TransactionRecord>
-BlockchainClient::parse_transactions(const json &j, bool incoming) {
-  try {
-    std::vector<TransactionRecord> history;
 
-    if (!j.contains("result") || j["result"].is_null()) {
-      return std::vector<TransactionRecord>();
-    }
-
-    if (!j["result"].contains("transfers") ||
-        j["result"]["transfers"].is_null()) {
-      return std::vector<TransactionRecord>();
-      ;
-    }
-    for (const auto &item : j["result"]["transfers"]) {
-      TransactionRecord tx;
-      tx.hash = item["hash"].get<std::string>();
-      tx.value = item.is_null() ? 0.0 : item["value"].get<double>();
-      tx.asset = item["asset"].get<std::string>();
-      tx.incoming = incoming;
-      if (item.contains("from")) {
-        tx.from = item["from"].get<std::string>();
-      }
-      if (item.contains("to")) {
-        tx.to = item["to"].get<std::string>();
-      }
-
-      if (item.contains("metadata") &&
-          !item["metadata"]["blockTimestamp"].is_null()) {
-        tx.timestamp = item["metadata"]["blockTimestamp"].get<std::string>();
-      }
-
-      history.push_back(tx);
-    }
-    return history;
-  } catch (const std::exception &err) {
-    return std::vector<TransactionRecord>();
-  }
-}
-
-std::vector<TransactionRecord>
-BlockchainClient::get_transaction_history(const std::string &eth_addr) const {
-  if(set_error) {
-        set_error(false);
-      }
-  json request_body_1 = transactions_history::form_receives(eth_addr);
-  json request_body_2 = transactions_history::form_sends(eth_addr);
-
-  auto make_request_and_parse_buffer = [this](const json &j) {
-    try {
-      std::string data = j.dump();
-      std::string buffer = http::post_request(form_url(), data);
-      json res = json::parse(buffer);
-      return res;
-    } catch (const std::exception &err) {
-      if(set_error) {
-        set_error(true);
-      }
-      return json::object();
-    }
-  };
-
-  json object_in = make_request_and_parse_buffer(request_body_1);
-  json object_out = make_request_and_parse_buffer(request_body_2);
-
-  auto history_in = parse_transactions(object_in);
-  auto history_out = parse_transactions(object_out, false);
-
-  std::vector<TransactionRecord> full_history = std::move(history_in);
-  full_history.insert(full_history.end(), history_out.begin(),
-                      history_out.end());
-
-  std::sort(
-      full_history.begin(), full_history.end(),
-      [](const auto &a, const auto &b) { return b.timestamp < a.timestamp; });
-  return full_history;
+void BlockchainClient::update(void) {
+    if(history_manager.get_status()) history_manager.update();
+    else history_manager.make_request_transaction_history(std::string{get_current_eth_addr()});
+    if(price_manager.get_status()) price_manager.update();
+    else price_manager.get_eth_price_in_usd();
+    if(balance_manager.get_status()) balance_manager.update();
+    else balance_manager.make_request(get_current_eth_addr());
 }
 
 void BlockchainClient::change_network(
@@ -130,15 +36,33 @@ std::string BlockchainClient::get_active_network_name(void) const {
   return active_network.name;
 }
 
-double BlockchainClient::get_eth_price_in_usd(void) {
-  try {
-    std::string buffer = http::get_request(ETH_USD_URL);
-    json j = json::parse(buffer);
 
-    double value = j.value("USD", 0.0);
-    return value;
+double BlockchainClient::get_balance(void) const {
+    return balance_manager.get_balance();
+}
+std::vector<TransactionRecord> BlockchainClient::get_transaction_history(void) const {
+    return history_manager.get_transactions_history();
+}
+double BlockchainClient::get_eth_price(void) const {
+    return price_manager.get_current_eth_price();
+}
 
-  } catch (const std::exception &err) {
-    return 0.0;
-  }
+
+void BlockchainClient::update_history_manager(void) {
+    if(!get_current_eth_addr) return;
+    secure_string eth_addr = get_current_eth_addr();
+    if(eth_addr.empty()) return;
+    history_manager.request_transactions_data(std::string{eth_addr});
+    history_manager.update();
+}
+void BlockchainClient::update_price_manager(void) {
+    price_manager.request_eth_price();
+    price_manager.update();
+}
+void BlockchainClient::update_balance_manager(void) {
+    if(!get_current_eth_addr) return;
+    secure_string eth_addr = get_current_eth_addr();
+    if(eth_addr.empty()) return;
+    balance_manager.request_balance( eth_addr );
+    balance_manager.update();
 }

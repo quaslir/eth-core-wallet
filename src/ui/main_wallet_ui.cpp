@@ -9,16 +9,15 @@
 #include <ftxui/dom/table.hpp>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
-  static std::vector<std::string> entries =  {" 💸 SEND FUNDS     ", " 📜 HISTORY        ", " 🌐 NETWORK        ",
+  static std::vector<std::string> entries = {
+      " 💸 SEND FUNDS     ", " 📜 HISTORY        ", " 🌐 NETWORK        ",
       " ➡  NEXT ADDR      ", " ⬅  PREV ADDR      ", " 🔑 EXPORT KEY     ",
       " 🚪 LOCK & EXIT    "};
 
+  auto menu = Menu(&entries, &selected);
 
-       auto menu = Menu(&entries, &selected);
-
-    auto menu_renderer = Renderer(menu, [=] {
-      return menu->Render() | color(Color::CyanLight);
-    });
+  auto menu_renderer =
+      Renderer(menu, [=] { return menu->Render() | color(Color::CyanLight); });
 
   auto walletUI = Renderer(menu_renderer, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
@@ -26,100 +25,83 @@ Component CLI::print_wallet_ui(void) {
     double balance_in_usd = tech_utils::eth_to_usd(
         wallet_info.balance, actions->get_current_eth_price());
 
+    auto asset_panel =
+        vbox({
+            text(" 💰 ASSETS ") | bold | color(Color::Yellow),
+            separatorDouble() | color(Color::Yellow),
 
+            hbox({text(" ETH: ") | bold,
+                  text(fmt::format("{:.5f}", wallet_info.balance)) |
+                      color(Color::White) | bold}),
 
-      auto asset_panel = vbox({
-        text(" 💰 ASSETS ") | bold | color(Color::Yellow),
-        separatorDouble() | color(Color::Yellow),
+            hbox({text(" USD: ") | bold,
+                  text(fmt::format("{:.2f}", balance_in_usd)) |
+                      color(Color::Green)}),
 
-        hbox({
-          text(" ETH: ") | bold,
-          text(fmt::format("{:.5f}", wallet_info.balance)) | color(Color::White) | bold
-        }),
+            filler(),
 
-        hbox({
-          text(" USD: ") | bold,
-          text(fmt::format("{:.2f}", balance_in_usd)) | color(Color::Green)
-        }),
+            text(" ADDRESS: ") | dim,
+            text_(wallet_info.addr) | color(Color::Cyan) | flex,
+            text(" (Press 'C' to copy) ") | dim | hcenter,
+        }) |
+        borderHeavy | size(WIDTH, EQUAL, 38);
 
-        filler(),
+    float sync_progress = 0.85f; //!!!
 
-        text(" ADDRESS: ") | dim,
-        text_(wallet_info.addr) | color(Color::Cyan) | flex,
-        text(" (Press 'C' to copy) ") | dim | hcenter,
-      }) | borderHeavy | size(WIDTH, EQUAL, 38);
+    auto network_info =
+        vbox({text(" 🌐 NETWORK & NODES ") | bold | color(Color::Magenta),
+              separator(),
 
-      float sync_progress = 0.85f; //!!!
+              hbox({text(" TARGET: "), text(actions->get_current_network()) |
+                                           color(Color::Green)}),
+              hbox({text(" GAS:    "), text("24 Gwei") | color(Color::Yellow)}),
 
-      auto network_info = vbox({
-        text(" 🌐 NETWORK & NODES ") | bold | color(Color::Magenta),
-        separator(),
+              text(""),
 
-        hbox({
-          text(" TARGET: "),
-          text(actions->get_current_network()) | color(Color::Green)
-        }),
-        hbox({
-          text(" GAS:    "),
-          text("24 Gwei") | color(Color::Yellow)
-        }),
+              hbox({text(" SYNC PROGRESS: ") | dim,
+                    gauge(sync_progress) | color(Color::Cyan) | flex,
+                    text(fmt::format(" {:.0f} ", sync_progress * 100)) | dim})
 
-        text(""),
+        }) |
+        borderHeavy;
 
-        hbox({
-           text(" SYNC PROGRESS: ") | dim,
-           gauge(sync_progress) | color(Color::Cyan) | flex,
-           text(fmt::format(" {:.0f} ", sync_progress * 100)) | dim
-        })
+    auto log_activity =
+        vbox({text(" 📑 RECENT ACTIVITY ") | bold | dim, separator(),
+              text(" • Connected to Infura/Alchemy node") | dim,
+              text(" • Block 19283745 synced") | dim,
+              text(" • Mempool monitor active") | dim}) |
+        flex;
 
-      }) | borderHeavy;
+    auto footer = hbox({text(" [ENTER] EXECUTE ") | bold | hcenter |
+                            color(Color::Black) | bgcolor(Color::Cyan),
 
+                        text(" [C] COPY ADDRESS ") | dim, filler(),
+                        text(" [Q] LOCK ") | color(Color::RedLight),
+                        text("  Build: v1.0-alpha ") | dim});
 
-      auto log_activity = vbox({
-        text(" 📑 RECENT ACTIVITY ") | bold | dim,
-        separator(),
-        text(" • Connected to Infura/Alchemy node") | dim,
-        text(" • Block 19283745 synced") | dim,
-        text(" • Mempool monitor active") | dim
-      }) | flex;
+    auto dashboard = vbox(
+        {hbox({text(" 💠 ETH-CORE WALLET v1.0 ") | bold | color(Color::Cyan),
+               filler(),
+               text(" SESSION: ACTIVE ") | color(Color::Green) | dim}),
 
-      auto footer = hbox({
-        text(" [ENTER] EXECUTE ") | bold | hcenter | color(Color::Black) | bgcolor(Color::Cyan),
-  
-        text(" [C] COPY ADDRESS ") | dim,
-        filler(),
-        text(" [Q] LOCK ") | color(Color::RedLight),
-        text("  Build: v1.0-alpha ") | dim
-      });
+         hbox({asset_panel,
+               vbox({network_info,
+                     hbox({
 
-      auto dashboard = vbox({
-        hbox({
-          text(" 💠 ETH-CORE WALLET v1.0 ") | bold | color(Color::Cyan),
-          filler(),
-          text(" SESSION: ACTIVE ") | color(Color::Green) | dim
-        }),
+                         vbox({text(" AVAILABLE OPERATIONS ") | bold |
+                                   color(Color::CyanLight),
+                               separator(), menu_renderer->Render()}) |
+                             borderHeavy | size(WIDTH, EQUAL, 30),
+                         log_activity | borderHeavy | flex}) |
+                         flex}) |
+                   flex}) |
+             flex,
+         footer
 
-        hbox({
-          asset_panel,
-          vbox({
-            network_info,
-            hbox({
+        });
 
-          vbox({
-            text(" AVAILABLE OPERATIONS ") | bold | color(Color::CyanLight),
-            separator(),
-            menu_renderer->Render()
-          }) | borderHeavy | size(WIDTH, EQUAL, 30),
-          log_activity | borderHeavy | flex
-        }) | flex
-      }) | flex
-    }) | flex,
-        footer
-
-      });
-
-   return to_center(dashboard | size(WIDTH, EQUAL, 100
-) | size(HEIGHT, EQUAL, 28) | center);
+    return to_center(dashboard | size(WIDTH, EQUAL, 100) |
+                     size(HEIGHT, EQUAL, 28) | center);
   });
 
   return CatchEvent(walletUI, [=, this](Event event) {
@@ -131,12 +113,11 @@ Component CLI::print_wallet_ui(void) {
                event == Event::Character('C')) {
       actions->copy_address();
       return true;
-    } 
-    else if(event == Event::Character('q') || 
-  event == Event::Character('Q')) {
-    screen.Exit();
-    return true;
-  }
+    } else if (event == Event::Character('q') ||
+               event == Event::Character('Q')) {
+      screen.Exit();
+      return true;
+    }
 
     return false;
   });
@@ -251,7 +232,7 @@ Component CLI::transaction_history_render(void) {
            " [B] BACK ", [&] { set_active_tab(WALLET_UI); },
            create_button("[B] BACK", Color::Red)),
        Button(
-           " [R] REFRESH ", [&] { actions->request_transactions_data(); },
+           " [R] REFRESH ", [&] { actions->update_transactions_data(); },
            create_button("[R] REFRESH", Color::Cyan2))});
 
   auto component = Renderer(buttons, [buttons, this]() mutable -> Element {
@@ -303,7 +284,6 @@ Component CLI::transaction_history_render(void) {
       return true;
     } else if (event == Event::Character('r') ||
                event == Event::Character('R')) {
-      actions->request_transactions_data();
       return true;
     }
     return false;
@@ -314,8 +294,8 @@ Component CLI::change_network_render(void) {
 
   auto menu_opts = MenuOption::Vertical();
   auto selected = std::make_shared<int>(0);
-  menu_opts.on_enter = [=, this] { 
-    actions->change_network(*selected); 
+  menu_opts.on_enter = [=, this] {
+    actions->change_network(*selected);
     set_active_tab(WALLET_UI);
   };
 
@@ -325,33 +305,26 @@ Component CLI::change_network_render(void) {
   auto menu = Menu(&networks, selected.get(), menu_opts);
 
   auto component = Renderer(menu, [this, menu] {
+    auto menu_render = menu->Render() | vscroll_indicator | frame |
+                       size(HEIGHT, LESS_THAN, 10) | color(Color::CyanLight);
 
-    auto menu_render = menu->Render() | vscroll_indicator | frame | size(HEIGHT, LESS_THAN, 10) |
-    color(Color::CyanLight);
+    auto box = vbox(
+        {text(" 🌐 NETWORK SELECTION ") | bold | hcenter | color(Color::Cyan),
+         separatorDouble() | color(Color::Cyan),
 
-    auto box =
-        vbox({text(" 🌐 NETWORK SELECTION ") | bold | hcenter | color(Color::Cyan),
-              separatorDouble() | color(Color::Cyan),
+         text(" Select target provider: ") | dim | hcenter, text(""),
+         menu_render, filler(), separatorLight(),
 
-              text(" Select target provider: ") | dim | hcenter,
-              text(""),
-              menu_render,
-              filler(), separatorLight(),
+         hbox({text(" ACTIVE: ") | bold, text(actions->get_current_network()) |
+                                             color(Color::GreenLight)}) |
+             hcenter,
 
-              hbox({text(" ACTIVE: ") | bold,
-                    text(actions->get_current_network()) |
-                        color(Color::GreenLight)}) |
-                  hcenter,
+         separatorLight(),
 
-              separatorLight(),
+         text(" [ENTER] Select | [B] Back ") | hcenter | dim});
 
-              text(" [ENTER] Select | [B] Back ") | hcenter | dim
-              });
-
-
-                
-
-    return to_center(box | borderHeavy | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 16));
+    return to_center(box | borderHeavy | size(WIDTH, EQUAL, 60) |
+                     size(HEIGHT, EQUAL, 16));
   });
 
   return CatchEvent(component, [this](Event event) {

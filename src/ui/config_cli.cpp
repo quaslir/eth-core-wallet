@@ -299,7 +299,7 @@ Component CLI::handle_derivation_path(void) {
         *invalid_path = false;
       }
       return true;
-    } else if(event == Event::Escape) {
+    } else if (event == Event::Escape) {
       set_active_tab(CONFIG_MENU);
       return true;
     }

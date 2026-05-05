@@ -36,7 +36,6 @@ public:
   virtual void apply_choice_from_wallet_ui(int choice) = 0;
   virtual const bytes_data &get_private_key(void) = 0;
   virtual std::vector<TransactionRecord> get_transactions_history(void) = 0;
-  virtual void request_transactions_data(void) = 0;
   virtual void update_transactions_data(void) = 0;
   virtual std::string get_current_network(void) = 0;
   virtual void change_network(size_t index) = 0;

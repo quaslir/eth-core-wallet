@@ -1,7 +1,3 @@
-
-#include "async-managers/async_eth_usd_update.hpp"
-#include "async-managers/async_manager.hpp"
-#include "async-managers/async_transactions_history_manager.hpp"
 #include "cli.hpp"
 #include "config/config.hpp"
 #include "core/secure_bytes_data.hpp"
@@ -17,10 +13,6 @@ private:
   Wallet wallet;
   Config config;
   BlockchainClient block_client;
-  AsyncBalanceManager balance_manager = AsyncBalanceManager(block_client);
-  AsyncTransactionsHistoryManager history_manager =
-      AsyncTransactionsHistoryManager(block_client);
-  Async_ETH_USD_Currency eth_price_manager;
   struct TEMP_DATA {
     secure_string password_for_wallet_unlocking;
     secure_string mnemonic, passphrase;
@@ -54,7 +46,6 @@ private:
   const bytes_data &get_private_key(void) override;
   std::vector<TransactionRecord> get_transactions_history(void) override;
   void update_transactions_data(void) override;
-  void request_transactions_data(void) override;
   std::string get_current_network(void) override;
   void change_network(size_t index) override;
   void update_eth_price(void) override;

@@ -33,7 +33,7 @@ public:
 
     if (event.is_character()) {
 
-      for(auto c : event.character()) {
+      for (auto c : event.character()) {
         data_.push_back(static_cast<uint8_t>(c));
       }
       changed = true;

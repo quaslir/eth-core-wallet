@@ -119,7 +119,6 @@ bool to_double(const std::string &str, double &val) {
 
     return true;
   } catch (...) {
-    // shoud be cleaned in the future
     return false;
   }
 }

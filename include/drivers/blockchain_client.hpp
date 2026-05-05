@@ -1,39 +1,37 @@
 #pragma once
-#include "api/json.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/supported_networks.hpp"
-
+#include "drivers/balance_client.hpp"
+#include "drivers/history_client.hpp"
+#include "drivers/price_client.hpp"
 #include <cstddef>
 #include <string>
 #include <vector>
 
-struct TransactionRecord {
-  std::string hash;
-  double value;
-  std::string asset;
-  std::string from;
-  std::string to;
-  std::string timestamp;
-  bool incoming;
-};
+
 
 class BlockchainClient {
 public:
-  std::function<void(bool)> set_error;
-
-
-  double get_balance(const std::string &eth_addr) const;
-  std::vector<TransactionRecord>
-  get_transaction_history(const std::string &eth_addr) const;
-  BlockchainClient() : active_network(networks::list[0]) {}
+  BlockchainClient();
+std::function<secure_string(void)> get_current_eth_addr;
   void change_network(const networks::NetworkConfig &new_network);
 
   std::string get_active_network_name(void) const;
-  static double get_eth_price_in_usd(void);
-
-private:
-  static std::vector<TransactionRecord>
-  parse_transactions(const json &j, bool incoming = true);
   std::string form_url(void) const;
+
+  void update(void);
+  double get_balance(void) const;
+  std::vector<TransactionRecord> get_transaction_history(void) const;
+  double get_eth_price(void) const;
+
+
+  void update_history_manager(void);
+  void update_price_manager(void);
+  void update_balance_manager(void);
+private:
+HistoryManager history_manager;
+PriceManager price_manager;
+BalanceManager balance_manager;
   // uint32_t chain_id;
   networks::NetworkConfig active_network;
 };

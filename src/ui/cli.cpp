@@ -49,8 +49,8 @@ void CLI::load(void) {
     while (refresh_ui) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       actions->update_balance();
-      actions->update_transactions_data();
       actions->update_eth_price();
+      actions->update_transactions_data();
       screen.PostEvent(Event::Custom);
     }
   });
