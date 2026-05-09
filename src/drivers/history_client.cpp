@@ -1,10 +1,7 @@
 #include "drivers/history_client.hpp"
 #include "api/http.hpp"
+#include "core/secure_bytes_data.hpp"
 
-HistoryManager::HistoryManager()
-: last_update_time(std::chrono::steady_clock::now() -
-                                             std::chrono::milliseconds(TIMER)) {
-}
 
 std::vector<TransactionRecord>
 HistoryManager::parse_transactions(const json &j, bool incoming) const {
@@ -47,7 +44,7 @@ HistoryManager::parse_transactions(const json &j, bool incoming) const {
 }
 
 std::vector<TransactionRecord>
-HistoryManager::make_request_transaction_history(const std::string &eth_addr) const {
+HistoryManager::make_request(const std::string &eth_addr) const {
 
   json request_body_1 = transactions_history::form_receives(eth_addr);
   json request_body_2 = transactions_history::form_sends(eth_addr);
@@ -79,22 +76,14 @@ HistoryManager::make_request_transaction_history(const std::string &eth_addr) co
   return full_history;
 }
 
-void HistoryManager::request_transactions_data(
-    const std::string &eth_addr) {
-  if (updating)
-    return;
-
-  auto now = std::chrono::steady_clock::now();
-  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     now - last_update_time)
-                     .count();
-  if (elapsed < TIMER)
-    return;
+void HistoryManager::request(
+    const secure_string &eth_addr) {
+  if(!can_request()) return;
 
   updating = true;
 
   worker = std::async(std::launch::async, [this, eth_addr]() {
-    return make_request_transaction_history(eth_addr);
+    return make_request(std::string{eth_addr});
   });
 }
 void HistoryManager::update(void) {
@@ -112,12 +101,8 @@ void HistoryManager::update(void) {
     }
   }
 }
-bool HistoryManager::get_status(void) const {
-  return this->updating;
-}
+
 std::vector<TransactionRecord>
 HistoryManager::get_transactions_history(void) const {
   return this->current_transactions_history;
 }
-
-bool HistoryManager::get_error(void) const { return error; }

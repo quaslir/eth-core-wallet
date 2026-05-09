@@ -296,6 +296,8 @@ Component CLI::change_network_render(void) {
   auto selected = std::make_shared<int>(0);
   menu_opts.on_enter = [=, this] {
     actions->change_network(*selected);
+    actions->update_balance();
+    actions->update_eth_price();
     set_active_tab(WALLET_UI);
   };
 

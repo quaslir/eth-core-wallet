@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 #include "api/json.hpp"
-#define TIMER 1000
+#include "config/configuration.hpp"
+#include "core/secure_bytes_data.hpp"
+#include "drivers/manager.hpp"
 
 struct TransactionRecord {
   std::string hash;
@@ -16,24 +18,23 @@ struct TransactionRecord {
   std::string timestamp;
   bool incoming;
 };
-class HistoryManager {
+class HistoryManager : public Manager {
 private:
   std::future<std::vector<TransactionRecord>> worker;
-  bool updating = false;
-  std::chrono::steady_clock::time_point last_update_time;
   std::vector<TransactionRecord> current_transactions_history;
-  bool error = false;
 
+  std::vector<TransactionRecord>
+  parse_transactions(const json &j, bool incoming = true) const;
 
-  std::vector<TransactionRecord> parse_transactions(const json &j, bool incoming = true) const;
-public:
+  std::vector<TransactionRecord>
+  make_request(const std::string &eth_addr) const;
+  public:
+
+ HistoryManager() :  Manager(TRANSACTION_TIMEOUT) {}
 std::function<std::string(void)> form_url;
-  HistoryManager();
 
-  void request_transactions_data(const std::string &eth_addr);
-  void update(void);
-  bool get_status(void) const;
-  bool get_error(void) const;
+
+  void request(const secure_string& eth_addr) override;
+  void update(void) override;
   std::vector<TransactionRecord> get_transactions_history(void) const;
-    std::vector<TransactionRecord> make_request_transaction_history(const std::string &eth_addr) const;
 };

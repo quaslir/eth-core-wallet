@@ -1,6 +1,7 @@
 #include "drivers/balance_client.hpp"
 #include "api/http.hpp"
 #include "api/json.hpp"
+#include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "utils/tech_utils.hpp"
@@ -37,17 +38,8 @@ double BalanceManager::make_request(const secure_string &eth_addr) const {
   }
 }
 
-void BalanceManager::request_balance(const secure_string &addr) {
-  if (updating)
-    return;
-
-  auto now = std::chrono::steady_clock::now();
-  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     now - last_update_time)
-                     .count();
-  if (elapsed < TIMER)
-    return;
-
+void BalanceManager::request(const secure_string &addr) {
+if(!can_request()) return;
   updating = true;
 
   worker = std::async(std::launch::async,
@@ -70,11 +62,11 @@ void BalanceManager::update(void) {
   }
 }
 double BalanceManager::get_balance(void) const { return this->current_balance; }
-bool BalanceManager::get_status(void) const { return updating; }
+
 
 void BalanceManager::clear_timer(void) {
   last_update_time =
-      std::chrono::steady_clock::now() - std::chrono::milliseconds(TIMER);
+      std::chrono::steady_clock::now() - std::chrono::milliseconds(TRANSACTION_TIMEOUT);
 }
 
 void BalanceManager::clear(void) {

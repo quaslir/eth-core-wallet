@@ -15,11 +15,11 @@ balance_manager.form_url = form_url_callback;
 
 void BlockchainClient::update(void) {
     if(history_manager.get_status()) history_manager.update();
-    else history_manager.make_request_transaction_history(std::string{get_current_eth_addr()});
+    else history_manager.request(get_current_eth_addr());
     if(price_manager.get_status()) price_manager.update();
-    else price_manager.get_eth_price_in_usd();
+    else price_manager.request(secure_string{});
     if(balance_manager.get_status()) balance_manager.update();
-    else balance_manager.make_request(get_current_eth_addr());
+    else balance_manager.request(get_current_eth_addr());
 }
 
 void BlockchainClient::change_network(
@@ -52,17 +52,17 @@ void BlockchainClient::update_history_manager(void) {
     if(!get_current_eth_addr) return;
     secure_string eth_addr = get_current_eth_addr();
     if(eth_addr.empty()) return;
-    history_manager.request_transactions_data(std::string{eth_addr});
+    history_manager.request(eth_addr);
     history_manager.update();
 }
 void BlockchainClient::update_price_manager(void) {
-    price_manager.request_eth_price();
+    price_manager.request(secure_string{});
     price_manager.update();
 }
 void BlockchainClient::update_balance_manager(void) {
     if(!get_current_eth_addr) return;
     secure_string eth_addr = get_current_eth_addr();
     if(eth_addr.empty()) return;
-    balance_manager.request_balance( eth_addr );
+    balance_manager.request( eth_addr );
     balance_manager.update();
 }

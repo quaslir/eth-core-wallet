@@ -35,6 +35,7 @@ drivers/blockchain_client.cpp
 drivers/balance_client.cpp
 drivers/history_client.cpp
 drivers/price_client.cpp
+drivers/manager.cpp
 )
 
 set(CONFIG_SOURCES

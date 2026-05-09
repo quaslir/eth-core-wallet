@@ -2,22 +2,15 @@
 #include "config/configuration.hpp"
 #include "api/http.hpp"
 #include "api/json.hpp"
-void PriceManager::request_eth_price(void) {
+#include "core/secure_bytes_data.hpp"
 
-  if (updating)
-    return;
-
-  auto now = std::chrono::steady_clock::now();
-  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     now - last_update_time)
-                     .count();
-  if (elapsed < ETH_PRICE_TIMEOUT)
-    return;
+void PriceManager::request(const secure_string&) {
+if(!can_request()) return;
 
   updating = true;
 
   worker = std::async(std::launch::async, [this]() {
-    return get_eth_price_in_usd();
+    return make_request();
   });
 }
 
@@ -41,9 +34,8 @@ double PriceManager::get_current_eth_price(void) const {
   return this->current_price;
 }
 
-bool PriceManager::get_status(void) const { return this->updating; }
 
-double PriceManager::get_eth_price_in_usd(void) const {
+double PriceManager::make_request(void) const {
   try {
     std::string buffer = http::get_request(ETH_USD_URL);
     json j = json::parse(buffer);
