@@ -158,10 +158,6 @@ void UserInterface::update_eth_price(bool force) {
   block_client.update_price_manager(force);
 }
 
-double UserInterface::get_current_gas_price(void) {
-  return block_client.get_current_gas();
-}
-
 void UserInterface::update_gas_price(bool force) {
   block_client.update_gas_manager(force);
 }
@@ -186,7 +182,12 @@ void UserInterface::copy_private_key(void) {
 #endif
 }
 
-std::vector<TransactionRecord> UserInterface::get_transactions_history(void) {
+std::pair<double, bool> UserInterface::get_current_gas_price(void) {
+  return block_client.get_current_gas();
+}
+
+std::pair<std::vector<TransactionRecord>, bool>
+UserInterface::get_transactions_history(void) {
   return block_client.get_transaction_history();
 }
 
@@ -203,7 +204,7 @@ void UserInterface::change_network(size_t index) {
   block_client.change_network(networks::list[index]);
 }
 
-double UserInterface::get_current_eth_price(void) {
+std::pair<double, bool> UserInterface::get_current_eth_price(void) {
   return block_client.get_eth_price();
 }
 

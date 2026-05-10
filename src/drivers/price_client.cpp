@@ -3,6 +3,7 @@
 #include "api/json.hpp"
 #include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
+#include <cmath>
 
 void PriceManager::request(const secure_string &) {
   if (!can_request())
@@ -20,9 +21,9 @@ void PriceManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        current_price = worker.get();
+        if (!error)
+          current_price = worker.get();
       } catch (const std::exception &err) {
-        current_price = 0.0;
       }
       updating = false;
       last_update_time = std::chrono::steady_clock::now();
@@ -34,8 +35,9 @@ double PriceManager::get_current_eth_price(void) const {
   return this->current_price;
 }
 
-double PriceManager::request_eth_price(void) const {
+double PriceManager::request_eth_price(void) {
   try {
+    error = false;
     std::string buffer = http::get_request(ETH_USD_URL);
     json j = json::parse(buffer);
 
@@ -43,6 +45,13 @@ double PriceManager::request_eth_price(void) const {
     return value;
 
   } catch (const std::exception &err) {
-    return 0.0;
+    error = true;
+    return NAN;
+  }
+}
+
+PriceManager::~PriceManager() {
+  if (worker.valid()) {
+    worker.wait();
   }
 }

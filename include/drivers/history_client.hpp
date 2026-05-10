@@ -26,11 +26,11 @@ private:
   std::vector<TransactionRecord> parse_transactions(const json &j,
                                                     bool incoming = true) const;
 
-  std::vector<TransactionRecord>
-  make_request(const std::string &eth_addr) const;
+  std::vector<TransactionRecord> make_request(const std::string &eth_addr);
 
 public:
   HistoryManager() : Manager(TRANSACTION_TIMEOUT) {}
+  ~HistoryManager();
   std::function<std::string(void)> form_url;
 
   void request(const secure_string &eth_addr) override;

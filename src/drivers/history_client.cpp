@@ -43,7 +43,7 @@ HistoryManager::parse_transactions(const json &j, bool incoming) const {
 }
 
 std::vector<TransactionRecord>
-HistoryManager::make_request(const std::string &eth_addr) const {
+HistoryManager::make_request(const std::string &eth_addr) {
 
   json request_body_1 = transactions_history::form_receives(eth_addr);
   json request_body_2 = transactions_history::form_sends(eth_addr);
@@ -53,8 +53,10 @@ HistoryManager::make_request(const std::string &eth_addr) const {
       std::string data = j.dump();
       std::string buffer = http::post_request(form_url(), data);
       json res = json::parse(buffer);
+      error = false;
       return res;
     } catch (const std::exception &err) {
+      error = true;
       return json::object();
     }
   };
@@ -91,10 +93,11 @@ void HistoryManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        current_transactions_history = worker.get();
+        if (!error)
+          current_transactions_history = worker.get();
       } catch (const std::exception &err) {
-        current_transactions_history = {};
       }
+
       updating = false;
       last_update_time = std::chrono::steady_clock::now();
     }
@@ -104,4 +107,10 @@ void HistoryManager::update(void) {
 std::vector<TransactionRecord>
 HistoryManager::get_transactions_history(void) const {
   return this->current_transactions_history;
+}
+
+HistoryManager::~HistoryManager() {
+  if (worker.valid()) {
+    worker.wait();
+  }
 }

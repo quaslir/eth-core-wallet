@@ -44,14 +44,15 @@ private:
   void copy_address(void) override;
   void copy_private_key(void) override;
   const bytes_data &get_private_key(void) override;
-  std::vector<TransactionRecord> get_transactions_history(void) override;
+  std::pair<std::vector<TransactionRecord>, bool>
+  get_transactions_history(void) override;
   void update_transactions_data(bool force = false) override;
   std::string get_current_network(void) override;
   void change_network(size_t index) override;
   void update_eth_price(bool force = false) override;
-  double get_current_eth_price(void) override;
+  std::pair<double, bool> get_current_eth_price(void) override;
   void wipe_mnemonic(void) override;
-  double get_current_gas_price(void) override;
+  std::pair<double, bool> get_current_gas_price(void) override;
 
   void update_gas_price(bool force = false) override;
 };

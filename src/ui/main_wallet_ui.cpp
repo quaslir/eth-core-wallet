@@ -23,7 +23,7 @@ Component CLI::print_wallet_ui(void) {
     WalletInfo wallet_info = actions->get_wallet();
 
     double balance_in_usd = tech_utils::eth_to_usd(
-        wallet_info.balance, actions->get_current_eth_price());
+        wallet_info.balance.first, actions->get_current_eth_price().first);
 
     auto asset_panel =
         vbox({
@@ -31,7 +31,7 @@ Component CLI::print_wallet_ui(void) {
             separatorDouble() | color(Color::Yellow),
 
             hbox({text(" ETH: ") | bold,
-                  text(fmt::format("{:.5f}", wallet_info.balance)) |
+                  text(fmt::format("{:.5f}", wallet_info.balance.first)) |
                       color(Color::White) | bold}),
 
             hbox({text(" USD: ") | bold,
@@ -46,7 +46,7 @@ Component CLI::print_wallet_ui(void) {
         }) |
         borderHeavy | size(WIDTH, EQUAL, 38);
 
-    float sync_progress = 0.85f; //!!!
+    float sync_progress = 0.85f; /// !!!
 
     auto network_info =
         vbox({text(" 🌐 NETWORK & NODES ") | bold | color(Color::Magenta),
@@ -56,7 +56,7 @@ Component CLI::print_wallet_ui(void) {
                                            color(Color::Green)}),
               hbox({text(" GAS:    "),
                     text(fmt::format("{:.3f}",
-                                     actions->get_current_gas_price()) +
+                                     actions->get_current_gas_price().first) +
                          " GWei") |
                         color(Color::Yellow)}),
 
@@ -240,9 +240,13 @@ Component CLI::transaction_history_render(void) {
            create_button("[R] REFRESH", Color::Cyan2))});
 
   auto component = Renderer(buttons, [buttons, this]() mutable -> Element {
-    auto history = actions->get_transactions_history();
-    if (history.empty()) {
+    auto [history, error] = actions->get_transactions_history();
+    if (history.empty() && !error) {
       return vbox({text("LOADING...") | bold | hcenter | color(Color::Cyan2)}) |
+             center;
+    } else if (error) {
+      return vbox({text("Could not load data") | bold | hcenter |
+                   color(Color::Red1)}) |
              center;
     }
 

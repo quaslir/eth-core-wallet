@@ -388,7 +388,7 @@ Component CLI::render_config_menu(void) {
 
   auto menu = Menu(entries.get(), selected.get(), menu_option);
 
-  auto component = Renderer(menu, [=, &cfg, this] {
+  auto component = Renderer(menu, [=, this] {
     update_entries();
 
     auto header =

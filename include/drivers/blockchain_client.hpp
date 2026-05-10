@@ -19,10 +19,11 @@ public:
   std::string form_url(void) const;
 
   void update(void);
-  double get_balance(void) const;
-  std::vector<TransactionRecord> get_transaction_history(void) const;
-  double get_eth_price(void) const;
-  double get_current_gas(void) const;
+  std::pair<double, bool> get_balance(void) const;
+  std::pair<std::vector<TransactionRecord>, bool>
+  get_transaction_history(void) const;
+  std::pair<double, bool> get_eth_price(void) const;
+  std::pair<double, bool> get_current_gas(void) const;
 
   void update_history_manager(bool force = false);
   void update_price_manager(bool force = false);

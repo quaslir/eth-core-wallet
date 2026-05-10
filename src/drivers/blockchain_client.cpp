@@ -40,15 +40,20 @@ std::string BlockchainClient::get_active_network_name(void) const {
   return active_network.name;
 }
 
-double BlockchainClient::get_balance(void) const {
-  return balance_manager.get_balance();
+std::pair<double, bool> BlockchainClient::get_balance(void) const {
+  return {balance_manager.get_balance(), balance_manager.get_error()};
 }
-std::vector<TransactionRecord>
+std::pair<std::vector<TransactionRecord>, bool>
 BlockchainClient::get_transaction_history(void) const {
-  return history_manager.get_transactions_history();
+  return {history_manager.get_transactions_history(),
+          history_manager.get_error()};
 }
-double BlockchainClient::get_eth_price(void) const {
-  return price_manager.get_current_eth_price();
+std::pair<double, bool> BlockchainClient::get_eth_price(void) const {
+  return {price_manager.get_current_eth_price(), price_manager.get_error()};
+}
+
+std::pair<double, bool> BlockchainClient::get_current_gas(void) const {
+  return {gas_manager.get_current_gas(), gas_manager.get_error()};
 }
 
 void BlockchainClient::update_history_manager(bool force) {
@@ -93,8 +98,4 @@ void BlockchainClient::update_gas_manager(bool force) {
     gas_manager.request();
 
   gas_manager.update();
-}
-
-double BlockchainClient::get_current_gas(void) const {
-  return gas_manager.get_current_gas();
 }

@@ -45,10 +45,8 @@ bool EncryptedKeystore::load(const std::string &filename) {
   return true;
 }
 
-AlchemyJSON::AlchemyJSON(const std::string &jsonrpc,
-                                   const std::string &method,
-                                   const std::vector<std::string> &params,
-                                   int id) {
+AlchemyJSON::AlchemyJSON(const std::string &jsonrpc, const std::string &method,
+                         const std::vector<std::string> &params, int id) {
   j["jsonrpc"] = jsonrpc;
   j["method"] = method;
   j["params"] = params;

@@ -6,12 +6,14 @@
 #include "core/uint256.hpp"
 #include "utils/tech_utils.hpp"
 #include <chrono>
+#include <cmath>
 #include <exception>
-double BalanceManager::make_request(const secure_string &eth_addr) const {
+double BalanceManager::make_request(const secure_string &eth_addr) {
 
   try {
+    error = false;
     AlchemyJSON alchm("2.0", "eth_getBalance",
-                           {std::string{eth_addr}, "latest"}, 1);
+                      {std::string{eth_addr}, "latest"}, 1);
 
     std::string data = alchm.to_string();
 
@@ -25,16 +27,16 @@ double BalanceManager::make_request(const secure_string &eth_addr) const {
 
     std::string res = uint256_t.from_wei_to_asset(WEI_TO_ETH);
 
-    double value;
+    double value = 0.0;
 
     if (!tech_utils::to_double(res, value))
-      return 0.0;
+      error = true;
 
     return value;
 
-  } catch (const std::exception &err) { // handle in the future
-                                        // handle
-    return 0.0;
+  } catch (const std::exception &err) {
+    error = true;
+    return NAN;
   }
 }
 
@@ -53,9 +55,9 @@ void BalanceManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        current_balance = worker.get();
-      } catch (const std::exception &err) {
-        current_balance = 0.0;
+        if (!error)
+          current_balance = worker.get();
+      } catch (...) {
       }
       updating = false;
       last_update_time = std::chrono::steady_clock::now();
@@ -72,4 +74,10 @@ void BalanceManager::clear_timer(void) {
 void BalanceManager::clear(void) {
   current_balance = 0.0;
   updating = false;
+}
+
+BalanceManager::~BalanceManager() {
+  if (worker.valid()) {
+    worker.wait();
+  }
 }
