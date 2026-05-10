@@ -54,7 +54,11 @@ Component CLI::print_wallet_ui(void) {
 
               hbox({text(" TARGET: "), text(actions->get_current_network()) |
                                            color(Color::Green)}),
-              hbox({text(" GAS:    "), text("24 Gwei") | color(Color::Yellow)}),
+              hbox({text(" GAS:    "),
+                    text(fmt::format("{:.3f}",
+                                     actions->get_current_gas_price()) +
+                         " GWei") |
+                        color(Color::Yellow)}),
 
               text(""),
 
@@ -296,8 +300,9 @@ Component CLI::change_network_render(void) {
   auto selected = std::make_shared<int>(0);
   menu_opts.on_enter = [=, this] {
     actions->change_network(*selected);
-    actions->update_balance();
-    actions->update_eth_price();
+    actions->update_balance(true);
+    actions->update_eth_price(true);
+    actions->update_gas_price(true);
     set_active_tab(WALLET_UI);
   };
 

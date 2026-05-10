@@ -40,15 +40,18 @@ private:
   void set_extra_entropy(bytes_data &&extra_entropy) override;
   void change_derivation_path(secure_string &&derive_path) override;
   void create_wallet(void) override;
-  void update_balance(void) override;
+  void update_balance(bool force = false) override;
   void copy_address(void) override;
   void copy_private_key(void) override;
   const bytes_data &get_private_key(void) override;
   std::vector<TransactionRecord> get_transactions_history(void) override;
-  void update_transactions_data(void) override;
+  void update_transactions_data(bool force = false) override;
   std::string get_current_network(void) override;
   void change_network(size_t index) override;
-  void update_eth_price(void) override;
+  void update_eth_price(bool force = false) override;
   double get_current_eth_price(void) override;
   void wipe_mnemonic(void) override;
+  double get_current_gas_price(void) override;
+
+  void update_gas_price(bool force = false) override;
 };

@@ -2,7 +2,6 @@
 #include "api/http.hpp"
 #include "core/secure_bytes_data.hpp"
 
-
 std::vector<TransactionRecord>
 HistoryManager::parse_transactions(const json &j, bool incoming) const {
   try {
@@ -76,9 +75,9 @@ HistoryManager::make_request(const std::string &eth_addr) const {
   return full_history;
 }
 
-void HistoryManager::request(
-    const secure_string &eth_addr) {
-  if(!can_request()) return;
+void HistoryManager::request(const secure_string &eth_addr) {
+  if (!can_request())
+    return;
 
   updating = true;
 

@@ -16,10 +16,10 @@ struct EncryptedKeystore {
   bool load(const std::string &filename = "session.json");
 };
 
-struct GetBalanceMethod {
+struct AlchemyJSON {
   json j;
 
-  GetBalanceMethod(const std::string &jsonrpc, const std::string &method,
+  AlchemyJSON(const std::string &jsonrpc, const std::string &method,
                    const std::vector<std::string> &params, int id);
   std::string to_string(void) const;
   void parse(const std::string &data);

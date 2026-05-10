@@ -1,17 +1,17 @@
 #include "drivers/price_client.hpp"
-#include "config/configuration.hpp"
 #include "api/http.hpp"
 #include "api/json.hpp"
+#include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
 
-void PriceManager::request(const secure_string&) {
-if(!can_request()) return;
+void PriceManager::request(const secure_string &) {
+  if (!can_request())
+    return;
 
   updating = true;
 
-  worker = std::async(std::launch::async, [this]() {
-    return make_request();
-  });
+  worker =
+      std::async(std::launch::async, [this]() { return request_eth_price(); });
 }
 
 void PriceManager::update(void) {
@@ -34,8 +34,7 @@ double PriceManager::get_current_eth_price(void) const {
   return this->current_price;
 }
 
-
-double PriceManager::make_request(void) const {
+double PriceManager::request_eth_price(void) const {
   try {
     std::string buffer = http::get_request(ETH_USD_URL);
     json j = json::parse(buffer);

@@ -1,13 +1,13 @@
 #pragma once
+#include "api/json.hpp"
+#include "config/configuration.hpp"
+#include "core/secure_bytes_data.hpp"
+#include "drivers/manager.hpp"
 #include <chrono>
 #include <functional>
 #include <future>
 #include <string>
 #include <vector>
-#include "api/json.hpp"
-#include "config/configuration.hpp"
-#include "core/secure_bytes_data.hpp"
-#include "drivers/manager.hpp"
 
 struct TransactionRecord {
   std::string hash;
@@ -23,18 +23,17 @@ private:
   std::future<std::vector<TransactionRecord>> worker;
   std::vector<TransactionRecord> current_transactions_history;
 
-  std::vector<TransactionRecord>
-  parse_transactions(const json &j, bool incoming = true) const;
+  std::vector<TransactionRecord> parse_transactions(const json &j,
+                                                    bool incoming = true) const;
 
   std::vector<TransactionRecord>
   make_request(const std::string &eth_addr) const;
-  public:
 
- HistoryManager() :  Manager(TRANSACTION_TIMEOUT) {}
-std::function<std::string(void)> form_url;
+public:
+  HistoryManager() : Manager(TRANSACTION_TIMEOUT) {}
+  std::function<std::string(void)> form_url;
 
-
-  void request(const secure_string& eth_addr) override;
+  void request(const secure_string &eth_addr) override;
   void update(void) override;
   std::vector<TransactionRecord> get_transactions_history(void) const;
 };

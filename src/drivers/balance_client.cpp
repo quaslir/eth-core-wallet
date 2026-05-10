@@ -10,7 +10,7 @@
 double BalanceManager::make_request(const secure_string &eth_addr) const {
 
   try {
-    GetBalanceMethod alchm("2.0", "eth_getBalance",
+    AlchemyJSON alchm("2.0", "eth_getBalance",
                            {std::string{eth_addr}, "latest"}, 1);
 
     std::string data = alchm.to_string();
@@ -23,7 +23,7 @@ double BalanceManager::make_request(const secure_string &eth_addr) const {
 
     Uint256 uint256_t(alchm.get_result(), 1);
 
-    std::string res = uint256_t.from_wei_to_eth();
+    std::string res = uint256_t.from_wei_to_asset(WEI_TO_ETH);
 
     double value;
 
@@ -39,7 +39,8 @@ double BalanceManager::make_request(const secure_string &eth_addr) const {
 }
 
 void BalanceManager::request(const secure_string &addr) {
-if(!can_request()) return;
+  if (!can_request())
+    return;
   updating = true;
 
   worker = std::async(std::launch::async,
@@ -63,10 +64,9 @@ void BalanceManager::update(void) {
 }
 double BalanceManager::get_balance(void) const { return this->current_balance; }
 
-
 void BalanceManager::clear_timer(void) {
-  last_update_time =
-      std::chrono::steady_clock::now() - std::chrono::milliseconds(TRANSACTION_TIMEOUT);
+  last_update_time = std::chrono::steady_clock::now() -
+                     std::chrono::milliseconds(TRANSACTION_TIMEOUT);
 }
 
 void BalanceManager::clear(void) {

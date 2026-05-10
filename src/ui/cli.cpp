@@ -51,6 +51,7 @@ void CLI::load(void) {
       actions->update_balance();
       actions->update_eth_price();
       actions->update_transactions_data();
+      actions->update_gas_price();
       screen.PostEvent(Event::Custom);
     }
   });

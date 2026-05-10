@@ -29,5 +29,5 @@ public:
 
   Uint256 &operator+=(const Uint256 &num);
   Uint256 operator+(const Uint256 &num) const;
-  std::string from_wei_to_eth(void) const;
+  std::string from_wei_to_asset(const std::string &dividor) const;
 };

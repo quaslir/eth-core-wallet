@@ -17,7 +17,7 @@ void UserInterface::load(void) {
   cli.set_actions(this);
   EncryptedKeystore encrp;
   block_client.get_current_eth_addr = [this]() -> secure_string {
-      return wallet.get_eth_address();
+    return wallet.get_eth_address();
   };
   if (encrp.load()) {
     cli.set_active_tab(UNLOCK_PASSWORD);
@@ -32,7 +32,7 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
     break; // send transaction
   case 2:
-  update_transactions_data();
+    update_transactions_data();
 
     cli.set_active_tab(TRANSACTION_HISTORY);
     break;
@@ -41,15 +41,13 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     break;
   case 4:
     wallet.derive_next();
-    //balance_manager.clear();
+    update_balance(true);
     break;
 
   case 5:
     if (wallet.derive_prev()) {
-
-      //balance_manager.clear_timer();
       wallet.set_balance(0.0);
-      update_balance();
+      update_balance(true);
     }
     break;
   case 6: // show private_key
@@ -145,12 +143,27 @@ void UserInterface::add_passphrase(secure_string &&passphrase) {
 void UserInterface::change_derivation_path(secure_string &&derive_path) {
   config.change_derivation_path(std::move(derive_path));
 }
-void UserInterface::update_balance(void) {
-    block_client.update_balance_manager();
+void UserInterface::update_balance(bool force) {
+
+  block_client.update_balance_manager(force);
 }
 
-void UserInterface::update_eth_price(void) {
-    block_client.update_price_manager();
+void UserInterface::update_transactions_data(bool force) {
+
+  block_client.update_history_manager(force);
+}
+
+void UserInterface::update_eth_price(bool force) {
+
+  block_client.update_price_manager(force);
+}
+
+double UserInterface::get_current_gas_price(void) {
+  return block_client.get_current_gas();
+}
+
+void UserInterface::update_gas_price(bool force) {
+  block_client.update_gas_manager(force);
 }
 
 void UserInterface::copy_address(void) {
@@ -175,11 +188,6 @@ void UserInterface::copy_private_key(void) {
 
 std::vector<TransactionRecord> UserInterface::get_transactions_history(void) {
   return block_client.get_transaction_history();
-}
-
-
-void UserInterface::update_transactions_data(void) {
-    block_client.update_history_manager();
 }
 
 const bytes_data &UserInterface::get_private_key(void) {
