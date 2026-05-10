@@ -7,7 +7,7 @@
 #include <string_view>
 
 Wallet::~Wallet() {
-// handle
+  // handle
 }
 
 int Wallet::get_number_of_bits(void) const { return 0; }
@@ -25,7 +25,8 @@ bool Wallet::update_index() const {
     return false;
   return true;
 }
-void Wallet::save(const secure_string &password, const std::string &filename) const {
+void Wallet::save(const secure_string &password,
+                  const std::string &filename) const {
   security_manager::first_time_save(*this, password, filename);
 }
 void Wallet::derive(const std::vector<uint32_t> &path_deriv) {
@@ -115,13 +116,14 @@ void Wallet::set_master_node(const bytes_data &master_n) {
 }
 void Wallet::set_index(const int i) { this->index = i; }
 
-bool Wallet::correct_mnemonic(const secure_string& mnemonic) const {
+bool Wallet::correct_mnemonic(const secure_string &mnemonic) const {
   if (mnemonic.empty())
     return false;
   return mem.mnemonic_is_correct(mnemonic);
 }
 
-void Wallet::import_wallet(const secure_string &mnemonic, const secure_string &passphrase) {
+void Wallet::import_wallet(const secure_string &mnemonic,
+                           const secure_string &passphrase) {
   finalize_from_mnemonic(mnemonic, passphrase, crypto_utils::path_deriv);
 }
 

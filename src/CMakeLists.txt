@@ -14,16 +14,15 @@ set(UI_SOURCES
 ui/cli.cpp
 ui/config_cli.cpp
 ui/ui.cpp
+ui/supported_functions_cli.cpp
+ui/main_wallet_ui.cpp
+ui/wallet_setup_ui.cpp
+ui/passwords_ui.cpp
 )
 
 set(UTILS_SOURCES
 utils/crypto_utils.cpp
 utils/tech_utils.cpp
-)
-set(MANAGERS_SOURCES
-async-managers/async_eth_usd_update.cpp
-async-managers/async_balance.cpp
-async-managers/async_transactions_history_manager.cpp
 )
 
 set(API_SOURCES
@@ -33,6 +32,11 @@ api/http.cpp
 
 set(DRIVERS_SOURCES
 drivers/blockchain_client.cpp
+drivers/balance_client.cpp
+drivers/history_client.cpp
+drivers/price_client.cpp
+drivers/gas_client.cpp
+drivers/manager.cpp
 )
 
 set(CONFIG_SOURCES

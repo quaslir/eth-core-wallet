@@ -1,13 +1,13 @@
 #include "config/config.hpp"
-#include "utils/crypto_utils.hpp"
 #include "secure_bytes_data.hpp"
+#include "utils/crypto_utils.hpp"
 
 class MnemonicGenerator {
 private:
   crypto_utils::Hashes hashes;
 
   static secure_string createMnemonic(const bytes_data &randNumber,
-                                   const bytes_data &checkSum);
+                                      const bytes_data &checkSum);
   static bytes_data createSalt(const secure_string &passphrase);
 
 public:
@@ -15,7 +15,7 @@ public:
   bytes_data generateSeed(const secure_string &mnemonic,
                           const secure_string &passphrase = "") const;
   secure_string generateMnemonic(const Config &conf) const;
-  bool mnemonic_is_correct(const secure_string& mnemonic) const;
+  bool mnemonic_is_correct(const secure_string &mnemonic) const;
   bytes_data handle_extra_entropy_from_user(const bytes_data &entropy,
                                             const bytes_data &extra_entropy,
                                             int target_bits) const;

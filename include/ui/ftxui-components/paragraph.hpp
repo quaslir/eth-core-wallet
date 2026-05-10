@@ -1,7 +1,7 @@
 #pragma once
 #include "config/configuration.hpp"
-#include "utils/tech_utils.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "utils/tech_utils.hpp"
 #include <cstddef>
 
 #include <ftxui/dom/node.hpp>
@@ -9,7 +9,6 @@
 #include <memory>
 
 using namespace ftxui;
-
 
 class ParagraphNode : public Node {
 private:

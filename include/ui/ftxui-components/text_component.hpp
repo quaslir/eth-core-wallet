@@ -1,13 +1,11 @@
 #pragma once
 
-
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <memory>
 
 #include "core/secure_bytes_data.hpp"
 using namespace ftxui;
-
 
 class TextNode : public Node {
 private:
@@ -17,7 +15,7 @@ public:
   explicit TextNode(secure_string data) : data_(std::move(data)) {}
 
   void ComputeRequirement(void) override {
-    requirement_.min_x = 2 + data_.size() * 2;
+    requirement_.min_x = static_cast<int>(data_.size());
     requirement_.min_y = 1;
   }
 
