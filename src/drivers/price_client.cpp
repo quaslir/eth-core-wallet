@@ -1,57 +1,39 @@
-#include "drivers/price_client.hpp"
+#include <string>
 #include "api/http.hpp"
 #include "api/json.hpp"
 #include "config/configuration.hpp"
-#include "core/secure_bytes_data.hpp"
-#include <cmath>
+#include "drivers/price_client.hpp"
+#include <map>
 
-void PriceManager::request(const secure_string &) {
-  if (!can_request())
-    return;
+std::map<std::string, double> price_manager::request_prices(const std::vector<std::string>& symbols) {
+    std::map<std::string, double> result;
+    if(symbols.empty()) return result;
 
-  updating = true;
+    try {
+        std::string fsyms;
 
-  worker =
-      std::async(std::launch::async, [this]() { return request_eth_price(); });
-}
+        for(size_t i = 0; i < symbols.size(); i++) {
+            if(i > 0)fsyms += ',';
+            fsyms += symbols[i];
+        }
 
-void PriceManager::update(void) {
-  if (updating && worker.valid()) {
-    auto status = worker.wait_for(std::chrono::milliseconds(0));
+        const std::string url = MIN_URL_BATCH + fsyms + "&tsyms=USD&api_key=" + MIN_API;
+        std::string buffer = http::get_request(url);
+        json j = json::parse(buffer);
 
-    if (status == std::future_status::ready) {
-      try {
-        if (!error)
-          current_price = worker.get();
-      } catch (const std::exception &err) {
-      }
-      updating = false;
-      last_update_time = std::chrono::steady_clock::now();
+
+        for(const auto& symbol : symbols) {
+            if(j.contains(symbol) && j[symbol].contains("USD")) {
+                result[symbol] = j[symbol]["USD"].get<double>();
+
+
+            }             else result[symbol] = NAN;
+        }
+    } catch(const std::exception & err) {
+        for(const auto& symbol : symbols) {
+            result[symbol] = NAN;
+        }
     }
-  }
-}
 
-double PriceManager::get_current_eth_price(void) const {
-  return this->current_price;
-}
-
-double PriceManager::request_eth_price(void) {
-  try {
-    error = false;
-    std::string buffer = http::get_request(ETH_USD_URL);
-    json j = json::parse(buffer);
-
-    double value = j.value("USD", 0.0);
-    return value;
-
-  } catch (const std::exception &err) {
-    error = true;
-    return NAN;
-  }
-}
-
-PriceManager::~PriceManager() {
-  if (worker.valid()) {
-    worker.wait();
-  }
+    return result;
 }

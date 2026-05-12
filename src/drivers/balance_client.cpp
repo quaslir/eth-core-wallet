@@ -8,9 +8,10 @@
 #include "utils/tech_utils.hpp"
 #include <chrono>
 #include <exception>
+#include <future>
 #include <string>
 #include <iostream>
-
+#include "drivers/price_client.hpp"
 std::string form_data(const std::string& contract_address, const secure_string& eth_addr) {
     json j;
     j["jsonrpc"] = "2.0";
@@ -57,12 +58,47 @@ try {
 
 assets_data BalanceManager::update_all(const secure_string& eth_addr) const {
     assets_data new_assets = crypto_assets::get_default_assets();
+
+    std::vector<std::future<bool>> balance_futures;
+
+    balance_futures.reserve(new_assets.size());
+
+
     for(auto & asset : new_assets) {
         if(asset.second.is_native) {
-            update_native(asset.second, eth_addr);
-        } else
-        update_one_asset(asset.second, eth_addr);
+            balance_futures.push_back(std::async(std::launch::async, [this, &asset, &eth_addr]() {
+                return update_native(asset.second, eth_addr);
+            }));
 
+        } else
+            balance_futures.push_back(std::async(std::launch::async, [this, &asset, &eth_addr]() {
+                return update_one_asset(asset.second, eth_addr);
+            }));
+
+    }
+
+    std::vector<std::string> symbols;
+
+    symbols.reserve(new_assets.size());
+
+    for(const auto& asset: new_assets) {
+        symbols.push_back(asset.second.symbol);
+    }
+
+    auto price_future = std::async(std::launch::async, [&symbols]() {
+        return price_manager::request_prices(symbols);
+    });
+
+    for(auto&f : balance_futures) f.wait();
+
+    auto prices = price_future.get();
+
+    for(auto & asset: new_assets) {
+        auto it = prices.find(asset.second.symbol);
+
+        if(it != prices.end()) {
+            asset.second.fiat_price = it->second;
+        }
     }
 
     return new_assets;

@@ -49,8 +49,6 @@ private:
   void update_transactions_data(bool force = false) override;
   std::string get_current_network(void) override;
   void change_network(size_t index) override;
-  void update_eth_price(bool force = false) override;
-  std::pair<double, bool> get_current_eth_price(void) override;
   void wipe_mnemonic(void) override;
   std::pair<double, bool> get_current_gas_price(void) override;
 

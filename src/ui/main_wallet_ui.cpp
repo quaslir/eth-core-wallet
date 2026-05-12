@@ -307,7 +307,6 @@ Component CLI::change_network_render(void) {
   menu_opts.on_enter = [=, this] {
     actions->change_network(*selected);
     actions->update_balance(true);
-    actions->update_eth_price(true);
     actions->update_gas_price(true);
     set_active_tab(WALLET_UI);
   };

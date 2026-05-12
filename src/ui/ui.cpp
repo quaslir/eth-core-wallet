@@ -152,11 +152,6 @@ void UserInterface::update_transactions_data(bool force) {
   block_client.update_history_manager(force);
 }
 
-void UserInterface::update_eth_price(bool force) {
-
-  block_client.update_price_manager(force);
-}
-
 void UserInterface::update_gas_price(bool force) {
   block_client.update_gas_manager(force);
 }
@@ -203,9 +198,6 @@ void UserInterface::change_network(size_t index) {
   block_client.change_network(networks::list[index]);
 }
 
-std::pair<double, bool> UserInterface::get_current_eth_price(void) {
-  return block_client.get_eth_price();
-}
 
 void UserInterface::wipe_mnemonic(void) {
   OPENSSL_cleanse(temp.mnemonic.data(), temp.mnemonic.size());
