@@ -142,4 +142,10 @@ bool contains_only_lowercase(std::string_view string) {
 
   return true;
 }
+
+std::string decimals_to_divisor(int decimals) {
+    if(decimals < 0) return "1";
+
+    return "1" + std::string(decimals, '0');
+ }
 } // namespace tech_utils

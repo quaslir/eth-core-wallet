@@ -1,9 +1,11 @@
 #pragma once
 #include "config/config.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "core/asset.hpp"
 #include "derive.hpp"
 #include "mnemonic.hpp"
 #include "security.hpp"
+#include <cstdint>
 #include <string>
 
 class Wallet {
@@ -11,7 +13,7 @@ private:
   bytes_data priv_key;
   secure_string eth_address;
   bytes_data master_node;
-  double current_balance;
+  std::map<std::pair<uint64_t, std::string>, Asset> assets = crypto_assets::get_default_assets();
   MnemonicGenerator mem;
   long long index = 0;
   int get_number_of_bits(void) const;
@@ -27,12 +29,12 @@ public:
   const bytes_data &get_master_node(void) const;
   secure_string __get_private_key_hex(void) const;
 
-  double get_balance(void) const;
+  std::map<std::pair<uint64_t, std::string>, Asset> get_balance(void) const;
   void sync_derive_path(std::vector<uint32_t> &derive_path) const;
 
   void set_private_key(const bytes_data &private_key);
   void set_master_node(const bytes_data &master_n);
-  void set_balance(double balance);
+  void set_balance(std::map<std::pair<uint64_t, std::string>, Asset> assets);
   void set_index(const int i);
   bool derive_next(void);
   bool derive_prev(void);

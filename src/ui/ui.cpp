@@ -46,7 +46,6 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
   case 5:
     if (wallet.derive_prev()) {
-      wallet.set_balance(0.0);
       update_balance(true);
     }
     break;

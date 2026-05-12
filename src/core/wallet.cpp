@@ -68,8 +68,8 @@ const bytes_data &Wallet::get_master_node(void) const {
   return this->master_node;
 }
 
-double Wallet::get_balance(void) const { return this->current_balance; }
-void Wallet::set_balance(double balance) { this->current_balance = balance; }
+std::map<std::pair<uint64_t, std::string>, Asset> Wallet::get_balance(void) const { return this->assets; }
+void Wallet::set_balance(std::map<std::pair<uint64_t, std::string>, Asset> assets) { this->assets = assets; }
 
 bool Wallet::derive_next(void) {
   if (index >= 0x7FFFFFF)

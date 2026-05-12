@@ -1,7 +1,8 @@
 #include "drivers/blockchain_client.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "drivers/balance_client.hpp"
 #include <string>
-
+#include <iostream>
 BlockchainClient::BlockchainClient(void) {
   auto form_url_callback = [this](void) -> std::string { return form_url(); };
 
@@ -40,8 +41,10 @@ std::string BlockchainClient::get_active_network_name(void) const {
   return active_network.name;
 }
 
-std::pair<double, bool> BlockchainClient::get_balance(void) const {
-  return {balance_manager.get_balance(), balance_manager.get_error()};
+assets_data BlockchainClient::get_balance(void) const {
+
+ return balance_manager.get_balance();
+
 }
 std::pair<std::vector<TransactionRecord>, bool>
 BlockchainClient::get_transaction_history(void) const {

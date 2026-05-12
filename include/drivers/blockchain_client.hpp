@@ -19,7 +19,7 @@ public:
   std::string form_url(void) const;
 
   void update(void);
-  std::pair<double, bool> get_balance(void) const;
+  assets_data get_balance(void) const;
   std::pair<std::vector<TransactionRecord>, bool>
   get_transaction_history(void) const;
   std::pair<double, bool> get_eth_price(void) const;

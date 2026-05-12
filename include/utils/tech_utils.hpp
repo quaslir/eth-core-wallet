@@ -17,4 +17,5 @@ void clear(bytes_data &data);
 bool to_double(const std::string &str, double &val);
 double eth_to_usd(double eth, double price);
 bool contains_only_lowercase(std::string_view string);
+std::string decimals_to_divisor(int decimals);
 } // namespace tech_utils
