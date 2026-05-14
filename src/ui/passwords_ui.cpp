@@ -130,7 +130,6 @@ Component CLI::render_request_unlock_password(void) {
 
         actions->load_wallet();
         actions->update_balance();
-        actions->update_eth_price();
         set_active_tab(WALLET_UI);
       } else {
         *attempts += 1;

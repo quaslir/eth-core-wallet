@@ -19,20 +19,17 @@ public:
   std::string form_url(void) const;
 
   void update(void);
-  std::pair<double, bool> get_balance(void) const;
+  assets_data get_balance(void) const;
   std::pair<std::vector<TransactionRecord>, bool>
   get_transaction_history(void) const;
-  std::pair<double, bool> get_eth_price(void) const;
   std::pair<double, bool> get_current_gas(void) const;
 
   void update_history_manager(bool force = false);
-  void update_price_manager(bool force = false);
   void update_balance_manager(bool force = false);
   void update_gas_manager(bool force = false);
 
 private:
   HistoryManager history_manager;
-  PriceManager price_manager;
   BalanceManager balance_manager;
   GasManager gas_manager;
   // uint32_t chain_id;

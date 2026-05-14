@@ -2,8 +2,10 @@
 
 #include "api/json.hpp"
 #include "config/config.hpp"
+#include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
+#include "drivers/balance_client.hpp"
 #include "drivers/blockchain_client.hpp"
 #include "iwallet_actions.hpp"
 #include "utils/tech_utils.hpp"
@@ -12,6 +14,7 @@
 #include <openssl/crypto.h>
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 void UserInterface::load(void) {
   cli.set_actions(this);
@@ -46,7 +49,6 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
 
   case 5:
     if (wallet.derive_prev()) {
-      wallet.set_balance(0.0);
       update_balance(true);
     }
     break;
@@ -75,7 +77,9 @@ void UserInterface::create_wallet(void) {
 }
 
 WalletInfo UserInterface::get_wallet(void) {
-  return WalletInfo(wallet.get_eth_address(), block_client.get_balance());
+  assets_data assets = block_client.get_balance();
+  return WalletInfo(wallet.get_eth_address(), assets,
+                    tech_utils::calculate_total(assets));
 }
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {
@@ -153,11 +157,6 @@ void UserInterface::update_transactions_data(bool force) {
   block_client.update_history_manager(force);
 }
 
-void UserInterface::update_eth_price(bool force) {
-
-  block_client.update_price_manager(force);
-}
-
 void UserInterface::update_gas_price(bool force) {
   block_client.update_gas_manager(force);
 }
@@ -202,10 +201,6 @@ void UserInterface::change_network(size_t index) {
   if (index >= networks::list.size())
     return; // handle
   block_client.change_network(networks::list[index]);
-}
-
-std::pair<double, bool> UserInterface::get_current_eth_price(void) {
-  return block_client.get_eth_price();
 }
 
 void UserInterface::wipe_mnemonic(void) {

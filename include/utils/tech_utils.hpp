@@ -1,5 +1,7 @@
 #pragma once
+#include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "drivers/balance_client.hpp"
 #include <stdint.h>
 #include <string>
 #include <string_view>
@@ -17,4 +19,6 @@ void clear(bytes_data &data);
 bool to_double(const std::string &str, double &val);
 double eth_to_usd(double eth, double price);
 bool contains_only_lowercase(std::string_view string);
+std::string decimals_to_divisor(int decimals);
+double calculate_total(const assets_data &assets);
 } // namespace tech_utils

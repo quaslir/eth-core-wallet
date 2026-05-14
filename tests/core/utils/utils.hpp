@@ -21,7 +21,7 @@ namespace core_test_utils {
 
 
     inline std::vector<MnemTests> get_vector_tests(void) {
-        std::ifstream file("bip39-tests.json");
+        std::ifstream file(TEST_JSON_PATH);
         if(!file.is_open()) {
             return std::vector<MnemTests>();
         }

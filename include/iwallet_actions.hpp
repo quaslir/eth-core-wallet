@@ -37,13 +37,11 @@ public:
   virtual const bytes_data &get_private_key(void) = 0;
   virtual std::pair<std::vector<TransactionRecord>, bool>
   get_transactions_history(void) = 0;
-  virtual std::pair<double, bool> get_current_eth_price(void) = 0;
   virtual std::pair<double, bool> get_current_gas_price(void) = 0;
   virtual void update_transactions_data(bool force = false) = 0;
 
   virtual void update_gas_price(bool force = false) = 0;
   virtual void update_balance(bool force = false) = 0;
-  virtual void update_eth_price(bool force = false) = 0;
   virtual std::string get_current_network(void) = 0;
   virtual void change_network(size_t index) = 0;
   virtual void wipe_mnemonic(void) = 0;

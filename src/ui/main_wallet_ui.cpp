@@ -21,30 +21,36 @@ Component CLI::print_wallet_ui(void) {
 
   auto walletUI = Renderer(menu_renderer, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
+    Elements asset_rows;
+    for (auto const &[id, asset] : wallet_info.assets) {
+      asset_rows.push_back(hbox(
+          {text(" " + asset.symbol + ": ") | bold | size(WIDTH, EQUAL, 8),
+           text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),
+           filler(),
+           text(fmt::format("{:.2f}", asset.balance * asset.fiat_price)) |
+               color(Color::Green)}));
+    }
+    asset_rows.push_back(separator());
+    asset_rows.push_back(
 
-    double balance_in_usd = tech_utils::eth_to_usd(
-        wallet_info.balance.first, actions->get_current_eth_price().first);
+        hbox({text(" TOTAL PORTFOLIO: ") | bold | color(Color::Yellow),
+              filler(),
+              text(fmt::format("{:.2f} USD", wallet_info.total)) | bold |
+                  color(Color::Green)}));
 
-    auto asset_panel =
-        vbox({
-            text(" 💰 ASSETS ") | bold | color(Color::Yellow),
-            separatorDouble() | color(Color::Yellow),
+    auto asset_panel = vbox({
+                           text(" 💰 ASSETS ") | bold | color(Color::Yellow),
+                           separatorDouble() | color(Color::Yellow),
 
-            hbox({text(" ETH: ") | bold,
-                  text(fmt::format("{:.5f}", wallet_info.balance.first)) |
-                      color(Color::White) | bold}),
+                           vbox(std::move(asset_rows)),
 
-            hbox({text(" USD: ") | bold,
-                  text(fmt::format("{:.2f}", balance_in_usd)) |
-                      color(Color::Green)}),
+                           separator(),
 
-            filler(),
-
-            text(" ADDRESS: ") | dim,
-            text_(wallet_info.addr) | color(Color::Cyan) | flex,
-            text(" (Press 'C' to copy) ") | dim | hcenter,
-        }) |
-        borderHeavy | size(WIDTH, EQUAL, 38);
+                           text(" ADDRESS: ") | dim,
+                           text_(wallet_info.addr) | color(Color::Cyan) | flex,
+                           text(" (Press 'C' to copy) ") | dim | hcenter,
+                       }) |
+                       borderHeavy | size(WIDTH, EQUAL, 45);
 
     float sync_progress = 0.85f; /// !!!
 
@@ -305,7 +311,6 @@ Component CLI::change_network_render(void) {
   menu_opts.on_enter = [=, this] {
     actions->change_network(*selected);
     actions->update_balance(true);
-    actions->update_eth_price(true);
     actions->update_gas_price(true);
     set_active_tab(WALLET_UI);
   };

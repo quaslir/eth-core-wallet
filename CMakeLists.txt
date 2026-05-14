@@ -20,7 +20,7 @@ set(CURL_DISABLE_TELNET ON CACHE INTERNAL "")
 set(CURL_DISABLE_MQTT ON CACHE INTERNAL "")
 set(ENABLE_THREADED_RESOLVER OFF CACHE INTERNAL "")
 set(BUILD_TESTING OFF CACHE INTERNAL "")
-
+enable_testing()
 include(FetchContent)
 FetchContent_Declare(
     json

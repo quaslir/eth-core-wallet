@@ -6,10 +6,6 @@
 #include <iostream>
 #include <string_view>
 
-Wallet::~Wallet() {
-  // handle
-}
-
 int Wallet::get_number_of_bits(void) const { return 0; }
 
 secure_string Wallet::prepare_mnemonic(const Config &conf) const {
@@ -67,9 +63,6 @@ const long long &Wallet::getIndex(void) const { return this->index; }
 const bytes_data &Wallet::get_master_node(void) const {
   return this->master_node;
 }
-
-double Wallet::get_balance(void) const { return this->current_balance; }
-void Wallet::set_balance(double balance) { this->current_balance = balance; }
 
 bool Wallet::derive_next(void) {
   if (index >= 0x7FFFFFF)

@@ -1,12 +1,11 @@
 #include "drivers/blockchain_client.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "drivers/balance_client.hpp"
 #include <string>
-
 BlockchainClient::BlockchainClient(void) {
   auto form_url_callback = [this](void) -> std::string { return form_url(); };
 
   history_manager.form_url = form_url_callback;
-  price_manager.form_url = form_url_callback;
   balance_manager.form_url = form_url_callback;
   gas_manager.form_url = form_url_callback;
 }
@@ -16,10 +15,6 @@ void BlockchainClient::update(void) {
     history_manager.update();
   else
     history_manager.request(get_current_eth_addr());
-  if (price_manager.get_status())
-    price_manager.update();
-  else
-    price_manager.request(secure_string{});
   if (balance_manager.get_status())
     balance_manager.update();
   else
@@ -40,16 +35,14 @@ std::string BlockchainClient::get_active_network_name(void) const {
   return active_network.name;
 }
 
-std::pair<double, bool> BlockchainClient::get_balance(void) const {
-  return {balance_manager.get_balance(), balance_manager.get_error()};
+assets_data BlockchainClient::get_balance(void) const {
+
+  return balance_manager.get_balance();
 }
 std::pair<std::vector<TransactionRecord>, bool>
 BlockchainClient::get_transaction_history(void) const {
   return {history_manager.get_transactions_history(),
           history_manager.get_error()};
-}
-std::pair<double, bool> BlockchainClient::get_eth_price(void) const {
-  return {price_manager.get_current_eth_price(), price_manager.get_error()};
 }
 
 std::pair<double, bool> BlockchainClient::get_current_gas(void) const {
@@ -68,14 +61,7 @@ void BlockchainClient::update_history_manager(bool force) {
     history_manager.force_request(eth_addr);
   history_manager.update();
 }
-void BlockchainClient::update_price_manager(bool force) {
-  if (force)
-    price_manager.force_request();
-  else
-    price_manager.request(secure_string{});
 
-  price_manager.update();
-}
 void BlockchainClient::update_balance_manager(bool force) {
   if (!get_current_eth_addr)
     return;

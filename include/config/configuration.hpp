@@ -4,14 +4,15 @@
 #define MIN_Y 3
 
 // BLOCKCHAIN
+#define MIN_API                                                                \
+  "0f5e105675e98c45f556aa3ca75670e2bf0155ea3178fcb40e5506ce4f7e3ecc"
 
-#define ETH_USD_URL                                                            \
-  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
+inline constexpr auto MIN_URL_BATCH =
+    "https://min-api.cryptocompare.com/data/pricemulti?fsyms=";
 
 // TIMEOUTS
-#define BALANCE_TIMEOUT 3000
+#define BALANCE_TIMEOUT 10000
 #define TRANSACTION_TIMEOUT 10000
-#define ETH_PRICE_TIMEOUT 10000
 #define GWEI_TIMEOUT 5000
 
 // WEI
