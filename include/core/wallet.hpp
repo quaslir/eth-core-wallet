@@ -1,10 +1,8 @@
 #pragma once
 #include "config/config.hpp"
-#include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "derive.hpp"
 #include "mnemonic.hpp"
-#include "security.hpp"
 #include <cstdint>
 #include <string>
 
@@ -18,7 +16,6 @@ private:
   int get_number_of_bits(void) const;
 
 public:
-  ~Wallet();
   secure_string prepare_mnemonic(const Config &conf) const;
   void finalize_from_mnemonic(const secure_string &mnemonic,
                               const secure_string &passphrase,

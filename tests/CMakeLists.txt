@@ -22,3 +22,12 @@ FetchContent_MakeAvailable(Catch2)
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain wallet_core)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    TEST_JSON_PATH="${CMAKE_BINARY_DIR}/bip39-tests.json"
+)
+
+include(Catch)
+catch_discover_tests(${PROJECT_NAME}
+    PROPERTIES LABELS "MY_WALLET_TESTS"
+)
