@@ -37,15 +37,13 @@ std::string BlockchainClient::get_active_network_name(void) const {
 
 assets_data BlockchainClient::get_balance(void) const {
 
- return balance_manager.get_balance();
-
+  return balance_manager.get_balance();
 }
 std::pair<std::vector<TransactionRecord>, bool>
 BlockchainClient::get_transaction_history(void) const {
   return {history_manager.get_transactions_history(),
           history_manager.get_error()};
 }
-
 
 std::pair<double, bool> BlockchainClient::get_current_gas(void) const {
   return {gas_manager.get_current_gas(), gas_manager.get_error()};

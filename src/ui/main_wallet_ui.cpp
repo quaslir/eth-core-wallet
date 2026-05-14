@@ -22,31 +22,35 @@ Component CLI::print_wallet_ui(void) {
   auto walletUI = Renderer(menu_renderer, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
     Elements asset_rows;
-    for(auto const & [id, asset] : wallet_info.assets) {
-        asset_rows.push_back(
-            hbox({
-                text(" " + asset.symbol + ": ") | bold | size(WIDTH, EQUAL, 8),
-                text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),
-                filler(),
-                text(fmt::format("{:.2f}", asset.balance * asset.fiat_price)) | color(Color::Green)
-            })
-        );
+    for (auto const &[id, asset] : wallet_info.assets) {
+      asset_rows.push_back(hbox(
+          {text(" " + asset.symbol + ": ") | bold | size(WIDTH, EQUAL, 8),
+           text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),
+           filler(),
+           text(fmt::format("{:.2f}", asset.balance * asset.fiat_price)) |
+               color(Color::Green)}));
     }
+    asset_rows.push_back(separator());
+    asset_rows.push_back(
 
-    auto asset_panel =
-        vbox({
-            text(" 💰 ASSETS ") | bold | color(Color::Yellow),
-            separatorDouble() | color(Color::Yellow),
+        hbox({text(" TOTAL PORTFOLIO: ") | bold | color(Color::Yellow),
+              filler(),
+              text(fmt::format("{:.2f} USD", wallet_info.total)) | bold |
+                  color(Color::Green)}));
 
-            vbox(std::move(asset_rows)),
+    auto asset_panel = vbox({
+                           text(" 💰 ASSETS ") | bold | color(Color::Yellow),
+                           separatorDouble() | color(Color::Yellow),
 
-            separator(),
+                           vbox(std::move(asset_rows)),
 
-            text(" ADDRESS: ") | dim,
-            text_(wallet_info.addr) | color(Color::Cyan) | flex,
-            text(" (Press 'C' to copy) ") | dim | hcenter,
-        }) |
-        borderHeavy | size(WIDTH, EQUAL, 45);
+                           separator(),
+
+                           text(" ADDRESS: ") | dim,
+                           text_(wallet_info.addr) | color(Color::Cyan) | flex,
+                           text(" (Press 'C' to copy) ") | dim | hcenter,
+                       }) |
+                       borderHeavy | size(WIDTH, EQUAL, 45);
 
     float sync_progress = 0.85f; /// !!!
 

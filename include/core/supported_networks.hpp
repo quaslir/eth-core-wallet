@@ -17,7 +17,7 @@ const static std::vector<NetworkConfig> list = {
     {" 🔴 Optimism         ", "opt-mainnet", 10},
     {" 🛡️ Base             ", "base-mainnet", 8453},
     {" 🧪 Sepolia Testnet  ", "eth-sepolia", 11155111},
-    {" 🟡 BNB Testnet      ", "bnb-testnet", 97} };
+    {" 🟡 BNB Testnet      ", "bnb-testnet", 97}};
 
 inline std::vector<std::string> get_network_names(void) {
   std::vector<std::string> names;

@@ -5,33 +5,34 @@
 #include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
+#include "drivers/price_client.hpp"
 #include "utils/tech_utils.hpp"
 #include <chrono>
 #include <exception>
 #include <future>
 #include <string>
-#include <iostream>
-#include "drivers/price_client.hpp"
-std::string form_data(const std::string& contract_address, const secure_string& eth_addr) {
-    json j;
-    j["jsonrpc"] = "2.0";
-    j["id"] = 1;
-    j["method"] = "eth_call";
+std::string form_data(const std::string &contract_address,
+                      const secure_string &eth_addr) {
+  json j;
+  j["jsonrpc"] = "2.0";
+  j["id"] = 1;
+  j["method"] = "eth_call";
 
-json tx_params;
+  json tx_params;
 
-tx_params["to"] = contract_address;
-tx_params["data"] = "0x70a08231000000000000000000000000" + eth_addr.substr(2);
+  tx_params["to"] = contract_address;
+  tx_params["data"] = "0x70a08231000000000000000000000000" + eth_addr.substr(2);
 
-j["params"] = json::array({tx_params, "latest"});
+  j["params"] = json::array({tx_params, "latest"});
 
-return j.dump();
+  return j.dump();
 }
-bool BalanceManager::update_one_asset(Asset& asset, const secure_string& eth_addr) const {
-try {
+bool BalanceManager::update_one_asset(Asset &asset,
+                                      const secure_string &eth_addr) const {
+  try {
     std::string data = form_data(asset.contract_address, eth_addr);
 
-    std::string buffer = http::post_request(form_url(),data);
+    std::string buffer = http::post_request(form_url(), data);
 
     json j = json::parse(buffer);
 
@@ -39,74 +40,74 @@ try {
 
     Uint256 res_val(res, true);
 
-    std::string converted = res_val.from_wei_to_asset(tech_utils::decimals_to_divisor(asset.decimals));
+    std::string converted = res_val.from_wei_to_asset(
+        tech_utils::decimals_to_divisor(asset.decimals));
 
     double value = 0.0;
 
-    if(!tech_utils::to_double(converted, value)) return false;
+    if (!tech_utils::to_double(converted, value))
+      return false;
 
     asset.balance = value;
 
     return true;
 
-} catch(const std::exception& err) {
+  } catch (const std::exception &err) {
     return false;
-}
-}
-
-
-
-assets_data BalanceManager::update_all(const secure_string& eth_addr) const {
-    assets_data new_assets = crypto_assets::get_default_assets();
-
-    std::vector<std::future<bool>> balance_futures;
-
-    balance_futures.reserve(new_assets.size());
-
-
-    for(auto & asset : new_assets) {
-        if(asset.second.is_native) {
-            balance_futures.push_back(std::async(std::launch::async, [this, &asset, &eth_addr]() {
-                return update_native(asset.second, eth_addr);
-            }));
-
-        } else
-            balance_futures.push_back(std::async(std::launch::async, [this, &asset, &eth_addr]() {
-                return update_one_asset(asset.second, eth_addr);
-            }));
-
-    }
-
-    std::vector<std::string> symbols;
-
-    symbols.reserve(new_assets.size());
-
-    for(const auto& asset: new_assets) {
-        symbols.push_back(asset.second.symbol);
-    }
-
-    auto price_future = std::async(std::launch::async, [&symbols]() {
-        return price_manager::request_prices(symbols);
-    });
-
-    for(auto&f : balance_futures) f.wait();
-
-    auto prices = price_future.get();
-
-    for(auto & asset: new_assets) {
-        auto it = prices.find(asset.second.symbol);
-
-        if(it != prices.end()) {
-            asset.second.fiat_price = it->second;
-        }
-    }
-
-    return new_assets;
+  }
 }
 
+assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
+  assets_data new_assets = crypto_assets::get_default_assets();
 
+  std::vector<std::future<bool>> balance_futures;
 
-bool BalanceManager::update_native(Asset & asset,const secure_string &eth_addr) const {
+  balance_futures.reserve(new_assets.size());
+
+  for (auto &asset : new_assets) {
+    if (asset.second.is_native) {
+      balance_futures.push_back(
+          std::async(std::launch::async, [this, &asset, &eth_addr]() {
+            return update_native(asset.second, eth_addr);
+          }));
+
+    } else
+      balance_futures.push_back(
+          std::async(std::launch::async, [this, &asset, &eth_addr]() {
+            return update_one_asset(asset.second, eth_addr);
+          }));
+  }
+
+  std::vector<std::string> symbols;
+
+  symbols.reserve(new_assets.size());
+
+  for (const auto &asset : new_assets) {
+    symbols.push_back(asset.second.symbol);
+  }
+
+  auto price_future = std::async(std::launch::async, [&symbols]() {
+    return price_manager::request_prices(symbols);
+  });
+
+  for (auto &f : balance_futures)
+    f.wait();
+
+  auto prices = price_future.get();
+
+  for (auto &asset : new_assets) {
+    auto it = prices.find(asset.second.symbol);
+
+    if (it != prices.end()) {
+      asset.second.fiat_price = it->second;
+    }
+  }
+
+  return new_assets;
+}
+
+bool BalanceManager::update_native(Asset &asset,
+                                   const secure_string &eth_addr) const {
 
   try {
     AlchemyJSON alchm("2.0", "eth_getBalance",
@@ -116,22 +117,23 @@ bool BalanceManager::update_native(Asset & asset,const secure_string &eth_addr) 
 
     std::string buffer = http::post_request(form_url(), data);
     if (buffer.empty())
-        return false;
+      return false;
 
     alchm.parse(buffer);
 
     Uint256 uint256_t(alchm.get_result(), 1);
-
-    std::string res = uint256_t.from_wei_to_asset(WEI_TO_ETH);
+    std::string divisor = tech_utils::decimals_to_divisor(asset.decimals);
+    std::string res = uint256_t.from_wei_to_asset(divisor);
 
     double value = 0.0;
 
-    if(!tech_utils::to_double(res, value)) return false;
+    if (!tech_utils::to_double(res, value))
+      return false;
     asset.balance = value;
     return true;
 
   } catch (const std::exception &err) {
-  return false;
+    return false;
   }
 }
 
@@ -150,7 +152,7 @@ void BalanceManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-            assets = worker.get();
+        assets = worker.get();
 
       } catch (...) {
       }
@@ -163,12 +165,10 @@ assets_data BalanceManager::get_balance(void) const { return this->assets; }
 
 void BalanceManager::clear_timer(void) {
   last_update_time = std::chrono::steady_clock::now() -
-                     std::chrono::milliseconds(TRANSACTION_TIMEOUT);
+                     std::chrono::milliseconds(BALANCE_TIMEOUT);
 }
 
-void BalanceManager::clear(void) {
-  updating = false;
-}
+void BalanceManager::clear(void) { updating = false; }
 
 BalanceManager::~BalanceManager() {
   if (worker.valid()) {

@@ -1,5 +1,6 @@
 #include "utils/tech_utils.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "drivers/balance_client.hpp"
 
 #include <cctype>
 #include <charconv>
@@ -144,8 +145,18 @@ bool contains_only_lowercase(std::string_view string) {
 }
 
 std::string decimals_to_divisor(int decimals) {
-    if(decimals < 0) return "1";
+  if (decimals < 0)
+    return "1";
 
-    return "1" + std::string(decimals, '0');
- }
+  return "1" + std::string(decimals, '0');
+}
+
+double calculate_total(const assets_data &assets) {
+  double total = 0.0;
+  for (const auto &asset : assets) {
+    total += (asset.second.fiat_price * asset.second.balance);
+  }
+
+  return total;
+}
 } // namespace tech_utils

@@ -2,8 +2,10 @@
 
 #include "api/json.hpp"
 #include "config/config.hpp"
+#include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
+#include "drivers/balance_client.hpp"
 #include "drivers/blockchain_client.hpp"
 #include "iwallet_actions.hpp"
 #include "utils/tech_utils.hpp"
@@ -12,6 +14,7 @@
 #include <openssl/crypto.h>
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 void UserInterface::load(void) {
   cli.set_actions(this);
@@ -74,7 +77,9 @@ void UserInterface::create_wallet(void) {
 }
 
 WalletInfo UserInterface::get_wallet(void) {
-  return WalletInfo(wallet.get_eth_address(), block_client.get_balance());
+  assets_data assets = block_client.get_balance();
+  return WalletInfo(wallet.get_eth_address(), assets,
+                    tech_utils::calculate_total(assets));
 }
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {
@@ -197,7 +202,6 @@ void UserInterface::change_network(size_t index) {
     return; // handle
   block_client.change_network(networks::list[index]);
 }
-
 
 void UserInterface::wipe_mnemonic(void) {
   OPENSSL_cleanse(temp.mnemonic.data(), temp.mnemonic.size());

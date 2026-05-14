@@ -1,12 +1,12 @@
 #pragma once
 
 #include "core/secure_bytes_data.hpp"
+#include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <future>
 class Manager {
 protected:
-  bool updating = false;
+  std::atomic<bool> updating = false;
   const std::chrono::milliseconds timer_interval;
   std::chrono::steady_clock::time_point last_update_time;
   bool error = false;

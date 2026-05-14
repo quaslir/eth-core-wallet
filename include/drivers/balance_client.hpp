@@ -14,9 +14,9 @@ class BalanceManager : public Manager {
 private:
   std::future<assets_data> worker;
   assets_data assets;
-  bool update_native(Asset & asset,const secure_string &eth_addr) const;
-  bool update_one_asset(Asset& asset, const secure_string& eth_addr) const;
-  assets_data update_all(const secure_string& eth_addr) const;
+  bool update_native(Asset &asset, const secure_string &eth_addr) const;
+  bool update_one_asset(Asset &asset, const secure_string &eth_addr) const;
+  assets_data update_all(const secure_string &eth_addr) const;
 
 public:
   std::function<std::string(void)> form_url;
