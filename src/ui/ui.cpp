@@ -206,3 +206,10 @@ void UserInterface::change_network(size_t index) {
 void UserInterface::wipe_mnemonic(void) {
   OPENSSL_cleanse(temp.mnemonic.data(), temp.mnemonic.size());
 }
+
+float UserInterface::get_next_refresh(void) {
+  return block_client.get_next_refresh();
+}
+void UserInterface::update_info(void) {
+    block_client.update();
+}

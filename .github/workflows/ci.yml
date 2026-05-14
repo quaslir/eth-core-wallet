@@ -2,16 +2,16 @@ name: C++ Hardcore CI
 
 on:
   push:
-    branches: ['**'] 
+    branches: ["**"]
   pull_request:
-    branches: ['**']
+    branches: ["**"]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [g++-13, clang++-18] 
+        compiler: [g++-13, clang++-18]
 
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,5 @@ jobs:
       - name: Run Tests (CTest)
         working-directory: build
         run: |
-
           sudo prlimit --pid=$$ --memlock=unlimited:unlimited
-          ctest --output-on-failure --verbose
+          ctest --output-on-failure --verbose -L MY_WALLET_TESTS

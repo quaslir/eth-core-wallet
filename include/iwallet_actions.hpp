@@ -45,4 +45,6 @@ public:
   virtual std::string get_current_network(void) = 0;
   virtual void change_network(size_t index) = 0;
   virtual void wipe_mnemonic(void) = 0;
+  virtual float get_next_refresh(void) = 0;
+  virtual void update_info(void) = 0;
 };

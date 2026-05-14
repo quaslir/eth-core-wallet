@@ -47,10 +47,8 @@ void CLI::load(void) {
   std::atomic<bool> refresh_ui = true;
   std::thread refresh_thread([&] {
     while (refresh_ui) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      actions->update_balance();
-      actions->update_transactions_data();
-      actions->update_gas_price();
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      actions->update_info();
       screen.PostEvent(Event::Custom);
     }
   });

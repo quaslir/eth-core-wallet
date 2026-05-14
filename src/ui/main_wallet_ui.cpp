@@ -2,7 +2,6 @@
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
-#include "utils/tech_utils.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -52,7 +51,7 @@ Component CLI::print_wallet_ui(void) {
                        }) |
                        borderHeavy | size(WIDTH, EQUAL, 45);
 
-    float sync_progress = 0.85f; /// !!!
+    float refresh_in = actions->get_next_refresh();
 
     auto network_info =
         vbox({text(" 🌐 NETWORK & NODES ") | bold | color(Color::Magenta),
@@ -68,9 +67,9 @@ Component CLI::print_wallet_ui(void) {
 
               text(""),
 
-              hbox({text(" SYNC PROGRESS: ") | dim,
-                    gauge(sync_progress) | color(Color::Cyan) | flex,
-                    text(fmt::format(" {:.0f} ", sync_progress * 100)) | dim})
+              hbox({text(" REFRESH IN: ") | dim,
+                    gauge(refresh_in) | color(Color::Blue) | flex,
+                    text(fmt::format(" {:.0f} ", refresh_in * 100)) | dim})
 
         }) |
         borderHeavy;
