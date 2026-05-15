@@ -213,3 +213,7 @@ float UserInterface::get_next_refresh(void) {
 void UserInterface::update_info(void) {
     block_client.update();
 }
+
+const std::deque<ActivityEvent>&  UserInterface::get_activity(void) {
+    return block_client.get_activity();
+}

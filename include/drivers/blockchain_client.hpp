@@ -5,9 +5,18 @@
 #include "drivers/gas_client.hpp"
 #include "drivers/history_client.hpp"
 #include "drivers/price_client.hpp"
+#include <chrono>
 #include <cstddef>
+#include <deque>
 #include <string>
 #include <vector>
+
+
+struct ActivityEvent {
+    std::string icon;
+    std::string msg;
+    std::chrono::system_clock::time_point time;
+};
 
 class BlockchainClient {
 public:
@@ -28,12 +37,14 @@ public:
   bool update_balance_manager(bool force = false);
   bool update_gas_manager(bool force = false);
   float get_next_refresh(void) const;
-
+  void push_activity(const std::string& icon, const std::string& msg);
+  const std::deque<ActivityEvent>& get_activity(void) const;
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;
   GasManager gas_manager;
   std::chrono::steady_clock::time_point last_update_time;
+  std::deque<ActivityEvent> activity_log;
   // uint32_t chain_id;
   networks::NetworkConfig active_network =
       networks::NetworkConfig{" 🌐 Ethereum Mainnet ", "eth-mainnet", 1};

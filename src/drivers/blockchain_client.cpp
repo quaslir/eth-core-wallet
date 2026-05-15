@@ -34,6 +34,8 @@ void BlockchainClient::update(void) {
 void BlockchainClient::change_network(
     const networks::NetworkConfig &new_network) {
   active_network = new_network;
+
+  push_activity("🔗", "Switched to " + new_network.name);
 }
 
 std::string BlockchainClient::form_url(void) const {
@@ -90,11 +92,12 @@ bool BlockchainClient::update_balance_manager(bool force) {
 }
 
 bool BlockchainClient::update_gas_manager(bool force) {
-    if (!get_current_eth_addr)
+    if (!get_current_eth_addr) {
             return false;
-        if (get_current_eth_addr().empty())
+    }
+        if (get_current_eth_addr().empty()) {
             return false;
-
+        }
   if (force)
     gas_manager.force_request();
   else
@@ -113,4 +116,16 @@ float BlockchainClient::get_next_refresh(void) const {
         static_cast<float>(elapsed) / static_cast<float>(FULL_UPDATE_TIMEOUT);
 
     return std::min(progress, 1.0f);
+}
+
+void BlockchainClient::push_activity(const std::string& icon, const std::string& msg) {
+    activity_log.push_front({icon, msg, std::chrono::system_clock::now()});
+
+    if(activity_log.size() > 5) {
+        activity_log.pop_back();
+    }
+}
+
+const std::deque<ActivityEvent>&BlockchainClient:: get_activity(void) const {
+    return activity_log;
 }
