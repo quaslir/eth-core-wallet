@@ -153,8 +153,8 @@ void BalanceManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-          auto new_assets = std::make_shared<assets_data>(worker.get());
-          std::atomic_store(&atomic_assets, new_assets);
+        auto new_assets = std::make_shared<assets_data>(worker.get());
+        std::atomic_store(&atomic_assets, new_assets);
       } catch (...) {
       }
       updating = false;
@@ -162,8 +162,8 @@ void BalanceManager::update(void) {
     }
   }
 }
-std::shared_ptr<assets_data>  BalanceManager::get_balance(void) const {
-    return std::atomic_load(&atomic_assets);
+std::shared_ptr<assets_data> BalanceManager::get_balance(void) const {
+  return std::atomic_load(&atomic_assets);
 }
 
 void BalanceManager::clear_timer(void) {

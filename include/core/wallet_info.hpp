@@ -7,6 +7,6 @@
 #include <string>
 struct WalletInfo {
   secure_string addr{};
-   std::shared_ptr<assets_data> assets{};
+  std::shared_ptr<assets_data> assets{};
   double total = 0.0;
 };

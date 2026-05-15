@@ -51,19 +51,23 @@ HistoryManager::make_request(const std::string &eth_addr) {
   json request_body_1 = transactions_history::form_receives(eth_addr);
   json request_body_2 = transactions_history::form_sends(eth_addr);
 
-  auto make_request_and_parse_buffer = [this](const json &j)-> std::pair<json, bool> {
+  auto make_request_and_parse_buffer =
+      [this](const json &j) -> std::pair<json, bool> {
     try {
       std::string data = j.dump();
       std::string buffer = http::post_request(form_url(), data);
       json res = json::parse(buffer);
       return {res, true};
     } catch (const std::exception &err) {
-      return{ json::object(), false};
+      return {json::object(), false};
     }
   };
 
-  auto future_in = std::async(std::launch::async, make_request_and_parse_buffer, std::cref(request_body_1));
-auto future_out = std::async(std::launch::async, make_request_and_parse_buffer, std::cref(request_body_2));
+  auto future_in = std::async(std::launch::async, make_request_and_parse_buffer,
+                              std::cref(request_body_1));
+  auto future_out =
+      std::async(std::launch::async, make_request_and_parse_buffer,
+                 std::cref(request_body_2));
 
   auto [object_in, status_in] = future_in.get();
   auto [object_out, status_out] = future_out.get();
