@@ -3,6 +3,7 @@
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
 #include <cstddef>
+#include <deque>
 #include <string>
 #include <vector>
 struct TransactionRecord;
@@ -35,8 +36,7 @@ public:
   virtual void copy_private_key(void) = 0;
   virtual void apply_choice_from_wallet_ui(int choice) = 0;
   virtual const bytes_data &get_private_key(void) = 0;
-  virtual std::pair<std::vector<TransactionRecord>, bool>
-  get_transactions_history(void) = 0;
+  virtual std::pair<std::vector<TransactionRecord>, bool> get_transactions_history(void) = 0;
   virtual std::pair<double, bool> get_current_gas_price(void) = 0;
   virtual void update_transactions_data(bool force = false) = 0;
 
@@ -47,4 +47,6 @@ public:
   virtual void wipe_mnemonic(void) = 0;
   virtual float get_next_refresh(void) = 0;
   virtual void update_info(void) = 0;
+
+  virtual const std::deque<ActivityEvent>& get_activity(void) = 0;
 };

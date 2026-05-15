@@ -1,4 +1,5 @@
 #include "fmt/core.h"
+#include <fmt/chrono.h>
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
@@ -73,13 +74,27 @@ Component CLI::print_wallet_ui(void) {
 
         }) |
         borderHeavy;
+    Elements log = {
+        text(" 📑 RECENT ACTIVITY ") | bold | dim,
+        separator(),
+    };
 
-    auto log_activity =
-        vbox({text(" 📑 RECENT ACTIVITY ") | bold | dim, separator(),
-              text(" • Connected to Infura/Alchemy node") | dim,
-              text(" • Block 19283745 synced") | dim,
-              text(" • Mempool monitor active") | dim}) |
-        flex;
+    const auto& activity = actions->get_activity();
+
+    if(activity.empty()) {
+        log.push_back(
+            text(" No recent activity ") |  dim
+        );
+    } else {
+        for(const auto& event : activity) {
+            log.push_back( vbox({
+                text(" " + event.icon + " " + event.msg),
+                filler(),
+                text(fmt::format("{:%H:%M:%S}",fmt::localtime(std::chrono::system_clock::to_time_t(event.time)))) | dim
+            })
+            );
+        }
+    }
 
     auto footer = hbox({text(" [ENTER] EXECUTE ") | bold | hcenter |
                             color(Color::Black) | bgcolor(Color::Cyan),
@@ -100,8 +115,8 @@ Component CLI::print_wallet_ui(void) {
                          vbox({text(" AVAILABLE OPERATIONS ") | bold |
                                    color(Color::CyanLight),
                                separator(), menu_renderer->Render()}) |
-                             borderHeavy | size(WIDTH, EQUAL, 30),
-                         log_activity | borderHeavy | flex}) |
+                             borderHeavy | size(WIDTH, EQUAL, 35),
+                         vbox(log) | borderHeavy | size(WIDTH, EQUAL, 50)}) |
                          flex}) |
                    flex}) |
              flex,
@@ -109,8 +124,8 @@ Component CLI::print_wallet_ui(void) {
 
         });
 
-    return to_center(dashboard | size(WIDTH, EQUAL, 100) |
-                     size(HEIGHT, EQUAL, 28) | center);
+    return to_center(dashboard | size(WIDTH, EQUAL, 120) |
+                     size(HEIGHT, EQUAL, 34) | center);
   });
 
   return CatchEvent(walletUI, [=, this](Event event) {

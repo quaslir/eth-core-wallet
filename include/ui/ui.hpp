@@ -54,4 +54,5 @@ private:
   float get_next_refresh(void) override;
   void update_gas_price(bool force = false) override;
   void update_info(void) override;
+  const std::deque<ActivityEvent>& get_activity(void) override;
 };
