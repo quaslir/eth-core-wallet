@@ -77,9 +77,9 @@ void UserInterface::create_wallet(void) {
 }
 
 WalletInfo UserInterface::get_wallet(void) {
-  assets_data assets = block_client.get_balance();
+  auto assets = block_client.get_balance();
   return WalletInfo(wallet.get_eth_address(), assets,
-                    tech_utils::calculate_total(assets));
+                    tech_utils::calculate_total(*assets));
 }
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {
@@ -210,10 +210,8 @@ void UserInterface::wipe_mnemonic(void) {
 float UserInterface::get_next_refresh(void) {
   return block_client.get_next_refresh();
 }
-void UserInterface::update_info(void) {
-    block_client.update();
-}
+void UserInterface::update_info(void) { block_client.update(); }
 
-const std::deque<ActivityEvent>&  UserInterface::get_activity(void) {
-    return block_client.get_activity();
+const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
+  return block_client.get_activity();
 }

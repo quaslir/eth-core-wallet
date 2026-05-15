@@ -8,14 +8,14 @@
 #include <chrono>
 #include <cstddef>
 #include <deque>
+#include <memory>
 #include <string>
 #include <vector>
 
-
 struct ActivityEvent {
-    std::string icon;
-    std::string msg;
-    std::chrono::system_clock::time_point time;
+  std::string icon;
+  std::string msg;
+  std::chrono::system_clock::time_point time;
 };
 
 class BlockchainClient {
@@ -28,7 +28,7 @@ public:
   std::string form_url(void) const;
 
   void update(void);
-  assets_data get_balance(void) const;
+  std::shared_ptr<assets_data> get_balance(void) const;
   std::pair<std::vector<TransactionRecord>, bool>
   get_transaction_history(void) const;
   std::pair<double, bool> get_current_gas(void) const;
@@ -37,8 +37,9 @@ public:
   bool update_balance_manager(bool force = false);
   bool update_gas_manager(bool force = false);
   float get_next_refresh(void) const;
-  void push_activity(const std::string& icon, const std::string& msg);
-  const std::deque<ActivityEvent>& get_activity(void) const;
+  void push_activity(const std::string &icon, const std::string &msg);
+  const std::deque<ActivityEvent> &get_activity(void) const;
+
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;
