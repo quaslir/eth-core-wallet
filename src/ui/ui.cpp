@@ -210,10 +210,8 @@ void UserInterface::wipe_mnemonic(void) {
 float UserInterface::get_next_refresh(void) {
   return block_client.get_next_refresh();
 }
-void UserInterface::update_info(void) {
-    block_client.update();
-}
+void UserInterface::update_info(void) { block_client.update(); }
 
-const std::deque<ActivityEvent>&  UserInterface::get_activity(void) {
-    return block_client.get_activity();
+const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
+  return block_client.get_activity();
 }

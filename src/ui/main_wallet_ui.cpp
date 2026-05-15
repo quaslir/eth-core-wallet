@@ -1,8 +1,8 @@
 #include "fmt/core.h"
-#include <fmt/chrono.h>
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
+#include <fmt/chrono.h>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -79,21 +79,20 @@ Component CLI::print_wallet_ui(void) {
         separator(),
     };
 
-    const auto& activity = actions->get_activity();
+    const auto &activity = actions->get_activity();
 
-    if(activity.empty()) {
-        log.push_back(
-            text(" No recent activity ") |  dim
-        );
+    if (activity.empty()) {
+      log.push_back(text(" No recent activity ") | dim);
     } else {
-        for(const auto& event : activity) {
-            log.push_back( vbox({
-                text(" " + event.icon + " " + event.msg),
-                filler(),
-                text(fmt::format("{:%H:%M:%S}",fmt::localtime(std::chrono::system_clock::to_time_t(event.time)))) | dim
-            })
-            );
-        }
+      for (const auto &event : activity) {
+        log.push_back(
+            vbox({text(" " + event.icon + " " + event.msg), filler(),
+                  text(fmt::format(
+                      "{:%H:%M:%S}",
+                      fmt::localtime(
+                          std::chrono::system_clock::to_time_t(event.time)))) |
+                      dim}));
+      }
     }
 
     auto footer = hbox({text(" [ENTER] EXECUTE ") | bold | hcenter |
