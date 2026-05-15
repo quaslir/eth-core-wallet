@@ -9,7 +9,6 @@
 #include "utils/utils.hpp"
 #include "core/bip39.hpp"
 
-// CHANGE
 TEST_CASE("Derivation from seed tests", "[derivaion]") {
     auto test_cases = core_test_utils::get_vector_tests();
     static const std::vector<uint32_t> PATH_DERIVE =

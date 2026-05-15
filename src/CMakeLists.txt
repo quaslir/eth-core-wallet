@@ -28,6 +28,7 @@ utils/tech_utils.cpp
 set(API_SOURCES
 api/json.cpp
 api/http.cpp
+api/rlp.cpp
 )
 
 set(DRIVERS_SOURCES

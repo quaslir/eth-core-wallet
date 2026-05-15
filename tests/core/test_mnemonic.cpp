@@ -24,8 +24,6 @@ TEST_CASE("Mnemonic generation basic flow", "[mnemonic][crypto]") {
     }
 }
 
-
-
 TEST_CASE("Seed phrase generation test", "[mnemonic][entropy]") {
 auto test_data = core_test_utils::get_vector_tests();
 
@@ -42,8 +40,6 @@ for(auto& entry : test_data) {
     }
 }
 }
-
-
 
 TEST_CASE("Mnemonic massive stress test", "[mnemonic][security][stress]") {
     MnemonicGenerator mnem_gen;
