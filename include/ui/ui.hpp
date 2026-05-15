@@ -51,6 +51,7 @@ private:
   void change_network(size_t index) override;
   void wipe_mnemonic(void) override;
   std::pair<double, bool> get_current_gas_price(void) override;
-
+  float get_next_refresh(void) override;
   void update_gas_price(bool force = false) override;
+  void update_info(void) override;
 };

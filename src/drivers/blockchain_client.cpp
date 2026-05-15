@@ -1,8 +1,11 @@
 #include "drivers/blockchain_client.hpp"
+#include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "drivers/balance_client.hpp"
+#include <chrono>
 #include <string>
-BlockchainClient::BlockchainClient(void) {
+#include <iostream>
+BlockchainClient::BlockchainClient(void) : last_update_time(std::chrono::steady_clock::now() - std::chrono::milliseconds(FULL_UPDATE_TIMEOUT)){
   auto form_url_callback = [this](void) -> std::string { return form_url(); };
 
   history_manager.form_url = form_url_callback;
@@ -11,14 +14,21 @@ BlockchainClient::BlockchainClient(void) {
 }
 
 void BlockchainClient::update(void) {
-  if (history_manager.get_status())
-    history_manager.update();
-  else
-    history_manager.request(get_current_eth_addr());
-  if (balance_manager.get_status())
     balance_manager.update();
-  else
-    balance_manager.request(get_current_eth_addr());
+    history_manager.update();
+    gas_manager.update();
+
+    auto now = std::chrono::steady_clock::now();
+    if((now - last_update_time >= std::chrono::milliseconds(FULL_UPDATE_TIMEOUT))) {
+ bool upd_balance =  update_balance_manager(true);
+ bool upd_history =  update_history_manager(true);
+  bool upd_gas = update_gas_manager(true);
+  if(upd_balance && upd_history && upd_gas) {
+
+  last_update_time = std::chrono::steady_clock::now();
+
+  }
+    }
 }
 
 void BlockchainClient::change_network(
@@ -49,39 +59,58 @@ std::pair<double, bool> BlockchainClient::get_current_gas(void) const {
   return {gas_manager.get_current_gas(), gas_manager.get_error()};
 }
 
-void BlockchainClient::update_history_manager(bool force) {
+bool BlockchainClient::update_history_manager(bool force) {
   if (!get_current_eth_addr)
-    return;
+    return false;
   secure_string eth_addr = get_current_eth_addr();
   if (eth_addr.empty())
-    return;
+    return false;
   if (force)
-    history_manager.request(eth_addr);
+       history_manager.force_request(eth_addr);
+
   else
-    history_manager.force_request(eth_addr);
-  history_manager.update();
+          history_manager.request(eth_addr);
+
+  return true;
 }
 
-void BlockchainClient::update_balance_manager(bool force) {
+bool BlockchainClient::update_balance_manager(bool force) {
   if (!get_current_eth_addr)
-    return;
+    return false;
   secure_string eth_addr = get_current_eth_addr();
   if (eth_addr.empty())
-    return;
+    return false;
 
   if (force)
     balance_manager.force_request(eth_addr);
   else
     balance_manager.request(eth_addr);
 
-  balance_manager.update();
+  return true;
 }
 
-void BlockchainClient::update_gas_manager(bool force) {
+bool BlockchainClient::update_gas_manager(bool force) {
+    if (!get_current_eth_addr)
+            return false;
+        if (get_current_eth_addr().empty())
+            return false;
+
   if (force)
     gas_manager.force_request();
   else
     gas_manager.request();
 
-  gas_manager.update();
+  return true;
+}
+
+float BlockchainClient::get_next_refresh(void) const {
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                       now - last_update_time)
+                       .count();
+    float progress =
+        static_cast<float>(elapsed) / static_cast<float>(FULL_UPDATE_TIMEOUT);
+
+    return std::min(progress, 1.0f);
 }

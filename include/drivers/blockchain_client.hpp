@@ -24,14 +24,16 @@ public:
   get_transaction_history(void) const;
   std::pair<double, bool> get_current_gas(void) const;
 
-  void update_history_manager(bool force = false);
-  void update_balance_manager(bool force = false);
-  void update_gas_manager(bool force = false);
+  bool update_history_manager(bool force = false);
+  bool update_balance_manager(bool force = false);
+  bool update_gas_manager(bool force = false);
+  float get_next_refresh(void) const;
 
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;
   GasManager gas_manager;
+  std::chrono::steady_clock::time_point last_update_time;
   // uint32_t chain_id;
   networks::NetworkConfig active_network =
       networks::NetworkConfig{" 🌐 Ethereum Mainnet ", "eth-mainnet", 1};
