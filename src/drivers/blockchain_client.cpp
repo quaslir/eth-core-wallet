@@ -47,7 +47,7 @@ std::string BlockchainClient::get_active_network_name(void) const {
   return active_network.name;
 }
 
-assets_data BlockchainClient::get_balance(void) const {
+ std::shared_ptr<assets_data> BlockchainClient::get_balance(void) const {
 
   return balance_manager.get_balance();
 }

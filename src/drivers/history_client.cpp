@@ -1,6 +1,9 @@
 #include "drivers/history_client.hpp"
 #include "api/http.hpp"
+#include "api/json.hpp"
 #include "core/secure_bytes_data.hpp"
+#include <functional>
+#include <future>
 
 std::vector<TransactionRecord>
 HistoryManager::parse_transactions(const json &j, bool incoming) const {
@@ -48,21 +51,22 @@ HistoryManager::make_request(const std::string &eth_addr) {
   json request_body_1 = transactions_history::form_receives(eth_addr);
   json request_body_2 = transactions_history::form_sends(eth_addr);
 
-  auto make_request_and_parse_buffer = [this](const json &j) {
+  auto make_request_and_parse_buffer = [this](const json &j)-> std::pair<json, bool> {
     try {
       std::string data = j.dump();
       std::string buffer = http::post_request(form_url(), data);
       json res = json::parse(buffer);
-      error = false;
-      return res;
+      return {res, true};
     } catch (const std::exception &err) {
-      error = true;
-      return json::object();
+      return{ json::object(), false};
     }
   };
 
-  json object_in = make_request_and_parse_buffer(request_body_1);
-  json object_out = make_request_and_parse_buffer(request_body_2);
+  auto future_in = std::async(std::launch::async, make_request_and_parse_buffer, std::cref(request_body_1));
+auto future_out = std::async(std::launch::async, make_request_and_parse_buffer, std::cref(request_body_2));
+
+  auto [object_in, status_in] = future_in.get();
+  auto [object_out, status_out] = future_out.get();
 
   auto history_in = parse_transactions(object_in);
   auto history_out = parse_transactions(object_out, false);

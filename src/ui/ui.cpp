@@ -77,9 +77,9 @@ void UserInterface::create_wallet(void) {
 }
 
 WalletInfo UserInterface::get_wallet(void) {
-  assets_data assets = block_client.get_balance();
+  auto assets = block_client.get_balance();
   return WalletInfo(wallet.get_eth_address(), assets,
-                    tech_utils::calculate_total(assets));
+                    tech_utils::calculate_total(*assets));
 }
 void UserInterface::on_main_menu(int choice) {
   switch (choice) {

@@ -22,7 +22,7 @@ Component CLI::print_wallet_ui(void) {
   auto walletUI = Renderer(menu_renderer, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
     Elements asset_rows;
-    for (auto const &[id, asset] : wallet_info.assets) {
+    for (auto const &[id, asset] : *wallet_info.assets) {
       asset_rows.push_back(hbox(
           {text(" " + asset.symbol + ": ") | bold | size(WIDTH, EQUAL, 8),
            text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),

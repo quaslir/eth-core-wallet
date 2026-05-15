@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstddef>
 #include <deque>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -28,7 +29,7 @@ public:
   std::string form_url(void) const;
 
   void update(void);
-  assets_data get_balance(void) const;
+  std::shared_ptr<assets_data> get_balance(void) const;
   std::pair<std::vector<TransactionRecord>, bool>
   get_transaction_history(void) const;
   std::pair<double, bool> get_current_gas(void) const;

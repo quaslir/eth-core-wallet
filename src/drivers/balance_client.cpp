@@ -7,6 +7,7 @@
 #include "core/uint256.hpp"
 #include "drivers/price_client.hpp"
 #include "utils/tech_utils.hpp"
+#include <atomic>
 #include <chrono>
 #include <exception>
 #include <future>
@@ -152,8 +153,8 @@ void BalanceManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        assets = worker.get();
-
+          auto new_assets = std::make_shared<assets_data>(worker.get());
+          std::atomic_store(&atomic_assets, new_assets);
       } catch (...) {
       }
       updating = false;
@@ -161,7 +162,9 @@ void BalanceManager::update(void) {
     }
   }
 }
-assets_data BalanceManager::get_balance(void) const { return this->assets; }
+std::shared_ptr<assets_data>  BalanceManager::get_balance(void) const {
+    return std::atomic_load(&atomic_assets);
+}
 
 void BalanceManager::clear_timer(void) {
   last_update_time = std::chrono::steady_clock::now() -
