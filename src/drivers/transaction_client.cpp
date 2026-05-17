@@ -14,6 +14,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <iostream>
 
 std::future<std::string> TransactionManager::send(RawTx &tx) {
   return std::async(std::launch::async, [this, tx]() -> std::string {
@@ -111,11 +112,12 @@ bytes_data TransactionManager::make_transfer_token_data(const bytes_data& to, co
     return data;
 }
 
-std::optional<uint64_t> TransactionManager::estimate_gas(const RawTx& raw_tx) const {
+std::optional<uint64_t> TransactionManager::estimate_gas(const RawTx& raw_tx, const secure_string& from) const {
     try {
         json params;
         params["to"] = "0x" + tech_utils::to_hex(raw_tx.to);
-        params["data"] = raw_tx.data;
+        params["data"] = "0x" + tech_utils::to_hex(raw_tx.data);
+        params["from"] = from;
 
         bytes_data val_bytes = raw_tx.value.to_bytes();
 

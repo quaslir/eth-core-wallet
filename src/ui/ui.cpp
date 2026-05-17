@@ -32,8 +32,7 @@ void UserInterface::load(void) {
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
   switch (choice) {
   case 1:
-    block_client.send_raw_transaction(
-        "0x000000000000000000000000000000000000dEaD", wallet.get_private_key(), crypto_assets::get_default_assets().begin()->second, "0.02");
+    cli.set_active_tab(SEND_FUNDS);
     break;
   case 2:
     update_transactions_data();
@@ -215,4 +214,8 @@ void UserInterface::update_info(void) { block_client.update(); }
 
 const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
   return block_client.get_activity();
+}
+
+bool UserInterface::send_transaction(const std::string& to, const Asset& asset, const std::string& amount) {
+    return block_client.send_raw_transaction(secure_string{to}, wallet.get_private_key(),asset, amount);
 }

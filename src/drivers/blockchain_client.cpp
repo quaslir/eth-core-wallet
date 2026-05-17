@@ -147,6 +147,7 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
   if (!nonce) {
     return false;
   }
+
   Uint256 val = Uint256::from_decimal_string(value, asset.decimals);
   raw_tx.private_key = private_key;
   raw_tx.nonce = *nonce;
@@ -154,7 +155,7 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
 
   double gas = gas_manager.get_current_gas();
   uint64_t gas_in_wei = static_cast<uint64_t>(gas * 1e9);
-      raw_tx.gas_price = gas_in_wei;
+      raw_tx.gas_price = 5000000000ULL;
   if (asset.is_native) {
     raw_tx.value = val;
     raw_tx.to = tech_utils::from_hex_to_bytes(std::string{to_addr});
@@ -164,9 +165,11 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
       raw_tx.data = transaction_manager.make_transfer_token_data( tech_utils::from_hex_to_bytes(std::string{to_addr}),val);
   }
 
-  auto estimated_gas = transaction_manager.estimate_gas(raw_tx);
+  auto estimated_gas = transaction_manager.estimate_gas(raw_tx, get_current_eth_addr());
   if(!estimated_gas) return false;
-  raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 1.2);
-  transaction_manager.send(raw_tx);
+
+  raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 30);
+
+  auto rs = transaction_manager.send(raw_tx);
   return true;
 }

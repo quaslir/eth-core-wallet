@@ -1,12 +1,18 @@
+#include "core/asset.hpp"
+#include "core/wallet_info.hpp"
 #include "fmt/core.h"
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
+#include <cstdint>
 #include <fmt/chrono.h>
 #include <ftxui/component/component.hpp>
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
+#include <string>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries = {
@@ -364,4 +370,197 @@ Component CLI::change_network_render(void) {
 
     return false;
   });
+}
+
+Component CLI::make_transaction_render(void) {
+    auto to_addr = std::make_shared<std::string>();
+    auto amount_str = std::make_shared<std::string>();
+    auto selected_asset = std::make_shared<int>(0);
+    auto error_msg = std::make_shared<std::string>();
+    auto success_msg = std::make_shared<std::string>();
+
+    InputOption input_opt;
+    input_opt.multiline = false;
+
+    auto addr_input = Input(to_addr.get(), "0x...", input_opt);
+    auto amount_input = Input(amount_str.get(), "0.00", input_opt);
+
+    auto asset_names = std::make_shared<std::vector<std::string>>();
+
+
+    auto asset_toggle = Toggle(asset_names.get(), selected_asset.get());
+
+    auto container = Container::Vertical({
+        asset_toggle,
+        addr_input,
+        amount_input
+    });
+
+    auto component = Renderer(container, [=, this]() mutable ->Element {
+        asset_names->clear();
+
+        WalletInfo info = actions->get_wallet();
+
+        for(const auto& [id, asset] : *info.assets) {
+            asset_names->push_back(" " + asset.symbol + " ");
+        }
+        int idx = 0;
+        Asset current_asset;
+
+        for(const auto&[id, asset] : *info.assets) {
+            if(idx == *selected_asset) {
+                current_asset = asset;
+                break;
+            }
+            idx++;
+        }
+
+        double gas_price = actions->get_current_gas_price().first;
+        uint64_t gas_limit = current_asset.is_native ? 21000 : 65000;
+        double fee_eth = (gas_limit * gas_price * 1e9) / 1e18;
+
+
+        std::string preview_addr = to_addr->empty() ? "--" : (to_addr->size()  >= 10) ? to_addr->substr(0, 6) + "..." +
+            to_addr->substr(to_addr->size() - 4) : *to_addr;
+
+        bool addr_valid = to_addr->size() == 42 && to_addr->substr(0, 2) == "0x";
+        bool amount_valid = !amount_str->empty();
+
+
+
+        auto box = vbox({
+            text(" 💸 SEND FUNDS ") | bold | color(Color::Cyan) | hcenter,
+            separatorDouble() | color(Color::Cyan),
+
+
+            hbox({
+                text(" ASSET:  ") | dim,
+                asset_toggle->Render() | color(Color::CyanLight)
+            }),
+
+            hbox({
+                text(" BALANCE: ") | dim,
+                filler(),
+                text(fmt::format("{:.5f} {}", current_asset.balance, current_asset.symbol)) | color(Color::Green),
+            }),
+
+            separator(),
+
+            hbox({
+                text(" TO:     ") | dim,
+                addr_input->Render() | flex | (addr_valid ? color(Color::White) : color(Color::RedLight))
+            }),
+
+            hbox({
+                text(" AMOUNT: ") | dim,
+                amount_input->Render() | flex,
+                text(" " + current_asset.symbol + " ") | dim
+            }),
+
+            separator(),
+
+            text(" PREVIEW ") | bold | color(Color::Yellow) | hcenter,
+            hbox({
+                text(" To:     ") | dim,
+                filler(),
+                text(preview_addr) | color(Color::Cyan)
+            }),
+
+            hbox({
+                text(" Amount: ") | dim,
+                filler(),
+                text(amount_str->empty() ? "--" : *amount_str + " " + current_asset.symbol) | color(Color::White)
+            }),
+
+            hbox({
+                text(" Gas:    ") | dim,
+                filler(),
+                text(fmt::format("{} · {:.2f} gwei", gas_limit, gas_price)) | color(Color::Yellow)
+            }),
+
+            hbox({
+                text(" Fee:    ") | dim,
+                filler(),
+                text(fmt::format("~{:.6f} ETH", fee_eth)) | color(Color::GrayLight)
+            }),
+
+
+            separator(),
+
+            error_msg->empty() ? text("") :
+            text(" ✗ " + *error_msg) | color(Color::Red1) | hcenter,
+
+            success_msg->empty() ? text("") :
+            text(" ✓ " + *success_msg) | color(Color::GrayLight) | hcenter | blink,
+
+            separator(),
+            text(" [ENTER] Send | [B] Back | [TAB] Switch field ") | dim | hcenter
+        });
+
+        return to_center(
+        box | borderHeavy | color(addr_valid && amount_valid ? Color::CyanLight : Color::GrayDark) |
+        size(WIDTH, EQUAL, 55) | size(HEIGHT, EQUAL, 22)
+        );
+    });
+
+return CatchEvent(component, [=, this](Event event) {
+
+
+    if(event == Event::ArrowLeft || event == Event::ArrowRight) {
+        error_msg->clear();
+        success_msg->clear();
+        amount_str->clear();
+        return false;
+    }
+
+    if(event == Event::Character('b') || event == Event::Character('B') || event == Event::Escape) {
+    set_active_tab(WALLET_UI);
+    return true;
+}
+
+if(event == Event::Return) {
+    bool addr_valid = to_addr->size() == 42 && to_addr->substr(0, 2) == "0x";
+    bool amount_valid = !amount_str->empty();
+
+    if(!addr_valid) {
+        *error_msg = "Invalid address";
+        return true;
+    }
+
+    if(!amount_valid) {
+        *error_msg = "Invalid amount";
+        return true;
+    }
+
+    int idx = 0;
+    Asset current_asset;
+    WalletInfo info = actions->get_wallet();
+
+    for(const auto&[id, asset] : *info.assets) {
+            if(idx == *selected_asset) {
+                current_asset = asset;
+                break;
+            }
+
+            idx++;
+    }
+
+    error_msg->clear();
+
+    bool ok = actions->send_transaction(*to_addr, current_asset, *amount_str);
+
+    if(ok) {
+        *success_msg = "Transaction sent!";
+        to_addr->clear();
+        amount_str->clear();;
+    } else {
+        *error_msg = "Failed to send transaction";
+    }
+
+    return true;
+}
+
+return false;
+});
+
 }

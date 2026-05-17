@@ -27,7 +27,8 @@ enum state_t {
   DERIVE_PATH_CONFIG = 13,
   DISPLAY_PRIVATE_KEY = 14,
   TRANSACTION_HISTORY = 15,
-  CHANGE_NETWORK = 16
+  CHANGE_NETWORK = 16,
+  SEND_FUNDS = 17
 };
 
 class CLI {
@@ -54,6 +55,7 @@ private:
   Component display_private_key(void);
   Component transaction_history_render(void);
   Component change_network_render(void);
+  Component make_transaction_render(void);
 
   ButtonOption create_button(const std::string &label, Color c) const;
 
