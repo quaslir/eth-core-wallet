@@ -39,7 +39,8 @@ bytes_data to_hex_bytes(const bytes_data &data) {
 }
 
 bytes_data from_hex_to_bytes(std::string hex) {
-if(hex.starts_with("0x") || hex.starts_with("0X")) hex = hex.substr(2);
+  if (hex.starts_with("0x") || hex.starts_with("0X"))
+    hex = hex.substr(2);
   if (hex.length() % 2 != 0) {
     throw std::runtime_error("Invalid hex string");
   }

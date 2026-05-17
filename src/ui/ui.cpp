@@ -32,7 +32,8 @@ void UserInterface::load(void) {
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
   switch (choice) {
   case 1:
-  block_client.send_raw_transaction("0x000000000000000000000000000000000000dEaD", wallet.get_private_key(), "10000000000000000");
+    block_client.send_raw_transaction(
+        "0x000000000000000000000000000000000000dEaD", wallet.get_private_key(), crypto_assets::get_default_assets().begin()->second, "0.02");
     break;
   case 2:
     update_transactions_data();
