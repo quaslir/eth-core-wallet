@@ -157,14 +157,16 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
       raw_tx.gas_price = gas_in_wei;
   if (asset.is_native) {
     raw_tx.value = val;
-      raw_tx.gas_limit = 30000;
     raw_tx.to = tech_utils::from_hex_to_bytes(std::string{to_addr});
   } else {
       raw_tx.value = Uint256("0", false);
       raw_tx.to = tech_utils::from_hex_to_bytes(asset.contract_address);
       raw_tx.data = transaction_manager.make_transfer_token_data( tech_utils::from_hex_to_bytes(std::string{to_addr}),val);
-      raw_tx.gas_limit = 100000;
   }
+
+  auto estimated_gas = transaction_manager.estimate_gas(raw_tx);
+  if(!estimated_gas) return false;
+  raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 1.2);
   transaction_manager.send(raw_tx);
   return true;
 }

@@ -110,3 +110,33 @@ bytes_data TransactionManager::make_transfer_token_data(const bytes_data& to, co
 
     return data;
 }
+
+std::optional<uint64_t> TransactionManager::estimate_gas(const RawTx& raw_tx) const {
+    try {
+        json params;
+        params["to"] = "0x" + tech_utils::to_hex(raw_tx.to);
+        params["data"] = raw_tx.data;
+
+        bytes_data val_bytes = raw_tx.value.to_bytes();
+
+        if(!val_bytes.empty()) {
+            params["value"] = "0x" + tech_utils::to_hex(val_bytes);
+        }
+
+        json j;
+        j["jsonrpc"] = "2.0";
+        j["method"] = "eth_estimateGas";
+        j["params"] = json::array({params});
+        j["id"] = 1;
+        std::string data = j.dump();
+        std::string result = http::post_request(form_url(), data);
+        json res = json::parse(result);
+        if(res.contains("error")) return std::nullopt;
+
+        std::string hex = res.at("result").get<std::string>();
+        return std::stoull(hex, nullptr, 16);
+
+    } catch(const std::exception& err) {
+        return std::nullopt;
+    }
+}
