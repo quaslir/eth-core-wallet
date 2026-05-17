@@ -5,6 +5,7 @@
 #include "drivers/gas_client.hpp"
 #include "drivers/history_client.hpp"
 #include "drivers/price_client.hpp"
+#include "drivers/transaction_client.hpp"
 #include <chrono>
 #include <cstddef>
 #include <deque>
@@ -39,14 +40,18 @@ public:
   float get_next_refresh(void) const;
   void push_activity(const std::string &icon, const std::string &msg);
   const std::deque<ActivityEvent> &get_activity(void) const;
+  bool send_raw_transaction(const secure_string& to_addr, const bytes_data& private_key, const std::string& value);
 
 private:
+
+
+
   HistoryManager history_manager;
   BalanceManager balance_manager;
   GasManager gas_manager;
+  TransactionManager transaction_manager;
   std::chrono::steady_clock::time_point last_update_time;
   std::deque<ActivityEvent> activity_log;
-  // uint32_t chain_id;
   networks::NetworkConfig active_network =
       networks::NetworkConfig{" 🌐 Ethereum Mainnet ", "eth-mainnet", 1};
 };

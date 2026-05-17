@@ -6,10 +6,12 @@
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 #include <filesystem>
 #include <fmt/core.h>
 #include <openssl/crypto.h>
 #include <string>
+#include <system_error>
 namespace tech_utils {
 
 secure_string to_hex(const bytes_data &data) {
@@ -36,7 +38,8 @@ bytes_data to_hex_bytes(const bytes_data &data) {
   return hex_format;
 }
 
-bytes_data from_hex_to_bytes(const std::string &hex) {
+bytes_data from_hex_to_bytes(std::string hex) {
+if(hex.starts_with("0x") || hex.starts_with("0X")) hex = hex.substr(2);
   if (hex.length() % 2 != 0) {
     throw std::runtime_error("Invalid hex string");
   }
@@ -159,4 +162,5 @@ double calculate_total(const assets_data &assets) {
 
   return total;
 }
+
 } // namespace tech_utils

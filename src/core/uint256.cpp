@@ -1,4 +1,5 @@
 #include "core/uint256.hpp"
+#include "core/secure_bytes_data.hpp"
 #include <cstddef>
 #include <openssl/bn.h>
 
@@ -133,3 +134,11 @@ std::string Uint256::from_wei_to_asset(const std::string &dividor) const {
 
   return whole_ptr_str + "." + frac_ptr_str.substr(0, 4);
 }
+
+  bytes_data Uint256::to_bytes(void) const {
+      if(BN_is_zero(bn.get())) return {};
+      int num_bytes = BN_num_bytes(bn.get());
+      bytes_data result(num_bytes);
+      BN_bn2bin(bn.get(), result.data());
+      return result;
+  }

@@ -1,4 +1,5 @@
 #pragma once
+#include "core/secure_bytes_data.hpp"
 #include <memory>
 #include <openssl/bn.h>
 
@@ -30,4 +31,5 @@ public:
   Uint256 &operator+=(const Uint256 &num);
   Uint256 operator+(const Uint256 &num) const;
   std::string from_wei_to_asset(const std::string &dividor) const;
+  bytes_data to_bytes(void) const;
 };

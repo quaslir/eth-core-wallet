@@ -1,8 +1,11 @@
 #include "drivers/blockchain_client.hpp"
 #include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "core/uint256.hpp"
 #include "drivers/balance_client.hpp"
+#include "utils/tech_utils.hpp"
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <string>
 BlockchainClient::BlockchainClient(void)
@@ -13,6 +16,7 @@ BlockchainClient::BlockchainClient(void)
   history_manager.form_url = form_url_callback;
   balance_manager.form_url = form_url_callback;
   gas_manager.form_url = form_url_callback;
+  transaction_manager.form_url = form_url_callback;
 }
 
 void BlockchainClient::update(void) {
@@ -131,4 +135,27 @@ void BlockchainClient::push_activity(const std::string &icon,
 
 const std::deque<ActivityEvent> &BlockchainClient::get_activity(void) const {
   return activity_log;
+}
+
+
+
+
+bool BlockchainClient::send_raw_transaction(const secure_string& to_addr, const bytes_data& private_key, const std::string& value) {
+    RawTx raw_tx;
+    auto nonce = transaction_manager.get_nonce(get_current_eth_addr(), form_url());
+    if(!nonce) {
+        return false;
+    }
+    raw_tx.private_key = private_key;
+    raw_tx.nonce = *nonce;
+    raw_tx.gas_limit = 21000;
+    raw_tx.value = Uint256(value, false);
+    raw_tx.v = active_network.chain_id;
+
+    double gas = gas_manager.get_current_gas();
+    uint64_t gas_in_wei =static_cast<uint64_t>(gas * 1e9);
+    raw_tx.gas_price = gas_in_wei;
+    raw_tx.to = tech_utils::from_hex_to_bytes(std::string{to_addr});
+   transaction_manager.send(raw_tx);
+   return true;
 }
