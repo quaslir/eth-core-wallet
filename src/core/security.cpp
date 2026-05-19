@@ -49,6 +49,25 @@ bool update(const Wallet &wallet, const std::string &filename) {
   return true;
 }
 
+bool check_password(const secure_string& password, const std::string&filename) {
+    EncryptedKeystore encrp;
+    if (!encrp.load(filename))
+      return false;
+
+    bytes_data hash_key =
+        crypto_utils::PBKDF2_HMAC_SHA512(password, encrp.salt, encrp.iter);
+
+    bytes_data mac_key, encryption_key, mac(32), mac_input;
+    crypto_utils::split_key_64(hash_key, encryption_key, mac_key);
+
+    mac_input.insert(mac_input.end(), mac_key.begin() + 16, mac_key.end());
+    mac_input.insert(mac_input.end(), encrp.ciphertext.begin(),
+                     encrp.ciphertext.end());
+    Keccak256::getHash(mac_input.data(), mac_input.size(), mac.data());
+
+   return CRYPTO_memcmp(mac.data(), encrp.mac.data(), mac.size()) != 0;
+}
+
 bool load_wallet(Wallet &wallet, const secure_string &password,
                  const std::string &filename) {
   EncryptedKeystore encrp;
@@ -67,7 +86,7 @@ bool load_wallet(Wallet &wallet, const secure_string &password,
                    encrp.ciphertext.end());
   Keccak256::getHash(mac_input.data(), mac_input.size(), mac.data());
 
-  auth_failed = mac != encrp.mac;
+  auth_failed = CRYPTO_memcmp(mac.data(), encrp.mac.data(), mac.size()) != 0;
 
   if (auth_failed) {
     return false;

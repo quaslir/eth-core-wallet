@@ -216,6 +216,6 @@ const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
   return block_client.get_activity();
 }
 
-bool UserInterface::send_transaction(const std::string& to, const Asset& asset, const std::string& amount) {
-    return block_client.send_raw_transaction(secure_string{to}, wallet.get_private_key(),asset, amount);
+bool UserInterface::send_transaction(const std::string& to, const Asset& asset, const std::string& amount, double target_gas_gwei) {
+    return block_client.send_raw_transaction(secure_string{to}, wallet.get_private_key(),asset, amount, target_gas_gwei);
 }

@@ -140,7 +140,7 @@ const std::deque<ActivityEvent> &BlockchainClient::get_activity(void) const {
 bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
                                             const bytes_data &private_key,
                                             const Asset &asset,
-                                            const std::string &value) {
+                                            const std::string &value, double target_gas_gwei) {
   RawTx raw_tx;
   auto nonce =
       transaction_manager.get_nonce(get_current_eth_addr(), form_url());
@@ -153,9 +153,9 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
   raw_tx.nonce = *nonce;
   raw_tx.v = active_network.chain_id;
 
-  double gas = gas_manager.get_current_gas();
-  uint64_t gas_in_wei = static_cast<uint64_t>(gas * 1e9);
-      raw_tx.gas_price = 5000000000ULL;
+
+  uint64_t gas_in_wei = static_cast<uint64_t>(target_gas_gwei * 1e9);
+      raw_tx.gas_price = gas_in_wei;
   if (asset.is_native) {
     raw_tx.value = val;
     raw_tx.to = tech_utils::from_hex_to_bytes(std::string{to_addr});
@@ -168,7 +168,7 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
   auto estimated_gas = transaction_manager.estimate_gas(raw_tx, get_current_eth_addr());
   if(!estimated_gas) return false;
 
-  raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 30);
+  raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 1.2);
 
   auto rs = transaction_manager.send(raw_tx);
   return true;

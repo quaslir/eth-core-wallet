@@ -91,8 +91,10 @@ Uint256 Uint256::operator+(const Uint256 &num) const {
 
 
 Uint256 Uint256::operator*(const Uint256& num) const {
+    BN_CTX*ctx =  BN_CTX_new();
     Uint256 result;
-    BN_mul(result.bn.get(), bn.get(), num.bn.get(), BN_CTX_new());
+    BN_mul(result.bn.get(), bn.get(), num.bn.get(), ctx);
+    BN_CTX_free(ctx);
     return result;
 }
 

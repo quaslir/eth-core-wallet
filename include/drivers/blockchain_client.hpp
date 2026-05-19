@@ -43,7 +43,7 @@ public:
   const std::deque<ActivityEvent> &get_activity(void) const;
   bool send_raw_transaction(const secure_string &to_addr,
                             const bytes_data &private_key, const Asset &asset,
-                            const std::string &value);
+                            const std::string &value, double target_gas_gwei);
 
 private:
   HistoryManager history_manager;

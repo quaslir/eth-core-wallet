@@ -378,7 +378,9 @@ Component CLI::make_transaction_render(void) {
     auto selected_asset = std::make_shared<int>(0);
     auto error_msg = std::make_shared<std::string>();
     auto success_msg = std::make_shared<std::string>();
-
+    auto gas_multiplayer = std::make_shared<int>(0);
+    auto final_gas = std::make_shared<double>(0.0);
+    static const std::vector<std::string> gas_options = {" 🐢 SLOW ", " ⚡ NORMAL ", " 🚀 FAST "};
     InputOption input_opt;
     input_opt.multiline = false;
 
@@ -390,10 +392,13 @@ Component CLI::make_transaction_render(void) {
 
     auto asset_toggle = Toggle(asset_names.get(), selected_asset.get());
 
+    auto gas_toggle = Toggle(&gas_options, gas_multiplayer.get());
+
     auto container = Container::Vertical({
         asset_toggle,
         addr_input,
-        amount_input
+        amount_input,
+        gas_toggle
     });
 
     auto component = Renderer(container, [=, this]() mutable ->Element {
@@ -416,10 +421,8 @@ Component CLI::make_transaction_render(void) {
         }
 
         double gas_price = actions->get_current_gas_price().first;
-        uint64_t gas_limit = current_asset.is_native ? 21000 : 65000;
-        double fee_eth = (gas_limit * gas_price * 1e9) / 1e18;
-
-
+        std::array<double, 3> multiplayer = {0.8, 1.0, 1.5};
+        *final_gas = gas_price * multiplayer[*gas_multiplayer];
         std::string preview_addr = to_addr->empty() ? "--" : (to_addr->size()  >= 10) ? to_addr->substr(0, 6) + "..." +
             to_addr->substr(to_addr->size() - 4) : *to_addr;
 
@@ -457,6 +460,14 @@ Component CLI::make_transaction_render(void) {
                 text(" " + current_asset.symbol + " ") | dim
             }),
 
+            hbox({
+                text(" GAS:    ") | dim,
+                gas_toggle->Render() | color(Color::CyanLight),
+                filler(),
+                text(fmt::format("{:.3f} gwei", *final_gas)) | color(Color::YellowLight)
+
+            }),
+
             separator(),
 
             text(" PREVIEW ") | bold | color(Color::Yellow) | hcenter,
@@ -475,14 +486,15 @@ Component CLI::make_transaction_render(void) {
             hbox({
                 text(" Gas:    ") | dim,
                 filler(),
-                text(fmt::format("{} · {:.2f} gwei", gas_limit, gas_price)) | color(Color::Yellow)
+                text(fmt::format("{:.2f} gwei",  *final_gas)) | color(Color::Yellow)
             }),
 
-            hbox({
+            /*hbox({
                 text(" Fee:    ") | dim,
                 filler(),
                 text(fmt::format("~{:.6f} ETH", fee_eth)) | color(Color::GrayLight)
             }),
+            */
 
 
             separator(),
@@ -499,19 +511,11 @@ Component CLI::make_transaction_render(void) {
 
         return to_center(
         box | borderHeavy | color(addr_valid && amount_valid ? Color::CyanLight : Color::GrayDark) |
-        size(WIDTH, EQUAL, 55) | size(HEIGHT, EQUAL, 22)
+        size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 24)
         );
     });
 
 return CatchEvent(component, [=, this](Event event) {
-
-
-    if(event == Event::ArrowLeft || event == Event::ArrowRight) {
-        error_msg->clear();
-        success_msg->clear();
-        amount_str->clear();
-        return false;
-    }
 
     if(event == Event::Character('b') || event == Event::Character('B') || event == Event::Escape) {
     set_active_tab(WALLET_UI);
@@ -547,7 +551,7 @@ if(event == Event::Return) {
 
     error_msg->clear();
 
-    bool ok = actions->send_transaction(*to_addr, current_asset, *amount_str);
+    bool ok = actions->send_transaction(*to_addr, current_asset, *amount_str, *final_gas);
 
     if(ok) {
         *success_msg = "Transaction sent!";

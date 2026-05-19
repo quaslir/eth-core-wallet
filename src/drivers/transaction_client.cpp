@@ -14,7 +14,6 @@
 #include <optional>
 #include <string>
 #include <tuple>
-#include <iostream>
 
 std::future<std::string> TransactionManager::send(RawTx &tx) {
   return std::async(std::launch::async, [this, tx]() -> std::string {
