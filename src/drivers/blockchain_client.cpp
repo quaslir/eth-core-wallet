@@ -17,19 +17,21 @@ BlockchainClient::BlockchainClient(void)
   balance_manager.form_url = form_url_callback;
   gas_manager.form_url = form_url_callback;
   transaction_manager.form_url = form_url_callback;
+  tx_status_manager.form_url = form_url_callback;
 }
 
 void BlockchainClient::update(void) {
   balance_manager.update();
   history_manager.update();
   gas_manager.update();
-
+  tx_status_manager.update();
   auto now = std::chrono::steady_clock::now();
   if ((now - last_update_time >=
        std::chrono::milliseconds(FULL_UPDATE_TIMEOUT))) {
     bool upd_balance = update_balance_manager(true);
     bool upd_history = update_history_manager(true);
     bool upd_gas = update_gas_manager(true);
+    update_current_tx_status();
     if (upd_balance && upd_history && upd_gas) {
 
       last_update_time = std::chrono::steady_clock::now();
@@ -112,6 +114,19 @@ bool BlockchainClient::update_gas_manager(bool force) {
   return true;
 }
 
+std::pair<TxStatus, bool> BlockchainClient::get_current_tx_status(void) const {
+  return tx_status_manager.get_current_tx_status();
+}
+void BlockchainClient::update_current_tx_status(void) {
+  if (!get_current_eth_addr) {
+    return;
+  }
+  if (tx_status_manager.get_status()) {
+    tx_status_manager.update();
+  } else
+    tx_status_manager.request(secure_string{});
+}
+
 float BlockchainClient::get_next_refresh(void) const {
 
   auto now = std::chrono::steady_clock::now();
@@ -140,7 +155,9 @@ const std::deque<ActivityEvent> &BlockchainClient::get_activity(void) const {
 bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
                                             const bytes_data &private_key,
                                             const Asset &asset,
-                                            const std::string &value, double target_gas_gwei) {
+                                            const std::string &value,
+                                            double target_gas_gwei,
+                                            uint64_t gas_limit) {
   RawTx raw_tx;
   auto nonce =
       transaction_manager.get_nonce(get_current_eth_addr(), form_url());
@@ -153,23 +170,28 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
   raw_tx.nonce = *nonce;
   raw_tx.v = active_network.chain_id;
 
-
   uint64_t gas_in_wei = static_cast<uint64_t>(target_gas_gwei * 1e9);
-      raw_tx.gas_price = gas_in_wei;
+  raw_tx.gas_price = gas_in_wei;
   if (asset.is_native) {
     raw_tx.value = val;
     raw_tx.to = tech_utils::from_hex_to_bytes(std::string{to_addr});
   } else {
-      raw_tx.value = Uint256("0", false);
-      raw_tx.to = tech_utils::from_hex_to_bytes(asset.contract_address);
-      raw_tx.data = transaction_manager.make_transfer_token_data( tech_utils::from_hex_to_bytes(std::string{to_addr}),val);
+    raw_tx.value = Uint256("0", false);
+    raw_tx.to = tech_utils::from_hex_to_bytes(asset.contract_address);
+    raw_tx.data = transaction_manager.make_transfer_token_data(
+        tech_utils::from_hex_to_bytes(std::string{to_addr}), val);
   }
+  if (gas_limit == 0) {
+    auto estimated_gas =
+        transaction_manager.estimate_gas(raw_tx, get_current_eth_addr());
+    if (!estimated_gas)
+      return false;
 
-  auto estimated_gas = transaction_manager.estimate_gas(raw_tx, get_current_eth_addr());
-  if(!estimated_gas) return false;
-
-  raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 1.2);
+    raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 1.2);
+  } else
+    raw_tx.gas_limit = gas_limit;
 
   auto rs = transaction_manager.send(raw_tx);
+  tx_status_manager.set_tx_hash(rs.get());
   return true;
 }

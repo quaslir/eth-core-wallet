@@ -23,11 +23,14 @@ struct RawTx {
 class TransactionManager {
 public:
   std::optional<uint64_t> get_nonce(const secure_string &eth_addr,
-                                           const std::string &url);
-  bytes_data make_transfer_token_data(const bytes_data& to, const Uint256& amount) const;
+                                    const std::string &url);
+  bytes_data make_transfer_token_data(const bytes_data &to,
+                                      const Uint256 &amount) const;
   std::future<std::string> send(RawTx &params);
   std::function<std::string(void)> form_url;
- std::optional<uint64_t> estimate_gas(const RawTx& raw_tx, const secure_string& from) const;
+  std::optional<uint64_t> estimate_gas(const RawTx &raw_tx,
+                                       const secure_string &from) const;
+
 private:
   std::tuple<bytes_data, bytes_data, int>
   sign_transaction(const bytes_data &hash, const bytes_data &key);

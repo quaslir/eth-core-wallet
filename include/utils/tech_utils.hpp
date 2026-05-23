@@ -22,5 +22,5 @@ double eth_to_usd(double eth, double price);
 bool contains_only_lowercase(std::string_view string);
 std::string decimals_to_divisor(int decimals);
 double calculate_total(const assets_data &assets);
-
+uint64_t string_to_uint64(const std::string &str);
 } // namespace tech_utils

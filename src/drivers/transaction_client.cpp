@@ -11,10 +11,10 @@
 #include <cstdint>
 #include <exception>
 #include <future>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <tuple>
-
 std::future<std::string> TransactionManager::send(RawTx &tx) {
   return std::async(std::launch::async, [this, tx]() -> std::string {
     bytes_data to_sign = rlp::encode_list(
@@ -81,63 +81,72 @@ TransactionManager::sign_transaction(const bytes_data &hash,
 }
 
 std::string TransactionManager::make_request(const bytes_data &data) const {
-  secure_string hex_data = "0x";
-  hex_data += tech_utils::to_hex(data);
-  json j;
-  j["jsonrpc"] = "2.0";
-  j["method"] = "eth_sendRawTransaction";
-  j["params"] = json::array({hex_data});
-  j["id"] = 1;
+  try {
+    secure_string hex_data = "0x";
+    hex_data += tech_utils::to_hex(data);
+    json j;
+    j["jsonrpc"] = "2.0";
+    j["method"] = "eth_sendRawTransaction";
+    j["params"] = json::array({hex_data});
+    j["id"] = 1;
 
-  std::string result = http::post_request(form_url(), j.dump());
-  json res = json::parse(result);
+    std::string result = http::post_request(form_url(), j.dump());
+    json res = json::parse(result);
 
-  return res.at("result").get<std::string>();
+    return res.at("result").get<std::string>();
+  } catch (const std::exception &err) {
+    return "";
+  }
 }
 
-bytes_data TransactionManager::make_transfer_token_data(const bytes_data& to, const Uint256& amount) const {
-    bytes_data data;
-    bytes_data selector = {0xa9, 0x05, 0x9c, 0xbb};
-    data.insert(data.end(), selector.begin(), selector.end());
+bytes_data
+TransactionManager::make_transfer_token_data(const bytes_data &to,
+                                             const Uint256 &amount) const {
+  bytes_data data;
+  bytes_data selector = {0xa9, 0x05, 0x9c, 0xbb};
+  data.insert(data.end(), selector.begin(), selector.end());
 
-    bytes_data addr_padded(12, 0x00);
-    addr_padded.insert(addr_padded.end(), to.begin(), to.end());
-    data.insert(data.end(), addr_padded.begin(), addr_padded.end());
+  bytes_data addr_padded(12, 0x00);
+  addr_padded.insert(addr_padded.end(), to.begin(), to.end());
+  data.insert(data.end(), addr_padded.begin(), addr_padded.end());
 
-    bytes_data amount_padded = amount.to_bytes32();
+  bytes_data amount_padded = amount.to_bytes32();
 
-    data.insert(data.end(), amount_padded.begin(), amount_padded.end());
+  data.insert(data.end(), amount_padded.begin(), amount_padded.end());
 
-    return data;
+  return data;
 }
 
-std::optional<uint64_t> TransactionManager::estimate_gas(const RawTx& raw_tx, const secure_string& from) const {
-    try {
-        json params;
-        params["to"] = "0x" + tech_utils::to_hex(raw_tx.to);
-        params["data"] = "0x" + tech_utils::to_hex(raw_tx.data);
-        params["from"] = from;
+std::optional<uint64_t>
+TransactionManager::estimate_gas(const RawTx &raw_tx,
+                                 const secure_string &from) const {
+  try {
+    json params;
+    params["to"] = "0x" + tech_utils::to_hex(raw_tx.to);
+    params["data"] = "0x" + tech_utils::to_hex(raw_tx.data);
+    params["from"] = from;
 
-        bytes_data val_bytes = raw_tx.value.to_bytes();
+    bytes_data val_bytes = raw_tx.value.to_bytes();
 
-        if(!val_bytes.empty()) {
-            params["value"] = "0x" + tech_utils::to_hex(val_bytes);
-        }
-
-        json j;
-        j["jsonrpc"] = "2.0";
-        j["method"] = "eth_estimateGas";
-        j["params"] = json::array({params});
-        j["id"] = 1;
-        std::string data = j.dump();
-        std::string result = http::post_request(form_url(), data);
-        json res = json::parse(result);
-        if(res.contains("error")) return std::nullopt;
-
-        std::string hex = res.at("result").get<std::string>();
-        return std::stoull(hex, nullptr, 16);
-
-    } catch(const std::exception& err) {
-        return std::nullopt;
+    if (!val_bytes.empty()) {
+      params["value"] = "0x" + tech_utils::to_hex(val_bytes);
     }
+
+    json j;
+    j["jsonrpc"] = "2.0";
+    j["method"] = "eth_estimateGas";
+    j["params"] = json::array({params});
+    j["id"] = 1;
+    std::string data = j.dump();
+    std::string result = http::post_request(form_url(), data);
+    json res = json::parse(result);
+    if (res.contains("error"))
+      return std::nullopt;
+
+    std::string hex = res.at("result").get<std::string>();
+    return std::stoull(hex, nullptr, 16);
+
+  } catch (const std::exception &err) {
+    return std::nullopt;
+  }
 }

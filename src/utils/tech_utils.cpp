@@ -164,4 +164,16 @@ double calculate_total(const assets_data &assets) {
   return total;
 }
 
+uint64_t string_to_uint64(const std::string &str) {
+  uint64_t value = 0;
+
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
+
+  if (ec == std::errc() && ptr == str.data() + str.size()) {
+    return value;
+  }
+
+  return 0;
+}
+
 } // namespace tech_utils

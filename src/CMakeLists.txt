@@ -39,6 +39,7 @@ drivers/price_client.cpp
 drivers/gas_client.cpp
 drivers/manager.cpp
 drivers/transaction_client.cpp
+drivers/tx_status_client.cpp
 )
 
 set(CONFIG_SOURCES

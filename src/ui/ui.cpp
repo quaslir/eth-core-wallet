@@ -10,6 +10,7 @@
 #include "iwallet_actions.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <openssl/crypto.h>
 #include <string>
@@ -216,6 +217,17 @@ const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
   return block_client.get_activity();
 }
 
-bool UserInterface::send_transaction(const std::string& to, const Asset& asset, const std::string& amount, double target_gas_gwei) {
-    return block_client.send_raw_transaction(secure_string{to}, wallet.get_private_key(),asset, amount, target_gas_gwei);
+bool UserInterface::send_transaction(const std::string &to, const Asset &asset,
+                                     const std::string &amount,
+                                     double target_gas_gwei,
+                                     const std::string &gas_limit_input) {
+  uint64_t gas_limit = tech_utils::string_to_uint64(gas_limit_input);
+
+  return block_client.send_raw_transaction(secure_string{to},
+                                           wallet.get_private_key(), asset,
+                                           amount, target_gas_gwei, gas_limit);
+}
+
+std::pair<TxStatus, bool> UserInterface::get_current_tx_status(void) {
+  return block_client.get_current_tx_status();
 }

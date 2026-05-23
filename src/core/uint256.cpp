@@ -89,13 +89,12 @@ Uint256 Uint256::operator+(const Uint256 &num) const {
   return res;
 }
 
-
-Uint256 Uint256::operator*(const Uint256& num) const {
-    BN_CTX*ctx =  BN_CTX_new();
-    Uint256 result;
-    BN_mul(result.bn.get(), bn.get(), num.bn.get(), ctx);
-    BN_CTX_free(ctx);
-    return result;
+Uint256 Uint256::operator*(const Uint256 &num) const {
+  BN_CTX *ctx = BN_CTX_new();
+  Uint256 result;
+  BN_mul(result.bn.get(), bn.get(), num.bn.get(), ctx);
+  BN_CTX_free(ctx);
+  return result;
 }
 
 std::string Uint256::from_wei_to_asset(const std::string &dividor) const {
@@ -156,32 +155,32 @@ bytes_data Uint256::to_bytes(void) const {
 }
 
 bytes_data Uint256::to_bytes32(void) const {
-    bytes_data result(32, 0x00);
-    int num_bytes = BN_num_bytes(bn.get());
+  bytes_data result(32, 0x00);
+  int num_bytes = BN_num_bytes(bn.get());
 
-    BN_bn2bin(bn.get(), result.data() + (32 - num_bytes));
-    return result;
+  BN_bn2bin(bn.get(), result.data() + (32 - num_bytes));
+  return result;
 }
-Uint256 Uint256::from_decimal_string(const std::string& str, uint8_t decimals) {
-    std::string int_part, frac_part;
-    size_t dot = str.find(".");
-    if(dot == std::string::npos) {
-        int_part = str;
-        frac_part = "";
-    }
+Uint256 Uint256::from_decimal_string(const std::string &str, uint8_t decimals) {
+  std::string int_part, frac_part;
+  size_t dot = str.find(".");
+  if (dot == std::string::npos) {
+    int_part = str;
+    frac_part = "";
+  }
 
-    else {
-        int_part = str.substr(0, dot);
-        frac_part = str.substr(dot + 1);
-    }
+  else {
+    int_part = str.substr(0, dot);
+    frac_part = str.substr(dot + 1);
+  }
 
-    if(frac_part.size() > decimals) {
-        frac_part = frac_part.substr(0, decimals);
-    }
-    while(frac_part.size() < decimals) {
-        frac_part += "0";
-    }
+  if (frac_part.size() > decimals) {
+    frac_part = frac_part.substr(0, decimals);
+  }
+  while (frac_part.size() < decimals) {
+    frac_part += "0";
+  }
 
-    std::string combined = int_part + frac_part;
-    return Uint256(combined, false);
+  std::string combined = int_part + frac_part;
+  return Uint256(combined, false);
 }

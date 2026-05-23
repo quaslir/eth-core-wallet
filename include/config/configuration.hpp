@@ -15,6 +15,7 @@ static constexpr auto BALANCE_TIMEOUT = 10000;
 static constexpr auto TRANSACTION_TIMEOUT = 10000;
 static constexpr auto GWEI_TIMEOUT = 10000;
 static constexpr auto FULL_UPDATE_TIMEOUT = 10000;
+static constexpr auto TX_STATUS_UPDATE_TIMEOUT = 1000;
 
 // WEI
 static constexpr auto WEI_TO_ETH = "1000000000000000000";

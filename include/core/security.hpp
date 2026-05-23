@@ -10,5 +10,6 @@ bool first_time_save(const Wallet &wallet, const secure_string &password,
 bool update(const Wallet &wallet, const std::string &filename = "session.json");
 bool load_wallet(Wallet &wallet, const secure_string &password,
                  const std::string &filename = "session.json");
-bool check_password(const secure_string& password, const std::string&filename = "session.json");
+bool check_password(const secure_string &password,
+                    const std::string &filename = "session.json");
 } // namespace security_manager

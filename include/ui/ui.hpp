@@ -55,5 +55,8 @@ private:
   void update_gas_price(bool force = false) override;
   void update_info(void) override;
   const std::deque<ActivityEvent> &get_activity(void) override;
-  bool send_transaction(const std::string& to, const Asset& asset, const std::string& amount,double target_gas_gwei) override;
+  bool send_transaction(const std::string &to, const Asset &asset,
+                        const std::string &amount, double target_gas_gwei,
+                        const std::string &gas_limit_input) override;
+  std::pair<TxStatus, bool> get_current_tx_status(void) override;
 };
