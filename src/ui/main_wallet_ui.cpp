@@ -333,8 +333,6 @@ Component CLI::change_network_render(void) {
   auto selected = std::make_shared<int>(0);
   menu_opts.on_enter = [=, this] {
     actions->change_network(*selected);
-    actions->update_balance(true);
-    actions->update_gas_price(true);
     set_active_tab(WALLET_UI);
   };
 
@@ -381,7 +379,6 @@ Component CLI::make_transaction_render(void) {
   auto amount_str = std::make_shared<std::string>();
   auto selected_asset = std::make_shared<int>(0);
   auto error_msg = std::make_shared<std::string>();
-  auto success_msg = std::make_shared<std::string>();
   auto gas_multiplayer = std::make_shared<int>(0);
   auto final_gas = std::make_shared<double>(0.0);
   auto selected_subtab = std::make_shared<int>(0);
@@ -392,6 +389,12 @@ Component CLI::make_transaction_render(void) {
   auto spin_idx = std::make_shared<int>(0);
   auto custom_gas_limit = std::make_shared<std::string>();
   auto custom_gas = std::make_shared<std::string>();
+
+  auto send_component_ptr = std::make_shared<Component>();
+  auto preview_component_ptr = std::make_shared<Component>();
+  auto status_component_ptr = std::make_shared<Component>();
+
+
   auto spinner =
       std::make_shared<std::vector<std::string>>(std::vector<std::string>{
           "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"});
@@ -401,7 +404,6 @@ Component CLI::make_transaction_render(void) {
   input_opt.multiline = false;
   input_opt.on_change = [=]() {
     error_msg->clear();
-    success_msg->clear();
   };
   auto addr_input = Input(to_addr.get(), "0x...", input_opt);
   auto amount_input = Input(amount_str.get(), "0.00", input_opt);
@@ -490,8 +492,9 @@ Component CLI::make_transaction_render(void) {
                      text(" Gwei ") | dim})
              : text(""),
 
-         hbox({text(" LIMIT ") | dim, gas_limit_input->Render() | flex,
-               text(" units ") | dim
+         hbox({text(" LIMIT ") | dim,
+             gas_limit_input->Render() | flex,
+               text(custom_gas_limit->empty() ? " auto ": " units ") | dim | color(Color::GrayLight)
 
          }),
 
@@ -506,7 +509,7 @@ Component CLI::make_transaction_render(void) {
     return to_center(
         box | borderHeavy |
         color(addr_valid && amount_valid ? Color::CyanLight : Color::GrayDark) |
-        size(WIDTH, EQUAL, 65) | size(HEIGHT, EQUAL, 20));
+        size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22));
   });
 
   auto send_component = CatchEvent(send_form, [=, this](Event event) {
@@ -545,11 +548,13 @@ Component CLI::make_transaction_render(void) {
 
       error_msg->clear();
       *selected_subtab = 1;
+      preview_component_ptr->get()->TakeFocus();
       return true;
     }
 
     return false;
   });
+  *send_component_ptr = send_component;
 
   auto preview_btn = Button("", [] {}, ButtonOption::Ascii());
   auto status_btn = Button("", [] {}, ButtonOption::Ascii());
@@ -586,11 +591,6 @@ Component CLI::make_transaction_render(void) {
              error_msg->empty()
                  ? text("")
                  : text(" ✗ " + *error_msg) | color(Color::Red1) | hcenter,
-
-             success_msg->empty()
-                 ? text("")
-                 : text(" ✓ " + *success_msg) | color(Color::GrayLight) |
-                       hcenter | blink,
              separator(),
              text(" [ENTER] Confirm | [ESC] Back ") | dim | hcenter}) |
         borderHeavy | color(Color::YellowLight) | size(WIDTH, EQUAL, 60) |
@@ -608,23 +608,25 @@ Component CLI::make_transaction_render(void) {
                                         *final_gas, *custom_gas_limit);
 
           if (ok) {
-            *success_msg = "Transaction sent!";
             to_addr->clear();
             amount_str->clear();
             *selected_subtab = 2;
+            status_component_ptr->get()->TakeFocus();
           } else {
             *error_msg = "Failed to send transaction";
           }
           return true;
         } else if (event == Event::Escape) {
           *selected_subtab = 0;
+          send_component_ptr->get()->TakeFocus();
           return true;
         }
 
         return false;
       });
-
+  *preview_component_ptr = preview_component;
   Component status_form = Renderer(status_btn, [=, this]() {
+      actions->update_current_tx_status();
     auto [status, confirmed] = actions->get_current_tx_status();
     Element status_element{};
     switch (status) {
@@ -658,12 +660,14 @@ Component CLI::make_transaction_render(void) {
         {text(" 📡 TRANSACTION STATUS ") | bold | color(Color::Cyan) | hcenter,
          separatorDouble() | color(Color::Cyan), filler(), status_element,
          filler(), separator(),
-         text(" [ESC] Back to wallet ") | dim | hcenter}));
+         text(" [ESC] Back to wallet ") | dim | hcenter})
+    |borderHeavy | color(Color::CyanLight) | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 12));
   });
 
   Component status_component = CatchEvent(status_form, [=, this](Event event) {
     if (event == Event::Escape) {
       *selected_subtab = 0;
+      send_component_ptr->get()->TakeFocus();
       *tx_status = TxStatus::ERROR;
       set_active_tab(WALLET_UI);
       return true;
@@ -671,13 +675,12 @@ Component CLI::make_transaction_render(void) {
 
     return false;
   });
-
+  *status_component_ptr = status_component;
   auto root =
       Container::Tab({send_component, preview_component, status_component},
                      selected_subtab.get());
 
-  return Renderer(root, [=, this] {
-    root->ChildAt(*selected_subtab)->TakeFocus();
+  return Renderer(root, [=] {
     if (*selected_subtab == 0) {
       return send_component->Render();
     } else if (*selected_subtab == 1) {

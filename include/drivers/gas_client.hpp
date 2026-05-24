@@ -1,11 +1,12 @@
 #include "config/configuration.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "drivers/manager.hpp"
+#include <cstdint>
 #include <future>
 
 class GasManager : public Manager {
 private:
-  std::future<double> worker;
+  std::future<std::pair<double, uint64_t>> worker;
   double current_gas_price = 0;
 
   double request_gas(void);

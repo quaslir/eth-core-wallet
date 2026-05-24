@@ -4,6 +4,9 @@
 #include "core/secure_bytes_data.hpp"
 #include <functional>
 #include <future>
+#include <string>
+#include <unistd.h>
+#include <utility>
 
 std::vector<TransactionRecord>
 HistoryManager::parse_transactions(const json &j, bool incoming) const {
@@ -90,9 +93,9 @@ void HistoryManager::request(const secure_string &eth_addr) {
     return;
 
   updating = true;
-
-  worker = std::async(std::launch::async, [this, eth_addr]() {
-    return make_request(std::string{eth_addr});
+    uint64_t gen = get_generation();
+  worker = std::async(std::launch::async, [this, eth_addr, gen]() {
+    return  std::make_pair(make_request(std::string{eth_addr}), gen);
   });
 }
 void HistoryManager::update(void) {
@@ -101,8 +104,10 @@ void HistoryManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        if (!error)
-          current_transactions_history = worker.get();
+          auto [trans_history, gen] = worker.get();
+          if(gen == get_generation()) {
+          current_transactions_history = std::move(trans_history);
+          }
       } catch (const std::exception &err) {
       }
 

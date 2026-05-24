@@ -4,6 +4,7 @@
 #include "api/json.hpp"
 #include <exception>
 #include <iostream>
+#include <utility>
 TxStatusManager::~TxStatusManager() {
   if (worker.valid()) {
     worker.wait();
@@ -15,8 +16,10 @@ void TxStatusManager::request(const secure_string &) {
   if (updating || current_tx_hash.empty())
     return;
   updating = true;
-
-  worker = std::async(std::launch::async, [this]() { return make_request(); });
+  uint64_t gen = get_generation();
+  worker = std::async(std::launch::async, [this, gen]() {
+      return std::make_pair(make_request(), gen);
+  });
 }
 void TxStatusManager::update(void) {
   if (updating && !current_tx_hash.empty() && worker.valid()) {
@@ -24,8 +27,10 @@ void TxStatusManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        if (!error)
-          current_tx_status = worker.get();
+        auto[tx_status, gen] = worker.get();
+        if(gen == get_generation()) {
+          current_tx_status = tx_status;
+        }
       } catch (const std::exception &err) {
       }
 
@@ -55,7 +60,6 @@ std::pair<TxStatus, bool> TxStatusManager::make_request(void) {
     std::string data = req.dump();
     std::string buffer = http::post_request(form_url(), data);
     json res = json::parse(buffer);
-    std::cerr << buffer << std::endl;
     if (res.contains("error")) {
       return {TxStatus::ERROR, false};
     }

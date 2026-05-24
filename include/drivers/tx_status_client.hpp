@@ -1,13 +1,14 @@
 #pragma once
 #include "config/configuration.hpp"
 #include "drivers/manager.hpp"
+#include <cstdint>
 #include <future>
 #include <string>
 enum class TxStatus { PENDING, SUCCESS, FAILED, ERROR };
 
 class TxStatusManager : public Manager {
 private:
-  std::future<std::pair<TxStatus, bool>> worker;
+  std::future<std::pair<std::pair<TxStatus, bool>, uint64_t>> worker;
   std::pair<TxStatus, bool> current_tx_status;
   std::string current_tx_hash{};
 

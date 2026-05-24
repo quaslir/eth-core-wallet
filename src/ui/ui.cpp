@@ -231,3 +231,7 @@ bool UserInterface::send_transaction(const std::string &to, const Asset &asset,
 std::pair<TxStatus, bool> UserInterface::get_current_tx_status(void) {
   return block_client.get_current_tx_status();
 }
+
+void UserInterface::update_current_tx_status(void) {
+    block_client.update_current_tx_status();
+}

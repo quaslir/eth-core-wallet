@@ -9,9 +9,12 @@
 #include "utils/tech_utils.hpp"
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <exception>
 #include <future>
+#include <memory>
 #include <string>
+#include <utility>
 std::string form_data(const std::string &contract_address,
                       const secure_string &eth_addr) {
   json j;
@@ -65,17 +68,18 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
 
   balance_futures.reserve(new_assets.size());
 
-  for (auto &asset : new_assets) {
-    if (asset.second.is_native) {
+  for (auto &[key, asset] : new_assets) {
+      Asset * asset_ptr = &asset;
+    if (asset.is_native) {
       balance_futures.push_back(
-          std::async(std::launch::async, [this, &asset, &eth_addr]() {
-            return update_native(asset.second, eth_addr);
+          std::async(std::launch::async, [this, asset_ptr, &eth_addr]() {
+            return update_native(*asset_ptr, eth_addr);
           }));
 
     } else
       balance_futures.push_back(
-          std::async(std::launch::async, [this, &asset, &eth_addr]() {
-            return update_one_asset(asset.second, eth_addr);
+          std::async(std::launch::async, [this, asset_ptr, &eth_addr]() {
+            return update_one_asset(*asset_ptr, eth_addr);
           }));
   }
 
@@ -142,9 +146,11 @@ void BalanceManager::request(const secure_string &addr) {
   if (!can_request())
     return;
   updating = true;
-
+  uint64_t gen = get_generation();
   worker = std::async(std::launch::async,
-                      [this, addr]() { return update_all(addr); });
+                      [this, addr, gen]() {
+                          return std::make_pair(update_all(addr), gen);
+                      });
 }
 
 void BalanceManager::update(void) {
@@ -153,13 +159,18 @@ void BalanceManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        auto new_assets = std::make_shared<assets_data>(worker.get());
-#if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
-    __cpp_lib_atomic_shared_ptr >= 201711L
-        atomic_assets.store(new_assets);
-#else
-        std::atomic_store(&atomic_assets, new_assets);
-#endif
+        auto [assets, gen] = worker.get();
+        if(gen == get_generation()) {
+            auto ptr = std::make_shared<assets_data>(std::move(assets));
+
+            #if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
+                __cpp_lib_atomic_shared_ptr >= 201711L
+                    atomic_assets.store(ptr);
+            #else
+                    std::atomic_store(&atomic_assets, ptr);
+            #endif
+        }
+
       } catch (...) {
       }
       updating = false;
@@ -176,12 +187,6 @@ std::shared_ptr<assets_data> BalanceManager::get_balance() const {
 #endif
 }
 
-void BalanceManager::clear_timer(void) {
-  last_update_time = std::chrono::steady_clock::now() -
-                     std::chrono::milliseconds(BALANCE_TIMEOUT);
-}
-
-void BalanceManager::clear(void) { updating = false; }
 
 BalanceManager::~BalanceManager() {
   if (worker.valid()) {

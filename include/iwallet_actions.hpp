@@ -58,4 +58,5 @@ public:
                                 const std::string &gas_limit_input) = 0;
 
   virtual std::pair<TxStatus, bool> get_current_tx_status(void) = 0;
+  virtual void update_current_tx_status(void) = 0;
 };

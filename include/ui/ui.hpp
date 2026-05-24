@@ -59,4 +59,5 @@ private:
                         const std::string &amount, double target_gas_gwei,
                         const std::string &gas_limit_input) override;
   std::pair<TxStatus, bool> get_current_tx_status(void) override;
+  void update_current_tx_status(void) override;
 };

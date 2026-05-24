@@ -134,7 +134,6 @@ Component CLI::render_mnemonic_wiping(void) {
   input_option.on_enter = [=, this] {
     if (*user_input == "I AM RESPONSIBLE") {
       actions->wipe_mnemonic();
-      std::cerr << actions->get_mnemonic().c_str() << std::endl;
       set_active_tab(SET_PASSWORD);
     }
   };

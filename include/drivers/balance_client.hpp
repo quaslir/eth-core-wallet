@@ -14,7 +14,7 @@ using assets_data = std::map<std::pair<uint64_t, std::string>, Asset>;
 
 class BalanceManager : public Manager {
 private:
-  std::future<assets_data> worker;
+  std::future<std::pair<assets_data, uint64_t>> worker;
 #if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
     __cpp_lib_atomic_shared_ptr >= 201711L
   std::atomic<std::shared_ptr<assets_data>> atomic_assets{
@@ -35,6 +35,4 @@ public:
   void request(const secure_string &eth_addr) override;
   void update(void) override;
   std::shared_ptr<assets_data> get_balance(void) const;
-  void clear(void);
-  void clear_timer(void);
 };

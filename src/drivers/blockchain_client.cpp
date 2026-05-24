@@ -24,7 +24,6 @@ void BlockchainClient::update(void) {
   balance_manager.update();
   history_manager.update();
   gas_manager.update();
-  tx_status_manager.update();
   auto now = std::chrono::steady_clock::now();
   if ((now - last_update_time >=
        std::chrono::milliseconds(FULL_UPDATE_TIMEOUT))) {
@@ -42,7 +41,14 @@ void BlockchainClient::update(void) {
 void BlockchainClient::change_network(
     const networks::NetworkConfig &new_network) {
   active_network = new_network;
+  balance_manager.clear();
+  gas_manager.clear();
+  history_manager.clear();
 
+  last_update_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(FULL_UPDATE_TIMEOUT);
+
+
+  update();
   push_activity("🔗", "Switched to " + new_network.name);
 }
 

@@ -74,8 +74,6 @@ bool Wallet::derive_next(void) {
     derive(next_path_deriv);
     index++;
   } catch (const std::exception &err) {
-    std::cerr << "[Wallet Error] Derivation failed: " << err.what()
-              << std::endl;
     return false;
   }
 
@@ -93,8 +91,6 @@ bool Wallet::derive_prev(void) {
     derive(prev_path_deriv);
     index--;
   } catch (const std::exception &err) {
-    std::cerr << "[Wallet Error] Derivation failed: " << err.what()
-              << std::endl;
     return false;
   }
 

@@ -6,10 +6,11 @@
 #include <cstdint>
 class Manager {
 protected:
-  std::atomic<bool> updating = false;
+  std::atomic<bool> updating{false};
+  std::atomic<uint64_t> generation{0};
   const std::chrono::milliseconds timer_interval;
   std::chrono::steady_clock::time_point last_update_time;
-  bool error = false;
+  bool error{false};
 
 public:
   Manager(uint32_t ms_interval)
@@ -24,4 +25,6 @@ public:
   bool get_status(void) const;
   bool get_error(void) const;
   bool can_request(void) const;
+  void clear(void);
+  uint64_t get_generation(void) const;
 };

@@ -18,3 +18,12 @@ void Manager::force_request(const secure_string &eth_addr) {
 
   request(eth_addr);
 }
+
+void Manager::clear(void) {
+    generation++;
+updating = false;
+last_update_time = std::chrono::steady_clock::now() - timer_interval;
+}
+uint64_t Manager::get_generation(void) const {
+    return generation.load();
+}
