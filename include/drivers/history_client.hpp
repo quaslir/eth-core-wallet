@@ -4,6 +4,7 @@
 #include "core/secure_bytes_data.hpp"
 #include "drivers/manager.hpp"
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <string>
@@ -20,7 +21,8 @@ struct TransactionRecord {
 };
 class HistoryManager : public Manager {
 private:
-  std::future<std::vector<TransactionRecord>> worker;
+
+  std::future<std::pair<std::vector<TransactionRecord>, uint64_t>> worker;
   std::vector<TransactionRecord> current_transactions_history;
 
   std::vector<TransactionRecord> parse_transactions(const json &j,

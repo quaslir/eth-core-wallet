@@ -1,12 +1,16 @@
 #pragma once
+#include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/supported_networks.hpp"
 #include "drivers/balance_client.hpp"
 #include "drivers/gas_client.hpp"
 #include "drivers/history_client.hpp"
 #include "drivers/price_client.hpp"
+#include "drivers/transaction_client.hpp"
+#include "drivers/tx_status_client.hpp"
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <string>
@@ -39,14 +43,22 @@ public:
   float get_next_refresh(void) const;
   void push_activity(const std::string &icon, const std::string &msg);
   const std::deque<ActivityEvent> &get_activity(void) const;
-
+  bool send_raw_transaction(const secure_string &to_addr,
+                            const bytes_data &private_key, const Asset &asset,
+                            const std::string &value, double target_gas_gwei,
+                            uint64_t gas_limit);
+  std::pair<TxStatus, bool> get_current_tx_status(void) const;
+  void update_current_tx_status(void);
+  bool speed_up_transaction(const bytes_data& private_key);
+  bool cancel_transaction(const bytes_data& private_key);
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;
   GasManager gas_manager;
+  TransactionManager transaction_manager;
+  TxStatusManager tx_status_manager;
   std::chrono::steady_clock::time_point last_update_time;
   std::deque<ActivityEvent> activity_log;
-  // uint32_t chain_id;
   networks::NetworkConfig active_network =
       networks::NetworkConfig{" 🌐 Ethereum Mainnet ", "eth-mainnet", 1};
 };

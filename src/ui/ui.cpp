@@ -10,6 +10,7 @@
 #include "iwallet_actions.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <openssl/crypto.h>
 #include <string>
@@ -32,8 +33,8 @@ void UserInterface::load(void) {
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
   switch (choice) {
   case 1:
-
-    break; // send transaction
+    cli.set_active_tab(SEND_FUNDS);
+    break;
   case 2:
     update_transactions_data();
 
@@ -214,4 +215,31 @@ void UserInterface::update_info(void) { block_client.update(); }
 
 const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
   return block_client.get_activity();
+}
+
+bool UserInterface::send_transaction(const std::string &to, const Asset &asset,
+                                     const std::string &amount,
+                                     double target_gas_gwei,
+                                     const std::string &gas_limit_input) {
+  uint64_t gas_limit = tech_utils::string_to_uint64(gas_limit_input);
+
+  return block_client.send_raw_transaction(secure_string{to},
+                                           wallet.get_private_key(), asset,
+                                           amount, target_gas_gwei, gas_limit);
+}
+
+std::pair<TxStatus, bool> UserInterface::get_current_tx_status(void) {
+  return block_client.get_current_tx_status();
+}
+
+void UserInterface::update_current_tx_status(void) {
+    block_client.update_current_tx_status();
+}
+
+bool UserInterface::speed_up_transaction(void) {
+    return block_client.speed_up_transaction(wallet.get_private_key());
+}
+bool UserInterface::cancel_transaction(void) {
+    std::cerr << "CANCELING" << std::endl;
+return block_client.cancel_transaction(wallet.get_private_key());
 }

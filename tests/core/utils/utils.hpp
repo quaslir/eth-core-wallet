@@ -52,7 +52,6 @@ namespace core_test_utils {
            }
             return vector_tests;
         } catch(const std::exception& err) {
-            std::cerr << err.what();
              return std::vector<MnemTests>();
         }
     }

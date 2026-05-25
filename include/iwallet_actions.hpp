@@ -1,4 +1,5 @@
 #pragma once
+#include "core/asset.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
@@ -50,4 +51,15 @@ public:
   virtual void update_info(void) = 0;
 
   virtual const std::deque<ActivityEvent> &get_activity(void) = 0;
+
+  virtual bool send_transaction(const std::string &to, const Asset &asset,
+                                const std::string &amount,
+                                double target_gas_gwei,
+                                const std::string &gas_limit_input) = 0;
+
+  virtual std::pair<TxStatus, bool> get_current_tx_status(void) = 0;
+  virtual void update_current_tx_status(void) = 0;
+
+  virtual  bool speed_up_transaction(void) = 0;
+  virtual bool cancel_transaction(void) = 0;
 };

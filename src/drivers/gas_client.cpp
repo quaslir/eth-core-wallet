@@ -4,11 +4,14 @@
 #include "config/configuration.hpp"
 #include "core/uint256.hpp"
 #include "utils/tech_utils.hpp"
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <future>
+#include <ratio>
 #include <string>
+#include <utility>
 double GasManager::get_current_gas(void) const { return current_gas_price; }
 
 double GasManager::request_gas(void) {
@@ -22,12 +25,10 @@ double GasManager::request_gas(void) {
     std::string converted = value.from_wei_to_asset(WEI_TO_GWEI);
 
     double to_number = 0.0;
-    if (!tech_utils::to_double(converted, to_number))
-      error = true;
+    tech_utils::to_double(converted, to_number);
 
     return to_number;
   } catch (const std::exception &err) {
-    error = true;
     return NAN;
   }
 }
@@ -37,8 +38,10 @@ void GasManager::request(const secure_string &) {
     return;
 
   updating = true;
-
-  worker = std::async(std::launch::async, [this]() { return request_gas(); });
+    uint64_t gen = get_generation();
+  worker = std::async(std::launch::async, [this, gen]() {
+      return std::make_pair(request_gas(),gen);
+  });
 }
 void GasManager::update(void) {
   if (updating && worker.valid()) {
@@ -46,8 +49,11 @@ void GasManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        if (!error)
-          current_gas_price = worker.get();
+          auto[result, gen] = worker.get();
+          if(gen == get_generation()) {
+              if(!isnan(result)) current_gas_price =result;
+          }
+
       } catch (const std::exception &err) {
       }
 

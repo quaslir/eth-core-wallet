@@ -1,6 +1,9 @@
 #include "core/uint256.hpp"
+#include "core/secure_bytes_data.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <openssl/bn.h>
+#include <ranges>
 
 Uint256::Uint256() : bn(BN_new()) {
   if (!bn) {
@@ -86,6 +89,14 @@ Uint256 Uint256::operator+(const Uint256 &num) const {
   return res;
 }
 
+Uint256 Uint256::operator*(const Uint256 &num) const {
+  BN_CTX *ctx = BN_CTX_new();
+  Uint256 result;
+  BN_mul(result.bn.get(), bn.get(), num.bn.get(), ctx);
+  BN_CTX_free(ctx);
+  return result;
+}
+
 std::string Uint256::from_wei_to_asset(const std::string &dividor) const {
   BN_CTX *ctx = BN_CTX_new();
   if (!ctx) {
@@ -132,4 +143,44 @@ std::string Uint256::from_wei_to_asset(const std::string &dividor) const {
   BN_CTX_free(ctx);
 
   return whole_ptr_str + "." + frac_ptr_str.substr(0, 4);
+}
+
+bytes_data Uint256::to_bytes(void) const {
+  if (BN_is_zero(bn.get()))
+    return {};
+  int num_bytes = BN_num_bytes(bn.get());
+  bytes_data result(num_bytes);
+  BN_bn2bin(bn.get(), result.data());
+  return result;
+}
+
+bytes_data Uint256::to_bytes32(void) const {
+  bytes_data result(32, 0x00);
+  int num_bytes = BN_num_bytes(bn.get());
+
+  BN_bn2bin(bn.get(), result.data() + (32 - num_bytes));
+  return result;
+}
+Uint256 Uint256::from_decimal_string(const std::string &str, uint8_t decimals) {
+  std::string int_part, frac_part;
+  size_t dot = str.find(".");
+  if (dot == std::string::npos) {
+    int_part = str;
+    frac_part = "";
+  }
+
+  else {
+    int_part = str.substr(0, dot);
+    frac_part = str.substr(dot + 1);
+  }
+
+  if (frac_part.size() > decimals) {
+    frac_part = frac_part.substr(0, decimals);
+  }
+  while (frac_part.size() < decimals) {
+    frac_part += "0";
+  }
+
+  std::string combined = int_part + frac_part;
+  return Uint256(combined, false);
 }
