@@ -23,4 +23,5 @@ public:
   void update(void) override;
   std::pair<TxStatus, bool> get_current_tx_status(void) const;
   void set_tx_hash(const std::string &tx_hash);
+  std::string get_tx_hash(void) const;
 };

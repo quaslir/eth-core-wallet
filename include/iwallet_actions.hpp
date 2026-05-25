@@ -59,4 +59,7 @@ public:
 
   virtual std::pair<TxStatus, bool> get_current_tx_status(void) = 0;
   virtual void update_current_tx_status(void) = 0;
+
+  virtual  bool speed_up_transaction(void) = 0;
+  virtual bool cancel_transaction(void) = 0;
 };

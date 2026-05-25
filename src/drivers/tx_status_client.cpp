@@ -77,3 +77,7 @@ std::pair<TxStatus, bool> TxStatusManager::make_request(void) {
     return {TxStatus::ERROR, true};
   }
 }
+
+std::string TxStatusManager::get_tx_hash(void) const {
+    return current_tx_hash;
+}

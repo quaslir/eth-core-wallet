@@ -235,3 +235,11 @@ std::pair<TxStatus, bool> UserInterface::get_current_tx_status(void) {
 void UserInterface::update_current_tx_status(void) {
     block_client.update_current_tx_status();
 }
+
+bool UserInterface::speed_up_transaction(void) {
+    return block_client.speed_up_transaction(wallet.get_private_key());
+}
+bool UserInterface::cancel_transaction(void) {
+    std::cerr << "CANCELING" << std::endl;
+return block_client.cancel_transaction(wallet.get_private_key());
+}

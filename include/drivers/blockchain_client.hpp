@@ -49,7 +49,8 @@ public:
                             uint64_t gas_limit);
   std::pair<TxStatus, bool> get_current_tx_status(void) const;
   void update_current_tx_status(void);
-
+  bool speed_up_transaction(const bytes_data& private_key);
+  bool cancel_transaction(const bytes_data& private_key);
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;

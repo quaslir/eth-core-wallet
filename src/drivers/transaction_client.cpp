@@ -150,3 +150,35 @@ TransactionManager::estimate_gas(const RawTx &raw_tx,
     return std::nullopt;
   }
 }
+
+RawTx TransactionManager::get_original_tx(const std::string& tx_hash) const {
+    try {
+    json j;
+    j["jsonrpc"] = "2.0";
+    j["method"] = "eth_getTransactionByHash";
+    j["params"] = json::array({tx_hash});
+    j["id"] = 1;
+
+    std::string buffer = j.dump();
+    std::string result = http::post_request(form_url(), buffer);
+    json res = json::parse(result);
+    json tx = res.at("result").get<json>();
+
+    RawTx raw_tx;
+    raw_tx.nonce = std::stoull(tx.at("nonce").get<std::string>(), nullptr, 16);
+    raw_tx.gas_price = std::stoull(tx.at("gasPrice").get<std::string>(), nullptr, 16);
+    raw_tx.gas_limit =  std::stoull(tx.at("gas").get<std::string>(), nullptr, 16);
+    raw_tx.to = tech_utils::from_hex_to_bytes(tx.at("to").get<std::string>());
+    raw_tx.value = Uint256(tx.at("value").get<std::string>(), true);
+
+    std::string input = tx.at("input").get<std::string>();
+
+    if(input != "0x") {
+        raw_tx.data = tech_utils::from_hex_to_bytes(input);
+    }
+
+    return raw_tx;
+    } catch(const std::exception& err) {
+        return RawTx();
+    }
+}

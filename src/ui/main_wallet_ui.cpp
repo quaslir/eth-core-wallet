@@ -625,10 +625,23 @@ Component CLI::make_transaction_render(void) {
         return false;
       });
   *preview_component_ptr = preview_component;
-  Component status_form = Renderer(status_btn, [=, this]() {
+
+
+  auto speed_up_btn = Button(" ⚡ Speed Up ", [this] {
+      actions->speed_up_transaction();
+  }, ButtonOption::Ascii());
+
+  auto cancel_btn = Button(" ✕ Cancel Tx ", [this] {
+      actions->cancel_transaction();
+  }, ButtonOption::Ascii());
+
+  auto status_btn_container = Container::Horizontal({speed_up_btn, cancel_btn});
+
+  Component status_form = Renderer(status_btn_container, [=, this]() {
       actions->update_current_tx_status();
     auto [status, confirmed] = actions->get_current_tx_status();
-    Element status_element{};
+    Element status_element = emptyElement();
+    Element buttons_element = emptyElement();
     switch (status) {
     case TxStatus::PENDING:
       *spin_idx = (*spin_idx + 1) % spinner->size();
@@ -637,6 +650,13 @@ Component CLI::make_transaction_render(void) {
                     color(Color::Yellow),
                 text(" Waiting for confirmation... ") | color(Color::Yellow)}) |
           hcenter;
+
+      buttons_element = hbox({
+          speed_up_btn->Render() | color(Color::YellowLight),
+          text("  "),
+          cancel_btn->Render() | color(Color::RedLight)
+      }) | hcenter;
+
       break;
 
     case TxStatus::SUCCESS:
@@ -659,7 +679,10 @@ Component CLI::make_transaction_render(void) {
     return to_center(vbox(
         {text(" 📡 TRANSACTION STATUS ") | bold | color(Color::Cyan) | hcenter,
          separatorDouble() | color(Color::Cyan), filler(), status_element,
-         filler(), separator(),
+         filler(),
+         buttons_element,
+         filler(),
+         separator(),
          text(" [ESC] Back to wallet ") | dim | hcenter})
     |borderHeavy | color(Color::CyanLight) | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 12));
   });
