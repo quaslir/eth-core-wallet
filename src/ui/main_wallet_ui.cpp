@@ -259,6 +259,8 @@ Component CLI::display_private_key(void) {
 }
 
 Component CLI::transaction_history_render(void) {
+    auto scroll_offset = std::make_shared<int>(0);
+    constexpr int page_size = 15;
 
   const auto buttons = Container::Horizontal(
       {Button(
@@ -268,9 +270,9 @@ Component CLI::transaction_history_render(void) {
            " [R] REFRESH ", [&] { actions->update_transactions_data(); },
            create_button("[R] REFRESH", Color::Cyan2))});
 
-  auto component = Renderer(buttons, [buttons, this]() mutable -> Element {
+  auto component = Renderer(buttons, [=, this]() mutable -> Element {
     auto [history, error] = actions->get_transactions_history();
-    if (history.empty() && !error) {
+    if (history->empty() && !error) {
       return vbox({text("LOADING...") | bold | hcenter | color(Color::Cyan2)}) |
              center;
     } else if (error) {
@@ -279,43 +281,57 @@ Component CLI::transaction_history_render(void) {
              center;
     }
 
-    std::vector<std::vector<std::string>> table_data;
-    table_data.push_back(
-        {" DATE ", " TYPE ", " AMOUNT ", " FROM ", " TO ", " HASH "});
-    for (const auto &tx : history) {
-      table_data.push_back(
-          {tx.timestamp.substr(5, 11), tx.incoming ? " IN " : " OUT ",
-           std::to_string(tx.value).substr(0, 6) + " " + tx.asset,
-           tx.from.substr(0, 6) + "..." + tx.from.substr(38),
-           tx.to.substr(0, 6) + "..." + tx.to.substr(38),
-           tx.hash.substr(0, 8) + "..."});
-    }
 
-    auto table = Table(table_data);
+    Elements rows;
 
-    table.SelectRow(0).Decorate(bold | bgcolor(Color::Blue) |
-                                color(Color::White));
-    table.SelectRow(0).SeparatorVertical();
+    rows.push_back(hbox({
+        text(" DATE      ") | bold | color(Color::Blue),
+        text(" TYPE ") | bold | color(Color::Blue),
+        text(" AMOUNT        ")| bold | color(Color::Blue),
+        text(" FROM          ") | bold | color(Color::Blue),
+        text(" HASH     ") | bold | color(Color::Blue)
+    }) | bgcolor(Color::Blue) | color(Color::White)
+    );
 
-    table.SelectColumn(0).Decorate(color(Color::GrayDark));
-    table.SelectColumn(2).Decorate(color(Color::GreenLight) | bold);
+    rows.push_back(separator());
 
-    table.SelectAll().SeparatorVertical(LIGHT);
-    table.SelectAll().Border(LIGHT);
+    int start = *scroll_offset;
+int end = std::min(start + page_size, static_cast<int>(history->size()));
+
+for(int i = start; i < end; i++) {
+    const auto& tx = history->at(i);
+    Color raw_color = tx.incoming ? Color::GreenLight : Color::RedLight;
+    rows.push_back(hbox({
+        text(" " + tx.timestamp.substr(5, 11) + " ") | size(WIDTH, EQUAL,16),
+        text(tx.incoming ? " IN  " : " OUT ") | color(raw_color) | size(WIDTH, EQUAL, 10),
+        text(fmt::format(" {:.5f} {} ", tx.value, tx.asset)) | size(WIDTH, EQUAL, 18),
+        text(" " + tx.from.substr(0, 6) + "..." + tx.from.substr(38) + " ") | dim | size(WIDTH, EQUAL, 18),
+        text(" " + tx.hash.substr(0, 8) + "...") | dim | size(WIDTH, EQUAL, 18),
+    }));
+
+    rows.push_back(separator() | dim);
+}
+rows.push_back(hbox({
+    filler(),
+    text(fmt::format(" {}/{} ",end, history->size())) | dim
+}));
+
+auto table_element = vbox(std::move(rows)) | flex;
     auto box = vbox({text(" TRANSACTION HISTORY ") | bold | hcenter |
                          color(Color::Yellow),
-                     separator(), table.Render() | frame | hcenter | flex,
+                     separator(), table_element,
 
                      hbox({buttons->Render() | hcenter}) | hcenter
 
                }) |
                borderDouble | color(Color::BlueLight) | flex |
-               size(HEIGHT, EQUAL, 20);
+               size(HEIGHT, EQUAL, 24);
 
     return to_center(box);
   });
 
-  return CatchEvent(component, [this](Event event) {
+  return CatchEvent(component, [=,this](Event event) {
+      auto [history, error] = actions->get_transactions_history();
     if (event == Event::Character('b') || event == Event::Character('B')) {
       set_active_tab(WALLET_UI);
       return true;
@@ -323,6 +339,16 @@ Component CLI::transaction_history_render(void) {
                event == Event::Character('R')) {
       return true;
     }
+    else if(event == Event::ArrowUp || (event.is_mouse() && event.mouse().button == Mouse::WheelUp)) {
+        if(*scroll_offset > 0) (*scroll_offset)--;
+        return true;
+    }
+    else if(event == Event::ArrowDown || (event.is_mouse() && event.mouse().button == Mouse::WheelDown)) {
+        int max_offset = std::max(0, static_cast<int>(history->size()) - page_size);
+        if(*scroll_offset < max_offset)        (*scroll_offset)++;
+        return true;
+    }
+
     return false;
   });
 }

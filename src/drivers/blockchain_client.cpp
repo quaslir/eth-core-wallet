@@ -65,7 +65,7 @@ std::shared_ptr<assets_data> BlockchainClient::get_balance(void) const {
 
   return balance_manager.get_balance();
 }
-std::pair<std::vector<TransactionRecord>, bool>
+std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
 BlockchainClient::get_transaction_history(void) const {
   return {history_manager.get_transactions_history(),
           history_manager.get_error()};

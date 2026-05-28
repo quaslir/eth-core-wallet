@@ -186,7 +186,7 @@ std::pair<double, bool> UserInterface::get_current_gas_price(void) {
   return block_client.get_current_gas();
 }
 
-std::pair<std::vector<TransactionRecord>, bool>
+std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
 UserInterface::get_transactions_history(void) {
   return block_client.get_transaction_history();
 }
@@ -240,6 +240,5 @@ bool UserInterface::speed_up_transaction(void) {
     return block_client.speed_up_transaction(wallet.get_private_key());
 }
 bool UserInterface::cancel_transaction(void) {
-    std::cerr << "CANCELING" << std::endl;
 return block_client.cancel_transaction(wallet.get_private_key());
 }

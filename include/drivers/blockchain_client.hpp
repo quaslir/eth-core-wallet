@@ -33,7 +33,7 @@ public:
 
   void update(void);
   std::shared_ptr<assets_data> get_balance(void) const;
-  std::pair<std::vector<TransactionRecord>, bool>
+  std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
   get_transaction_history(void) const;
   std::pair<double, bool> get_current_gas(void) const;
 
