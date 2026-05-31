@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <openssl/crypto.h>
+#include <optional>
 #include <string>
 #include <system_error>
 namespace tech_utils {
@@ -174,6 +175,32 @@ uint64_t string_to_uint64(const std::string &str) {
   }
 
   return 0;
+}
+
+void copy_to_clipboard(const secure_string& text) {
+    #ifdef __APPLE__
+    FILE * pipe = popen("pbcopy", "w");
+    #else
+    FILE * pipe = popen("xclip -selection clipboard 2>/dev/null", "w");
+    if(!pipe) pipe = popen("xsel --clipboard --input 2>/dev/null", "w");
+    if(!pipe) = popen("wl-copy 2>/dev/null", "w");
+    #endif
+
+    if(pipe) {
+        fwrite(text.data(), 1, text.size(), pipe);
+        pclose(pipe);
+    }
+}
+
+std::optional<uint64_t> parse_hex(const std::string & hex) {
+    try {
+        size_t pos = 0;
+        uint64_t res = std::stoull(hex, &pos,16);
+        if(pos != hex.size()) return std::nullopt;
+        return res;
+    } catch(...) {
+        return std::nullopt;
+    }
 }
 
 } // namespace tech_utils

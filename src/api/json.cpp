@@ -60,7 +60,7 @@ void AlchemyJSON::parse(const std::string &data) { j = json::parse(data); }
 std::string AlchemyJSON::get_result(void) const { return j["result"]; }
 
 namespace transactions_history {
-json form_receives(const std::string &addr, const std::string& from_block) {
+json form_receives(const std::string &addr, const std::string &from_block) {
   return {{"id", 1},
           {"jsonrpc", "2.0"},
           {"method", "alchemy_getAssetTransfers"},
@@ -72,7 +72,7 @@ json form_receives(const std::string &addr, const std::string& from_block) {
              {"withMetadata", true},
              {"excludeZeroValue", true}}}}};
 }
-json form_sends(const std::string &addr, const std::string& from_block) {
+json form_sends(const std::string &addr, const std::string &from_block) {
   return {{"id", 1},
           {"jsonrpc", "2.0"},
           {"method", "alchemy_getAssetTransfers"},

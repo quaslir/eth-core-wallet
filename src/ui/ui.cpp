@@ -44,20 +44,26 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     cli.set_active_tab(CHANGE_NETWORK);
     break;
   case 4:
-    wallet.derive_next();
+    if(wallet.derive_next()) {
+    block_client.clear_history();
     update_balance(true);
+    update_transactions_data(true);
+    }
+
     break;
 
   case 5:
     if (wallet.derive_prev()) {
+         block_client.clear_history();
       update_balance(true);
+      update_transactions_data(true);
     }
     break;
   case 6: // show private_key
     cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
   case 7: // exit
-    // wallet.save();
+    //wallet.save();
 
     break;
   }
@@ -163,23 +169,11 @@ void UserInterface::update_gas_price(bool force) {
 }
 
 void UserInterface::copy_address(void) {
-#ifdef __APPLE__
-  secure_string command = "echo " + wallet.get_eth_address() + "| pbcopy";
-  std::system(command.c_str());
-#else
-// handle
-#endif
+    tech_utils::copy_to_clipboard(wallet.get_eth_address());
 }
 
 void UserInterface::copy_private_key(void) {
-
-#ifdef __APPLE__
-  secure_string command =
-      "echo " + tech_utils::to_hex(wallet.get_private_key()) + "| pbcopy";
-  std::system(command.c_str());
-#else
-// handle
-#endif
+    tech_utils::copy_to_clipboard(tech_utils::to_hex(wallet.get_private_key()));
 }
 
 std::pair<double, bool> UserInterface::get_current_gas_price(void) {
@@ -233,12 +227,12 @@ std::pair<TxStatus, bool> UserInterface::get_current_tx_status(void) {
 }
 
 void UserInterface::update_current_tx_status(void) {
-    block_client.update_current_tx_status();
+  block_client.update_current_tx_status();
 }
 
 bool UserInterface::speed_up_transaction(void) {
-    return block_client.speed_up_transaction(wallet.get_private_key());
+  return block_client.speed_up_transaction(wallet.get_private_key());
 }
 bool UserInterface::cancel_transaction(void) {
-return block_client.cancel_transaction(wallet.get_private_key());
+  return block_client.cancel_transaction(wallet.get_private_key());
 }

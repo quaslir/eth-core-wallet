@@ -259,8 +259,8 @@ Component CLI::display_private_key(void) {
 }
 
 Component CLI::transaction_history_render(void) {
-    auto scroll_offset = std::make_shared<int>(0);
-    constexpr int page_size = 15;
+  auto scroll_offset = std::make_shared<int>(0);
+  constexpr int page_size = 15;
 
   const auto buttons = Container::Horizontal(
       {Button(
@@ -281,42 +281,41 @@ Component CLI::transaction_history_render(void) {
              center;
     }
 
-
     Elements rows;
 
-    rows.push_back(hbox({
-        text(" DATE      ") | bold | color(Color::Blue),
-        text(" TYPE ") | bold | color(Color::Blue),
-        text(" AMOUNT        ")| bold | color(Color::Blue),
-        text(" FROM          ") | bold | color(Color::Blue),
-        text(" HASH     ") | bold | color(Color::Blue)
-    }) | bgcolor(Color::Blue) | color(Color::White)
-    );
+    rows.push_back(hbox({text(" DATE      ") | bold | color(Color::Blue),
+                         text(" TYPE ") | bold | color(Color::Blue),
+                         text(" AMOUNT        ") | bold | color(Color::Blue),
+                         text(" FROM          ") | bold | color(Color::Blue),
+                         text(" HASH     ") | bold | color(Color::Blue)}) |
+                   bgcolor(Color::Blue) | color(Color::White));
 
     rows.push_back(separator());
 
     int start = *scroll_offset;
-int end = std::min(start + page_size, static_cast<int>(history->size()));
+    int end = std::min(start + page_size, static_cast<int>(history->size()));
 
-for(int i = start; i < end; i++) {
-    const auto& tx = history->at(i);
-    Color raw_color = tx.incoming ? Color::GreenLight : Color::RedLight;
-    rows.push_back(hbox({
-        text(" " + tx.timestamp.substr(5, 11) + " ") | size(WIDTH, EQUAL,16),
-        text(tx.incoming ? " IN  " : " OUT ") | color(raw_color) | size(WIDTH, EQUAL, 10),
-        text(fmt::format(" {:.5f} {} ", tx.value, tx.asset)) | size(WIDTH, EQUAL, 18),
-        text(" " + tx.from.substr(0, 6) + "..." + tx.from.substr(38) + " ") | dim | size(WIDTH, EQUAL, 18),
-        text(" " + tx.hash.substr(0, 8) + "...") | dim | size(WIDTH, EQUAL, 18),
-    }));
+    for (int i = start; i < end; i++) {
+      const auto &tx = history->at(i);
+      Color raw_color = tx.incoming ? Color::GreenLight : Color::RedLight;
+      rows.push_back(hbox({
+          text(" " + tx.timestamp.substr(5, 11) + " ") | size(WIDTH, EQUAL, 16),
+          text(tx.incoming ? " IN  " : " OUT ") | color(raw_color) |
+              size(WIDTH, EQUAL, 10),
+          text(fmt::format(" {:.5f} {} ", tx.value, tx.asset)) |
+              size(WIDTH, EQUAL, 18),
+          text(" " + tx.from.substr(0, 6) + "..." + tx.from.substr(38) + " ") |
+              dim | size(WIDTH, EQUAL, 18),
+          text(" " + tx.hash.substr(0, 8) + "...") | dim |
+              size(WIDTH, EQUAL, 18),
+      }));
 
-    rows.push_back(separator() | dim);
-}
-rows.push_back(hbox({
-    filler(),
-    text(fmt::format(" {}/{} ",end, history->size())) | dim
-}));
+      rows.push_back(separator() | dim);
+    }
+    rows.push_back(hbox(
+        {filler(), text(fmt::format(" {}/{} ", end, history->size())) | dim}));
 
-auto table_element = vbox(std::move(rows)) | flex;
+    auto table_element = vbox(std::move(rows)) | flex;
     auto box = vbox({text(" TRANSACTION HISTORY ") | bold | hcenter |
                          color(Color::Yellow),
                      separator(), table_element,
@@ -330,23 +329,26 @@ auto table_element = vbox(std::move(rows)) | flex;
     return to_center(box);
   });
 
-  return CatchEvent(component, [=,this](Event event) {
-      auto [history, error] = actions->get_transactions_history();
+  return CatchEvent(component, [=, this](Event event) {
+    auto [history, error] = actions->get_transactions_history();
     if (event == Event::Character('b') || event == Event::Character('B')) {
       set_active_tab(WALLET_UI);
       return true;
     } else if (event == Event::Character('r') ||
                event == Event::Character('R')) {
       return true;
-    }
-    else if(event == Event::ArrowUp || (event.is_mouse() && event.mouse().button == Mouse::WheelUp)) {
-        if(*scroll_offset > 0) (*scroll_offset)--;
-        return true;
-    }
-    else if(event == Event::ArrowDown || (event.is_mouse() && event.mouse().button == Mouse::WheelDown)) {
-        int max_offset = std::max(0, static_cast<int>(history->size()) - page_size);
-        if(*scroll_offset < max_offset)        (*scroll_offset)++;
-        return true;
+    } else if (event == Event::ArrowUp ||
+               (event.is_mouse() && event.mouse().button == Mouse::WheelUp)) {
+      if (*scroll_offset > 0)
+        (*scroll_offset)--;
+      return true;
+    } else if (event == Event::ArrowDown ||
+               (event.is_mouse() && event.mouse().button == Mouse::WheelDown)) {
+      int max_offset =
+          std::max(0, static_cast<int>(history->size()) - page_size);
+      if (*scroll_offset < max_offset)
+        (*scroll_offset)++;
+      return true;
     }
 
     return false;
@@ -420,7 +422,6 @@ Component CLI::make_transaction_render(void) {
   auto preview_component_ptr = std::make_shared<Component>();
   auto status_component_ptr = std::make_shared<Component>();
 
-
   auto spinner =
       std::make_shared<std::vector<std::string>>(std::vector<std::string>{
           "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"});
@@ -428,9 +429,7 @@ Component CLI::make_transaction_render(void) {
       " 🐢 SLOW ", " ⚡ NORMAL ", " 🚀 FAST ", " ✏️  CUSTOM "};
   InputOption input_opt;
   input_opt.multiline = false;
-  input_opt.on_change = [=]() {
-    error_msg->clear();
-  };
+  input_opt.on_change = [=]() { error_msg->clear(); };
   auto addr_input = Input(to_addr.get(), "0x...", input_opt);
   auto amount_input = Input(amount_str.get(), "0.00", input_opt);
   auto gas_limit_input = Input(custom_gas_limit.get(), "auto", input_opt);
@@ -518,9 +517,9 @@ Component CLI::make_transaction_render(void) {
                      text(" Gwei ") | dim})
              : text(""),
 
-         hbox({text(" LIMIT ") | dim,
-             gas_limit_input->Render() | flex,
-               text(custom_gas_limit->empty() ? " auto ": " units ") | dim | color(Color::GrayLight)
+         hbox({text(" LIMIT ") | dim, gas_limit_input->Render() | flex,
+               text(custom_gas_limit->empty() ? " auto " : " units ") | dim |
+                   color(Color::GrayLight)
 
          }),
 
@@ -539,8 +538,7 @@ Component CLI::make_transaction_render(void) {
   });
 
   auto send_component = CatchEvent(send_form, [=, this](Event event) {
-    if (event == Event::Character('b') || event == Event::Character('B') ||
-        event == Event::Escape) {
+    if (event == Event::Escape) {
       set_active_tab(WALLET_UI);
       return true;
     }
@@ -576,6 +574,12 @@ Component CLI::make_transaction_render(void) {
       *selected_subtab = 1;
       preview_component_ptr->get()->TakeFocus();
       return true;
+    } else if(event.is_character() && event.character().size() > 1) {
+        for(char c : event.character()) {
+            to_addr->push_back(c);
+        }
+
+        return true;
     }
 
     return false;
@@ -652,19 +656,18 @@ Component CLI::make_transaction_render(void) {
       });
   *preview_component_ptr = preview_component;
 
+  auto speed_up_btn = Button(
+      " ⚡ Speed Up ", [this] { actions->speed_up_transaction(); },
+      ButtonOption::Ascii());
 
-  auto speed_up_btn = Button(" ⚡ Speed Up ", [this] {
-      actions->speed_up_transaction();
-  }, ButtonOption::Ascii());
-
-  auto cancel_btn = Button(" ✕ Cancel Tx ", [this] {
-      actions->cancel_transaction();
-  }, ButtonOption::Ascii());
+  auto cancel_btn = Button(
+      " ✕ Cancel Tx ", [this] { actions->cancel_transaction(); },
+      ButtonOption::Ascii());
 
   auto status_btn_container = Container::Horizontal({speed_up_btn, cancel_btn});
 
   Component status_form = Renderer(status_btn_container, [=, this]() {
-      actions->update_current_tx_status();
+    actions->update_current_tx_status();
     auto [status, confirmed] = actions->get_current_tx_status();
     Element status_element = emptyElement();
     Element buttons_element = emptyElement();
@@ -677,11 +680,10 @@ Component CLI::make_transaction_render(void) {
                 text(" Waiting for confirmation... ") | color(Color::Yellow)}) |
           hcenter;
 
-      buttons_element = hbox({
-          speed_up_btn->Render() | color(Color::YellowLight),
-          text("  "),
-          cancel_btn->Render() | color(Color::RedLight)
-      }) | hcenter;
+      buttons_element =
+          hbox({speed_up_btn->Render() | color(Color::YellowLight), text("  "),
+                cancel_btn->Render() | color(Color::RedLight)}) |
+          hcenter;
 
       break;
 
@@ -702,15 +704,14 @@ Component CLI::make_transaction_render(void) {
       break;
     }
 
-    return to_center(vbox(
-        {text(" 📡 TRANSACTION STATUS ") | bold | color(Color::Cyan) | hcenter,
-         separatorDouble() | color(Color::Cyan), filler(), status_element,
-         filler(),
-         buttons_element,
-         filler(),
-         separator(),
-         text(" [ESC] Back to wallet ") | dim | hcenter})
-    |borderHeavy | color(Color::CyanLight) | size(WIDTH, EQUAL, 60) | size(HEIGHT, EQUAL, 12));
+    return to_center(
+        vbox({text(" 📡 TRANSACTION STATUS ") | bold | color(Color::Cyan) |
+                  hcenter,
+              separatorDouble() | color(Color::Cyan), filler(), status_element,
+              filler(), buttons_element, filler(), separator(),
+              text(" [ESC] Back to wallet ") | dim | hcenter}) |
+        borderHeavy | color(Color::CyanLight) | size(WIDTH, EQUAL, 60) |
+        size(HEIGHT, EQUAL, 12));
   });
 
   Component status_component = CatchEvent(status_form, [=, this](Event event) {

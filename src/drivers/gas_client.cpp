@@ -38,9 +38,9 @@ void GasManager::request(const secure_string &) {
     return;
 
   updating = true;
-    uint64_t gen = get_generation();
+  uint64_t gen = get_generation();
   worker = std::async(std::launch::async, [this, gen]() {
-      return std::make_pair(request_gas(),gen);
+    return std::make_pair(request_gas(), gen);
   });
 }
 void GasManager::update(void) {
@@ -49,10 +49,11 @@ void GasManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-          auto[result, gen] = worker.get();
-          if(gen == get_generation()) {
-              if(!isnan(result)) current_gas_price =result;
-          }
+        auto [result, gen] = worker.get();
+        if (gen == get_generation()) {
+          if (!isnan(result))
+            current_gas_price = result;
+        }
 
       } catch (const std::exception &err) {
       }

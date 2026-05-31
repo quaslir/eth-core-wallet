@@ -2,6 +2,8 @@
 #include "api/http.hpp"
 #include "api/json.hpp"
 #include "core/secure_bytes_data.hpp"
+#include "fmt/format.h"
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <memory>
@@ -9,7 +11,7 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
-
+#include "utils/tech_utils.hpp"
 std::vector<TransactionRecord>
 HistoryManager::parse_transactions(const json &j, bool incoming) const {
   try {
@@ -42,8 +44,8 @@ HistoryManager::parse_transactions(const json &j, bool incoming) const {
         tx.timestamp = item["metadata"]["blockTimestamp"].get<std::string>();
       }
 
-      if(item.contains("blockNum")) {
-          tx.block_num = item["blockNum"].get<std::string>();
+      if (item.contains("blockNum")) {
+        tx.block_num = item["blockNum"].get<std::string>();
       }
 
       history.push_back(tx);
@@ -57,8 +59,10 @@ HistoryManager::parse_transactions(const json &j, bool incoming) const {
 std::vector<TransactionRecord>
 HistoryManager::make_request(const std::string &eth_addr) {
 
-  json request_body_1 = transactions_history::form_receives(eth_addr, last_known_block);
-  json request_body_2 = transactions_history::form_sends(eth_addr, last_known_block);
+  json request_body_1 =
+      transactions_history::form_receives(eth_addr, last_known_block);
+  json request_body_2 =
+      transactions_history::form_sends(eth_addr, last_known_block);
 
   auto make_request_and_parse_buffer =
       [this](const json &j) -> std::pair<json, bool> {
@@ -84,16 +88,22 @@ HistoryManager::make_request(const std::string &eth_addr) {
   auto history_in = parse_transactions(object_in);
   auto history_out = parse_transactions(object_out, false);
 
-  cached_history.insert(cached_history.end(), history_in.begin(), history_in.end());
-  cached_history.insert(cached_history.end(), history_out.begin(), history_out.end());
+  cached_history.insert(cached_history.end(), history_in.begin(),
+                        history_in.end());
+  cached_history.insert(cached_history.end(), history_out.begin(),
+                        history_out.end());
 
   std::sort(
       cached_history.begin(), cached_history.end(),
       [](const auto &a, const auto &b) { return b.timestamp < a.timestamp; });
 
-  if(!cached_history.empty()) {
+  if (!cached_history.empty()) {
 
-  last_known_block = cached_history.front().block_num;
+     auto block_num = tech_utils::parse_hex(cached_history.front().block_num);
+     if(block_num.has_value()) {
+      last_known_block = fmt::format("0x{:x}", *block_num + 1);
+     }
+
   }
   return cached_history;
 }
@@ -103,9 +113,9 @@ void HistoryManager::request(const secure_string &eth_addr) {
     return;
 
   updating = true;
-    uint64_t gen = get_generation();
+  uint64_t gen = get_generation();
   worker = std::async(std::launch::async, [this, eth_addr, gen]() {
-    return  std::make_pair(make_request(std::string{eth_addr}), gen);
+    return std::make_pair(make_request(std::string{eth_addr}), gen);
   });
 }
 void HistoryManager::update(void) {
@@ -114,16 +124,17 @@ void HistoryManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-          auto [trans_history, gen] = worker.get();
-          if(gen == get_generation()) {
-              auto ptr = std::make_shared<std::vector<TransactionRecord>>(std::move(trans_history));
-              #if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
-                  __cpp_lib_atomic_shared_ptr >= 201711L
-                      atomic_history.store(ptr);
-              #else
-                      std::atomic_store(&atomic_history, ptr);
-              #endif
-          }
+        auto [trans_history, gen] = worker.get();
+        if (gen == get_generation()) {
+          auto ptr = std::make_shared<std::vector<TransactionRecord>>(
+              std::move(trans_history));
+#if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
+    __cpp_lib_atomic_shared_ptr >= 201711L
+          atomic_history.store(ptr);
+#else
+          std::atomic_store(&atomic_history, ptr);
+#endif
+        }
       } catch (const std::exception &err) {
       }
 
@@ -135,16 +146,21 @@ void HistoryManager::update(void) {
 
 std::shared_ptr<std::vector<TransactionRecord>>
 HistoryManager::get_transactions_history(void) const {
-    #if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
-        __cpp_lib_atomic_shared_ptr >= 201711L
-      return atomic_history.load();
-    #else
-      return std::atomic_load(&atomic_history);
-    #endif
+#if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
+    __cpp_lib_atomic_shared_ptr >= 201711L
+  return atomic_history.load();
+#else
+  return std::atomic_load(&atomic_history);
+#endif
 }
 
 HistoryManager::~HistoryManager() {
   if (worker.valid()) {
     worker.wait();
   }
+}
+
+void HistoryManager::clear_history(void) {
+    cached_history.clear();
+    last_known_block = "0x0";
 }
