@@ -283,10 +283,10 @@ Component CLI::transaction_history_render(void) {
 
     Elements rows;
 
-    rows.push_back(hbox({text(" DATE      ") | bold | color(Color::Blue),
-                         text(" TYPE ") | bold | color(Color::Blue),
-                         text(" AMOUNT        ") | bold | color(Color::Blue),
-                         text(" FROM          ") | bold | color(Color::Blue),
+    rows.push_back(hbox({text(" DATE           ") | bold | color(Color::Blue),
+                         text(" TYPE     ") | bold | color(Color::Blue),
+                         text(" AMOUNT           ") | bold | color(Color::Blue),
+                         text(" FROM             ") | bold | color(Color::Blue),
                          text(" HASH     ") | bold | color(Color::Blue)}) |
                    bgcolor(Color::Blue) | color(Color::White));
 
@@ -319,7 +319,7 @@ Component CLI::transaction_history_render(void) {
     auto box = vbox({text(" TRANSACTION HISTORY ") | bold | hcenter |
                          color(Color::Yellow),
                      separator(), table_element,
-
+                     text(""),
                      hbox({buttons->Render() | hcenter}) | hcenter
 
                }) |
@@ -528,7 +528,7 @@ Component CLI::make_transaction_render(void) {
              ? text("")
              : text(" ✗ " + *error_msg) | color(Color::Red1) | hcenter,
          separator(),
-         text(" [ENTER] Send | [B] Back | [TAB] Switch field ") | dim |
+         text(" [ENTER] Send | [ESC] Back | [TAB] Switch field ") | dim |
              hcenter});
 
     return to_center(
@@ -540,6 +540,10 @@ Component CLI::make_transaction_render(void) {
   auto send_component = CatchEvent(send_form, [=, this](Event event) {
     if (event == Event::Escape) {
       set_active_tab(WALLET_UI);
+      to_addr->clear();
+      amount_str->clear();
+      custom_gas->clear();
+      error_msg->clear();
       return true;
     }
 
