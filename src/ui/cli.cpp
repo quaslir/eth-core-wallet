@@ -62,4 +62,6 @@ void CLI::load(void) {
   if (refresh_thread.joinable()) {
     refresh_thread.join();
   }
+
+  screen.TrackMouse(true);
 }

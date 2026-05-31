@@ -44,7 +44,7 @@ private:
   void copy_address(void) override;
   void copy_private_key(void) override;
   const bytes_data &get_private_key(void) override;
-  std::pair<std::vector<TransactionRecord>, bool>
+  std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
   get_transactions_history(void) override;
   void update_transactions_data(bool force = false) override;
   std::string get_current_network(void) override;

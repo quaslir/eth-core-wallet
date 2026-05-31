@@ -18,7 +18,7 @@ void TxStatusManager::request(const secure_string &) {
   updating = true;
   uint64_t gen = get_generation();
   worker = std::async(std::launch::async, [this, gen]() {
-      return std::make_pair(make_request(), gen);
+    return std::make_pair(make_request(), gen);
   });
 }
 void TxStatusManager::update(void) {
@@ -27,8 +27,8 @@ void TxStatusManager::update(void) {
 
     if (status == std::future_status::ready) {
       try {
-        auto[tx_status, gen] = worker.get();
-        if(gen == get_generation()) {
+        auto [tx_status, gen] = worker.get();
+        if (gen == get_generation()) {
           current_tx_status = tx_status;
         }
       } catch (const std::exception &err) {
@@ -78,6 +78,4 @@ std::pair<TxStatus, bool> TxStatusManager::make_request(void) {
   }
 }
 
-std::string TxStatusManager::get_tx_hash(void) const {
-    return current_tx_hash;
-}
+std::string TxStatusManager::get_tx_hash(void) const { return current_tx_hash; }

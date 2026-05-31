@@ -33,10 +33,10 @@ public:
 
   void update(void);
   std::shared_ptr<assets_data> get_balance(void) const;
-  std::pair<std::vector<TransactionRecord>, bool>
+  std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
   get_transaction_history(void) const;
   std::pair<double, bool> get_current_gas(void) const;
-
+  void clear_history(void) ;
   bool update_history_manager(bool force = false);
   bool update_balance_manager(bool force = false);
   bool update_gas_manager(bool force = false);
@@ -49,8 +49,9 @@ public:
                             uint64_t gas_limit);
   std::pair<TxStatus, bool> get_current_tx_status(void) const;
   void update_current_tx_status(void);
-  bool speed_up_transaction(const bytes_data& private_key);
-  bool cancel_transaction(const bytes_data& private_key);
+  bool speed_up_transaction(const bytes_data &private_key);
+  bool cancel_transaction(const bytes_data &private_key);
+
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;

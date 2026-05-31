@@ -69,7 +69,7 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
   balance_futures.reserve(new_assets.size());
 
   for (auto &[key, asset] : new_assets) {
-      Asset * asset_ptr = &asset;
+    Asset *asset_ptr = &asset;
     if (asset.is_native) {
       balance_futures.push_back(
           std::async(std::launch::async, [this, asset_ptr, &eth_addr]() {
@@ -147,10 +147,9 @@ void BalanceManager::request(const secure_string &addr) {
     return;
   updating = true;
   uint64_t gen = get_generation();
-  worker = std::async(std::launch::async,
-                      [this, addr, gen]() {
-                          return std::make_pair(update_all(addr), gen);
-                      });
+  worker = std::async(std::launch::async, [this, addr, gen]() {
+    return std::make_pair(update_all(addr), gen);
+  });
 }
 
 void BalanceManager::update(void) {
@@ -160,15 +159,15 @@ void BalanceManager::update(void) {
     if (status == std::future_status::ready) {
       try {
         auto [assets, gen] = worker.get();
-        if(gen == get_generation()) {
-            auto ptr = std::make_shared<assets_data>(std::move(assets));
+        if (gen == get_generation()) {
+          auto ptr = std::make_shared<assets_data>(std::move(assets));
 
-            #if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
-                __cpp_lib_atomic_shared_ptr >= 201711L
-                    atomic_assets.store(ptr);
-            #else
-                    std::atomic_store(&atomic_assets, ptr);
-            #endif
+#if defined(__cpp_lib_atomic_shared_ptr) &&                                    \
+    __cpp_lib_atomic_shared_ptr >= 201711L
+          atomic_assets.store(ptr);
+#else
+          std::atomic_store(&atomic_assets, ptr);
+#endif
         }
 
       } catch (...) {
@@ -186,7 +185,6 @@ std::shared_ptr<assets_data> BalanceManager::get_balance() const {
   return std::atomic_load(&atomic_assets);
 #endif
 }
-
 
 BalanceManager::~BalanceManager() {
   if (worker.valid()) {

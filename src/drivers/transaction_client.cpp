@@ -52,10 +52,9 @@ TransactionManager::get_nonce(const secure_string &eth_addr,
 
     json j = json::parse(result);
 
-    std::string value = j.at("result").get<std::string>();
+    std::string hex = j.at("result").get<std::string>();
 
-    uint64_t converted = std::stoull(value, nullptr, 16);
-    return converted;
+    return tech_utils::parse_hex(hex);
   } catch (const std::exception &err) {
     return std::nullopt;
   }
@@ -151,8 +150,8 @@ TransactionManager::estimate_gas(const RawTx &raw_tx,
   }
 }
 
-RawTx TransactionManager::get_original_tx(const std::string& tx_hash) const {
-    try {
+RawTx TransactionManager::get_original_tx(const std::string &tx_hash) const {
+  try {
     json j;
     j["jsonrpc"] = "2.0";
     j["method"] = "eth_getTransactionByHash";
@@ -166,19 +165,21 @@ RawTx TransactionManager::get_original_tx(const std::string& tx_hash) const {
 
     RawTx raw_tx;
     raw_tx.nonce = std::stoull(tx.at("nonce").get<std::string>(), nullptr, 16);
-    raw_tx.gas_price = std::stoull(tx.at("gasPrice").get<std::string>(), nullptr, 16);
-    raw_tx.gas_limit =  std::stoull(tx.at("gas").get<std::string>(), nullptr, 16);
+    raw_tx.gas_price =
+        std::stoull(tx.at("gasPrice").get<std::string>(), nullptr, 16);
+    raw_tx.gas_limit =
+        std::stoull(tx.at("gas").get<std::string>(), nullptr, 16);
     raw_tx.to = tech_utils::from_hex_to_bytes(tx.at("to").get<std::string>());
     raw_tx.value = Uint256(tx.at("value").get<std::string>(), true);
 
     std::string input = tx.at("input").get<std::string>();
 
-    if(input != "0x") {
-        raw_tx.data = tech_utils::from_hex_to_bytes(input);
+    if (input != "0x") {
+      raw_tx.data = tech_utils::from_hex_to_bytes(input);
     }
 
     return raw_tx;
-    } catch(const std::exception& err) {
-        return RawTx();
-    }
+  } catch (const std::exception &err) {
+    return RawTx();
+  }
 }

@@ -30,7 +30,8 @@ public:
   std::function<std::string(void)> form_url;
   std::optional<uint64_t> estimate_gas(const RawTx &raw_tx,
                                        const secure_string &from) const;
-  RawTx get_original_tx(const std::string& tx_hash) const;
+  RawTx get_original_tx(const std::string &tx_hash) const;
+
 private:
   std::tuple<bytes_data, bytes_data, int>
   sign_transaction(const bytes_data &hash, const bytes_data &key);

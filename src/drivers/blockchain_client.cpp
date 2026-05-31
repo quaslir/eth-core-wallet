@@ -45,8 +45,8 @@ void BlockchainClient::change_network(
   gas_manager.clear();
   history_manager.clear();
 
-  last_update_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(FULL_UPDATE_TIMEOUT);
-
+  last_update_time = std::chrono::steady_clock::now() -
+                     std::chrono::milliseconds(FULL_UPDATE_TIMEOUT);
 
   update();
   push_activity("🔗", "Switched to " + new_network.name);
@@ -65,7 +65,7 @@ std::shared_ptr<assets_data> BlockchainClient::get_balance(void) const {
 
   return balance_manager.get_balance();
 }
-std::pair<std::vector<TransactionRecord>, bool>
+std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
 BlockchainClient::get_transaction_history(void) const {
   return {history_manager.get_transactions_history(),
           history_manager.get_error()};
@@ -119,6 +119,11 @@ bool BlockchainClient::update_gas_manager(bool force) {
 
   return true;
 }
+
+void BlockchainClient::clear_history(void) {
+    history_manager.clear_history();
+}
+
 
 std::pair<TxStatus, bool> BlockchainClient::get_current_tx_status(void) const {
   return tx_status_manager.get_current_tx_status();
@@ -202,29 +207,32 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
   return true;
 }
 
-bool BlockchainClient::speed_up_transaction(const bytes_data& private_key) {
-    RawTx tx = transaction_manager.get_original_tx(tx_status_manager.get_tx_hash());
-    tx.gas_price = static_cast<uint64_t>(tx.gas_price * 1.15);
-    tx.private_key = private_key;
-    auto rs = transaction_manager.send(tx);
-    std::string hash = rs.get();
-    if(hash.empty()) return false;
-    tx_status_manager.set_tx_hash(hash);
-    return true;
-
+bool BlockchainClient::speed_up_transaction(const bytes_data &private_key) {
+  RawTx tx =
+      transaction_manager.get_original_tx(tx_status_manager.get_tx_hash());
+  tx.gas_price = static_cast<uint64_t>(tx.gas_price * 1.15);
+  tx.private_key = private_key;
+  auto rs = transaction_manager.send(tx);
+  std::string hash = rs.get();
+  if (hash.empty())
+    return false;
+  tx_status_manager.set_tx_hash(hash);
+  return true;
 }
-bool BlockchainClient::cancel_transaction(const bytes_data& private_key) {
-    RawTx tx = transaction_manager.get_original_tx(tx_status_manager.get_tx_hash());
+bool BlockchainClient::cancel_transaction(const bytes_data &private_key) {
+  RawTx tx =
+      transaction_manager.get_original_tx(tx_status_manager.get_tx_hash());
 
-    tx.to = tech_utils::from_hex_to_bytes(std::string{get_current_eth_addr()});
-    tx.value = Uint256("0", false);
-    tx.data = {};
-    tx.gas_price = static_cast<uint64_t>(tx.gas_price * 1.15);
-    tx.private_key = private_key;
-    tx.gas_limit = 21000;
-    auto rs = transaction_manager.send(tx);
-    std::string hash = rs.get();
-    if(hash.empty()) return false;
-    tx_status_manager.set_tx_hash(hash);
-    return true;
+  tx.to = tech_utils::from_hex_to_bytes(std::string{get_current_eth_addr()});
+  tx.value = Uint256("0", false);
+  tx.data = {};
+  tx.gas_price = static_cast<uint64_t>(tx.gas_price * 1.15);
+  tx.private_key = private_key;
+  tx.gas_limit = 21000;
+  auto rs = transaction_manager.send(tx);
+  std::string hash = rs.get();
+  if (hash.empty())
+    return false;
+  tx_status_manager.set_tx_hash(hash);
+  return true;
 }

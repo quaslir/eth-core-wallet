@@ -27,6 +27,7 @@ struct AlchemyJSON {
 };
 
 namespace transactions_history {
-json form_receives(const std::string &addr);
-json form_sends(const std::string &addr);
+json form_receives(const std::string &addr,
+                   const std::string &from_block = "0x0");
+json form_sends(const std::string &addr, const std::string &from_block = "0x0");
 } // namespace transactions_history

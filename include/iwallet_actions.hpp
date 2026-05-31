@@ -37,7 +37,7 @@ public:
   virtual void copy_private_key(void) = 0;
   virtual void apply_choice_from_wallet_ui(int choice) = 0;
   virtual const bytes_data &get_private_key(void) = 0;
-  virtual std::pair<std::vector<TransactionRecord>, bool>
+  virtual std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
   get_transactions_history(void) = 0;
   virtual std::pair<double, bool> get_current_gas_price(void) = 0;
   virtual void update_transactions_data(bool force = false) = 0;
@@ -60,6 +60,6 @@ public:
   virtual std::pair<TxStatus, bool> get_current_tx_status(void) = 0;
   virtual void update_current_tx_status(void) = 0;
 
-  virtual  bool speed_up_transaction(void) = 0;
+  virtual bool speed_up_transaction(void) = 0;
   virtual bool cancel_transaction(void) = 0;
 };

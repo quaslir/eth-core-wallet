@@ -23,4 +23,6 @@ bool contains_only_lowercase(std::string_view string);
 std::string decimals_to_divisor(int decimals);
 double calculate_total(const assets_data &assets);
 uint64_t string_to_uint64(const std::string &str);
+void copy_to_clipboard(const secure_string& text);
+std::optional<uint64_t> parse_hex(const std::string & hex);
 } // namespace tech_utils
