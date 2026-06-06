@@ -1,10 +1,12 @@
 #include "core/asset.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/tx_status_client.hpp"
 #include "fmt/core.h"
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
+#include "ui/password_sign_ui.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <fmt/chrono.h>
@@ -421,7 +423,24 @@ Component CLI::make_transaction_render(void) {
   auto send_component_ptr = std::make_shared<Component>();
   auto preview_component_ptr = std::make_shared<Component>();
   auto status_component_ptr = std::make_shared<Component>();
+  Component sign_transaction = PasswordUI::create("Confirm transaction", [=, this](const secure_string& password){
+      return actions->check_password(password);
+  }, [=, this]{
+      bool ok =
+          actions->send_transaction(*to_addr, *current_asset, *amount_str,
+                                    *final_gas, *custom_gas_limit);
+      if (ok) {
+        to_addr->clear();
+        amount_str->clear();
+              *selected_subtab = 3;
+        status_component_ptr->get()->TakeFocus();
+      } else {
+        *error_msg = "Failed to send transaction";
+      }
 
+  }, [=]{
+      *selected_subtab = 0;
+  });
   auto spinner =
       std::make_shared<std::vector<std::string>>(std::vector<std::string>{
           "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"});
@@ -636,19 +655,8 @@ Component CLI::make_transaction_render(void) {
   Component preview_component =
       CatchEvent(preview_form, [=, this](Event event) {
         if (event == Event::Return) {
-
-          bool ok =
-              actions->send_transaction(*to_addr, *current_asset, *amount_str,
-                                        *final_gas, *custom_gas_limit);
-
-          if (ok) {
-            to_addr->clear();
-            amount_str->clear();
             *selected_subtab = 2;
-            status_component_ptr->get()->TakeFocus();
-          } else {
-            *error_msg = "Failed to send transaction";
-          }
+            sign_transaction->TakeFocus();
           return true;
         } else if (event == Event::Escape) {
           *selected_subtab = 0;
@@ -731,7 +739,7 @@ Component CLI::make_transaction_render(void) {
   });
   *status_component_ptr = status_component;
   auto root =
-      Container::Tab({send_component, preview_component, status_component},
+      Container::Tab({send_component, preview_component,  sign_transaction, status_component},
                      selected_subtab.get());
 
   return Renderer(root, [=] {
@@ -740,7 +748,9 @@ Component CLI::make_transaction_render(void) {
     } else if (*selected_subtab == 1) {
       return preview_component->Render();
     }
-
+    else if(*selected_subtab == 2) {
+     return sign_transaction->Render();
+ }
     return status_component->Render();
   });
 }

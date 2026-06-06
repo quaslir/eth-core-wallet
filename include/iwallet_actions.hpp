@@ -24,7 +24,7 @@ public:
   virtual void set_mnemonic(secure_string &&mnemonic) = 0;
   virtual void set_passphrase(secure_string &&passphrase) = 0;
   virtual void import_wallet(void) = 0;
-  virtual bool check_password(const secure_string &password) = 0;
+  virtual bool check_and_load_wallet(const secure_string &password) = 0;
   virtual void load_wallet(void) = 0;
   virtual void save_wallet(void) = 0;
   virtual void change_bit_length(int new_bit_length) = 0;
@@ -62,4 +62,6 @@ public:
 
   virtual bool speed_up_transaction(void) = 0;
   virtual bool cancel_transaction(void) = 0;
+
+  virtual bool check_password(const secure_string& password) = 0;
 };

@@ -36,7 +36,6 @@ private:
   ScreenInteractive screen = ScreenInteractive::Fullscreen();
   int active_tab = MAIN_MENU;
   IWalletActions *actions;
-
   Component render_password_setup(void);
   Component create_main_menu(void);
   Component render_confirm_password_setup(void);

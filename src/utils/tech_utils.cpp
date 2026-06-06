@@ -183,7 +183,7 @@ void copy_to_clipboard(const secure_string& text) {
     #else
     FILE * pipe = popen("xclip -selection clipboard 2>/dev/null", "w");
     if(!pipe) pipe = popen("xsel --clipboard --input 2>/dev/null", "w");
-    if(!pipe) = popen("wl-copy 2>/dev/null", "w");
+    if(!pipe) = pipe popen("wl-copy 2>/dev/null", "w");
     #endif
 
     if(pipe) {

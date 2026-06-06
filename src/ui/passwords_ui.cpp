@@ -126,7 +126,7 @@ Component CLI::render_request_unlock_password(void) {
   auto component = CatchEvent(field, [=, this](Event event) {
     if (event == Event::Return && !user_input->empty()) {
 
-      if (actions->check_password(*user_input)) {
+      if (actions->check_and_load_wallet(*user_input)) {
 
         actions->load_wallet();
         actions->update_balance();

@@ -33,7 +33,7 @@ private:
   void set_mnemonic(secure_string &&mnemonic) override;
   void set_passphrase(secure_string &&passphrase) override;
   void import_wallet(void) override;
-  bool check_password(const secure_string &password) override;
+  bool check_and_load_wallet(const secure_string &password) override;
   void load_wallet(void) override;
   void save_wallet(void) override;
   void change_bit_length(int new_bit_length) override;
@@ -62,4 +62,5 @@ private:
   void update_current_tx_status(void) override;
   bool speed_up_transaction(void) override;
   bool cancel_transaction(void) override;
+  bool check_password(const secure_string& password) override;
 };

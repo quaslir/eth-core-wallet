@@ -66,7 +66,7 @@ bool check_password(const secure_string &password,
                    encrp.ciphertext.end());
   Keccak256::getHash(mac_input.data(), mac_input.size(), mac.data());
 
-  return CRYPTO_memcmp(mac.data(), encrp.mac.data(), mac.size()) != 0;
+  return CRYPTO_memcmp(mac.data(), encrp.mac.data(), mac.size()) == 0;
 }
 
 bool load_wallet(Wallet &wallet, const secure_string &password,
