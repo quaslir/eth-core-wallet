@@ -25,6 +25,8 @@ Component PasswordUI::create(const std::string & title, std::function<bool(const
                         input->Render() | flex,
                     }),
 
+                    error_msg->empty() ? emptyElement() : text_(*error_msg) | hcenter | bold | color(Color::Red),
+
                     separator(),
                     text(" [ENTER] Confirm | [ESC] Cancel ") | dim | hcenter
                 }) | borderHeavy | color(Color::Yellow) | size(WIDTH, EQUAL, 50) | size(HEIGHT, EQUAL, 12)

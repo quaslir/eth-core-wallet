@@ -94,7 +94,7 @@ std::string TransactionManager::make_request(const bytes_data &data) const {
 
     return res.at("result").get<std::string>();
   } catch (const std::exception &err) {
-    return "";
+      return "";
   }
 }
 
