@@ -1,10 +1,12 @@
 #include "core/asset.hpp"
+#include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/tx_status_client.hpp"
 #include "fmt/core.h"
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
+#include "ui/password_sign_ui.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <fmt/chrono.h>
@@ -210,6 +212,17 @@ Component CLI::display_private_key(void) {
     return false;
   });
 
+
+  Component to_approve = PasswordUI::create("Confirm showing private key", [this](const secure_string& password) {
+      return actions->check_password(password);
+  }, [=]() {
+      *active_sub_tab = 2;
+  }, [=, this]() {
+      *active_sub_tab = 0;
+      active_tab = WALLET_UI;
+  });
+
+
   Component private_key_view = Renderer(button_subtab_1, [=, this] {
     const bytes_data &private_key_in_bytes = actions->get_private_key();
 
@@ -246,13 +259,15 @@ Component CLI::display_private_key(void) {
         return false;
       });
   auto container =
-      Container::Tab({warning_component, private_key_displayer_component},
+      Container::Tab({warning_component, to_approve, private_key_displayer_component},
                      active_sub_tab.get());
 
   return Renderer(container, [=] {
     container->ChildAt(*active_sub_tab)->TakeFocus();
     if (*active_sub_tab == 0) {
       return warning_component->Render();
+    } else if(*active_sub_tab == 1) {
+        return to_approve->Render();
     }
     return private_key_displayer_component->Render();
   });
@@ -332,6 +347,7 @@ Component CLI::transaction_history_render(void) {
   return CatchEvent(component, [=, this](Event event) {
     auto [history, error] = actions->get_transactions_history();
     if (event == Event::Character('b') || event == Event::Character('B')) {
+        *scroll_offset = 0;
       set_active_tab(WALLET_UI);
       return true;
     } else if (event == Event::Character('r') ||
@@ -417,11 +433,30 @@ Component CLI::make_transaction_render(void) {
   auto spin_idx = std::make_shared<int>(0);
   auto custom_gas_limit = std::make_shared<std::string>();
   auto custom_gas = std::make_shared<std::string>();
-
   auto send_component_ptr = std::make_shared<Component>();
   auto preview_component_ptr = std::make_shared<Component>();
   auto status_component_ptr = std::make_shared<Component>();
+  auto status_container_tab = std::make_shared<int>(0);
+  auto to_cancel = std::make_shared<bool>();
+  auto to_speed_up = std::make_shared<bool>();
+  Component sign_transaction = PasswordUI::create("Confirm transaction", [=, this](const secure_string& password){
+      return actions->check_password(password);
+  }, [=, this]{
+      bool ok =
+          actions->send_transaction(*to_addr, *current_asset, *amount_str,
+                                    *final_gas, *custom_gas_limit);
+      if (ok) {
+        to_addr->clear();
+        amount_str->clear();
+              *selected_subtab = 3;
+        status_component_ptr->get()->TakeFocus();
+      } else {
+        *error_msg = "Failed to send transaction";
+      }
 
+  }, [=]{
+      *selected_subtab = 0;
+  });
   auto spinner =
       std::make_shared<std::vector<std::string>>(std::vector<std::string>{
           "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"});
@@ -636,19 +671,8 @@ Component CLI::make_transaction_render(void) {
   Component preview_component =
       CatchEvent(preview_form, [=, this](Event event) {
         if (event == Event::Return) {
-
-          bool ok =
-              actions->send_transaction(*to_addr, *current_asset, *amount_str,
-                                        *final_gas, *custom_gas_limit);
-
-          if (ok) {
-            to_addr->clear();
-            amount_str->clear();
             *selected_subtab = 2;
-            status_component_ptr->get()->TakeFocus();
-          } else {
-            *error_msg = "Failed to send transaction";
-          }
+            sign_transaction->TakeFocus();
           return true;
         } else if (event == Event::Escape) {
           *selected_subtab = 0;
@@ -660,17 +684,52 @@ Component CLI::make_transaction_render(void) {
       });
   *preview_component_ptr = preview_component;
 
+
   auto speed_up_btn = Button(
-      " ⚡ Speed Up ", [this] { actions->speed_up_transaction(); },
+      " ⚡ Speed Up ", [=] {
+          *to_speed_up = true;
+          *status_container_tab = 1;
+      },
       ButtonOption::Ascii());
 
   auto cancel_btn = Button(
-      " ✕ Cancel Tx ", [this] { actions->cancel_transaction(); },
+      " ✕ Cancel Tx ", [=] {
+          *to_cancel = true;
+          *status_container_tab = 2;
+      },
       ButtonOption::Ascii());
 
   auto status_btn_container = Container::Horizontal({speed_up_btn, cancel_btn});
 
-  Component status_form = Renderer(status_btn_container, [=, this]() {
+  Component confirm_canceling = PasswordUI::create("Confirm cancel transaction", [=, this](const secure_string& password){
+      return actions->check_password(password);
+  }, [=, this]{
+      actions->cancel_transaction();
+       *status_container_tab = 0;
+       status_btn_container->TakeFocus();
+  }, [=]{
+      *to_cancel = false;
+       *status_container_tab = 0;
+       status_btn_container->TakeFocus();
+  });
+
+  Component confirm_speeding_up= PasswordUI::create("Confirm speed up transaction", [=, this](const secure_string& password){
+      return actions->check_password(password);
+  }, [=, this]{
+      actions->speed_up_transaction();
+      *status_container_tab = 0;
+      status_btn_container->TakeFocus();
+  }, [=]{
+      *to_speed_up = false;
+       *status_container_tab = 0;
+       status_btn_container->TakeFocus();
+  });
+  auto container_status = Container::Tab({status_btn_container, confirm_speeding_up, confirm_canceling}, status_container_tab.get());
+  Component status_form = Renderer(container_status, [=, this]() {
+      if(*status_container_tab == 1) return confirm_speeding_up->Render();
+      else if(*status_container_tab == 2) return confirm_canceling->Render();
+
+
     actions->update_current_tx_status();
     auto [status, confirmed] = actions->get_current_tx_status();
     Element status_element = emptyElement();
@@ -684,11 +743,16 @@ Component CLI::make_transaction_render(void) {
                 text(" Waiting for confirmation... ") | color(Color::Yellow)}) |
           hcenter;
 
+
+
+
+      if(!*to_speed_up && !*to_cancel) {
+
       buttons_element =
           hbox({speed_up_btn->Render() | color(Color::YellowLight), text("  "),
                 cancel_btn->Render() | color(Color::RedLight)}) |
           hcenter;
-
+      }
       break;
 
     case TxStatus::SUCCESS:
@@ -723,6 +787,9 @@ Component CLI::make_transaction_render(void) {
       *selected_subtab = 0;
       send_component_ptr->get()->TakeFocus();
       *tx_status = TxStatus::ERROR;
+      *to_speed_up = false;
+      *to_cancel = false;
+      *status_container_tab = 0;
       set_active_tab(WALLET_UI);
       return true;
     }
@@ -731,7 +798,7 @@ Component CLI::make_transaction_render(void) {
   });
   *status_component_ptr = status_component;
   auto root =
-      Container::Tab({send_component, preview_component, status_component},
+      Container::Tab({send_component, preview_component,  sign_transaction, status_component},
                      selected_subtab.get());
 
   return Renderer(root, [=] {
@@ -740,7 +807,9 @@ Component CLI::make_transaction_render(void) {
     } else if (*selected_subtab == 1) {
       return preview_component->Render();
     }
-
+    else if(*selected_subtab == 2) {
+     return sign_transaction->Render();
+ }
     return status_component->Render();
   });
 }

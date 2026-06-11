@@ -212,6 +212,7 @@ bool BlockchainClient::speed_up_transaction(const bytes_data &private_key) {
       transaction_manager.get_original_tx(tx_status_manager.get_tx_hash());
   tx.gas_price = static_cast<uint64_t>(tx.gas_price * 1.15);
   tx.private_key = private_key;
+  tx.v = active_network.chain_id;
   auto rs = transaction_manager.send(tx);
   std::string hash = rs.get();
   if (hash.empty())
@@ -229,6 +230,7 @@ bool BlockchainClient::cancel_transaction(const bytes_data &private_key) {
   tx.gas_price = static_cast<uint64_t>(tx.gas_price * 1.15);
   tx.private_key = private_key;
   tx.gas_limit = 21000;
+  tx.v = active_network.chain_id;
   auto rs = transaction_manager.send(tx);
   std::string hash = rs.get();
   if (hash.empty())

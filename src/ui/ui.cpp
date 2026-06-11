@@ -126,8 +126,12 @@ void UserInterface::import_wallet(void) {
   wallet.import_wallet(temp.mnemonic, temp.passphrase);
 }
 
-bool UserInterface::check_password(const secure_string &password) {
+bool UserInterface::check_and_load_wallet(const secure_string &password) {
   return security_manager::load_wallet(wallet, password);
+}
+
+bool UserInterface::check_password(const secure_string& password) {
+    return security_manager::check_password(password);
 }
 void UserInterface::load_wallet(void) {
   std::vector<uint32_t> current_path =

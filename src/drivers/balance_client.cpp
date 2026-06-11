@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <iostream>
 std::string form_data(const std::string &contract_address,
                       const secure_string &eth_addr) {
   json j;
@@ -88,7 +89,7 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
   symbols.reserve(new_assets.size());
 
   for (const auto &asset : new_assets) {
-    symbols.push_back(asset.second.symbol);
+    symbols.push_back(asset.second.id);
   }
 
   auto price_future = std::async(std::launch::async, [&symbols]() {
@@ -101,7 +102,7 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
   auto prices = price_future.get();
 
   for (auto &asset : new_assets) {
-    auto it = prices.find(asset.second.symbol);
+    auto it = prices.find(asset.second.id);
 
     if (it != prices.end()) {
       asset.second.fiat_price = it->second;

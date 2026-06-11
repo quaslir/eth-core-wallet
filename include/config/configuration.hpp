@@ -10,6 +10,9 @@ static constexpr auto MIN_API =
 inline constexpr auto MIN_URL_BATCH =
     "https://min-api.cryptocompare.com/data/pricemulti?fsyms=";
 
+static constexpr auto COINGECKO_API = "CG-WruGSkuP8QbJNUGVcqPMcTzm";
+
+
 // TIMEOUTS
 static constexpr auto BALANCE_TIMEOUT = 10000;
 static constexpr auto TRANSACTION_TIMEOUT = 10000;

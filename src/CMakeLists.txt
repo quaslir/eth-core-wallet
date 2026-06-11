@@ -18,6 +18,7 @@ ui/supported_functions_cli.cpp
 ui/main_wallet_ui.cpp
 ui/wallet_setup_ui.cpp
 ui/passwords_ui.cpp
+ui/password_sign_ui.cpp
 )
 
 set(UTILS_SOURCES

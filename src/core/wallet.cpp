@@ -65,7 +65,7 @@ const bytes_data &Wallet::get_master_node(void) const {
 }
 
 bool Wallet::derive_next(void) {
-  if (index >= 0x7FFFFFF)
+  if (index >= 0x7FFFFFFF)
     return false;
 
   try {
