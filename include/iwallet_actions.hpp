@@ -1,9 +1,10 @@
 #pragma once
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <string>
 #include <vector>
@@ -35,6 +36,7 @@ public:
 
   virtual void copy_address(void) = 0;
   virtual void copy_private_key(void) = 0;
+  virtual void copy_mnemonic(void) = 0;
   virtual void apply_choice_from_wallet_ui(int choice) = 0;
   virtual const bytes_data &get_private_key(void) = 0;
   virtual std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
@@ -52,7 +54,7 @@ public:
 
   virtual const std::deque<ActivityEvent> &get_activity(void) = 0;
 
-  virtual bool send_transaction(const std::string &to, const Asset &asset,
+  virtual std::pair<std::string, bool> send_transaction(const std::string &to, const Asset &asset,
                                 const std::string &amount,
                                 double target_gas_gwei,
                                 const std::string &gas_limit_input) = 0;
@@ -64,4 +66,6 @@ public:
   virtual bool cancel_transaction(void) = 0;
 
   virtual bool check_password(const secure_string& password) = 0;
+
+  virtual uint64_t get_current_chain_id(void) = 0;
 };

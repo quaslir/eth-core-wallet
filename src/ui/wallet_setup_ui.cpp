@@ -2,6 +2,7 @@
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/input_component.hpp"
 #include "ui/ftxui-components/paragraph.hpp"
+#include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -80,12 +81,25 @@ Component CLI::create_main_menu(void) {
 Component CLI::render_mnemonic_element(void) {
   auto mnemonic = std::make_shared<secure_string>(actions->get_mnemonic());
 
+
+
+
+
   auto button = Button(
       " [ I HAVE WRITTEN IT DOWN ] ",
       [this, mnemonic] { this->set_active_tab(MNEMONIC_WIPING); },
       ButtonOption::Ascii());
 
-  return Renderer(button, [this, button, mnemonic] {
+    auto mnemonic_component = CatchEvent(button, [this](Event event) {
+        if(event.character() == "c" || event.character() == "C") {
+            actions->copy_mnemonic();
+            return true;
+        }
+
+        return false;
+    });
+
+  return Renderer(mnemonic_component, [this,button, mnemonic] {
     if (mnemonic->empty()) {
       *mnemonic = actions->get_mnemonic();
     }

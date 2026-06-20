@@ -1,5 +1,5 @@
 #pragma once
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "drivers/balance_client.hpp"
 #include <cstdint>

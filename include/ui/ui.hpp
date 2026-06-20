@@ -1,5 +1,6 @@
 #include "cli.hpp"
 #include "config/config.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet.hpp"
 #include "core/wallet_info.hpp"
@@ -19,7 +20,7 @@ private:
   };
   TEMP_DATA temp;
   CLI cli;
-
+  AssetsStore assets_store;
   void apply_choice_from_wallet_ui(int choice) override;
 
   secure_string get_mnemonic(void) override;
@@ -43,6 +44,7 @@ private:
   void update_balance(bool force = false) override;
   void copy_address(void) override;
   void copy_private_key(void) override;
+    void copy_mnemonic(void) override;
   const bytes_data &get_private_key(void) override;
   std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
   get_transactions_history(void) override;
@@ -55,7 +57,7 @@ private:
   void update_gas_price(bool force = false) override;
   void update_info(void) override;
   const std::deque<ActivityEvent> &get_activity(void) override;
-  bool send_transaction(const std::string &to, const Asset &asset,
+  std::pair<std::string, bool> send_transaction(const std::string &to, const Asset &asset,
                         const std::string &amount, double target_gas_gwei,
                         const std::string &gas_limit_input) override;
   std::pair<TxStatus, bool> get_current_tx_status(void) override;
@@ -63,4 +65,6 @@ private:
   bool speed_up_transaction(void) override;
   bool cancel_transaction(void) override;
   bool check_password(const secure_string& password) override;
+
+  uint64_t get_current_chain_id(void) override;
 };

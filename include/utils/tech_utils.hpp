@@ -1,12 +1,14 @@
 #pragma once
-#include "core/asset.hpp"
+
 #include "core/secure_bytes_data.hpp"
-#include "drivers/balance_client.hpp"
+
 #include <cstdint>
 #include <stdint.h>
 #include <string>
 #include <string_view>
 #include <vector>
+
+struct Asset;
 namespace tech_utils {
 secure_string to_hex(const bytes_data &data);
 bytes_data to_hex_bytes(const bytes_data &data);
@@ -21,8 +23,9 @@ bool to_double(const std::string &str, double &val);
 double eth_to_usd(double eth, double price);
 bool contains_only_lowercase(std::string_view string);
 std::string decimals_to_divisor(int decimals);
-double calculate_total(const assets_data &assets);
+double calculate_total(const std::vector<Asset>& assets);
 uint64_t string_to_uint64(const std::string &str);
 void copy_to_clipboard(const secure_string& text);
 std::optional<uint64_t> parse_hex(const std::string & hex);
+secure_string sanitize_hex(secure_string hex);
 } // namespace tech_utils

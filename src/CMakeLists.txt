@@ -8,6 +8,7 @@ core/wallet.cpp
 core/derive.cpp
 core/security.cpp
 core/mnemonic.cpp
+core/assets.cpp
 )
 
 set(UI_SOURCES
