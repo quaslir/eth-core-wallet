@@ -3,11 +3,13 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "drivers/balance_client.hpp"
+#include "fmt/format.h"
 #include "utils/tech_utils.hpp"
 #include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <string_view>
 BlockchainClient::BlockchainClient(void)
     : last_update_time(std::chrono::steady_clock::now() -
                        std::chrono::milliseconds(FULL_UPDATE_TIMEOUT)) {
@@ -216,6 +218,8 @@ std::pair<std::string, bool> BlockchainClient::send_raw_transaction(const secure
       return {hash, false};
   }
   tx_status_manager.set_tx_hash(hash);
+  std::string short_addr{to_addr.size() >= 10 ? to_addr.substr(0, 6) + "..." + to_addr.substr(to_addr.size() - 4) : to_addr};
+  push_activity("Sent", fmt::format("{} {} to {}", value, asset.symbol, short_addr));
   return {"", true};
 }
 
