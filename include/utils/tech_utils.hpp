@@ -7,7 +7,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-
+#include <optional>
 struct Asset;
 namespace tech_utils {
 secure_string to_hex(const bytes_data &data);
