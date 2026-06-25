@@ -3,6 +3,7 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
+#include "drivers/rpc_bridge.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -68,4 +69,10 @@ public:
   virtual bool check_password(const secure_string& password) = 0;
 
   virtual uint64_t get_current_chain_id(void) = 0;
+
+  /*virtual std::shared_ptr<DappRequest> get_pending_dapp_request(void) = 0;
+  virtual void approve_dapp_request(uint64_t id, const secure_string& password) = 0;
+  virtual void reject_dapp_request(uint64_t id) = 0;
+  virtual void toggle_dapp_bridge(bool enable) = 0;
+  virtual bool is_bridge_running(void) = 0;*/
 };

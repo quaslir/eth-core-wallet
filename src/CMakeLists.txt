@@ -42,6 +42,7 @@ drivers/gas_client.cpp
 drivers/manager.cpp
 drivers/transaction_client.cpp
 drivers/tx_status_client.cpp
+drivers/rpc_bridge.cpp
 )
 
 set(CONFIG_SOURCES
@@ -57,7 +58,7 @@ target_include_directories(wallet_core PUBLIC ${CMAKE_SOURCE_DIR}/include
 target_link_libraries(wallet_core PUBLIC OpenSSL::Crypto
 nlohmann_json::nlohmann_json libcurl ftxui::screen
     ftxui::dom
-    ftxui::component fmt::fmt secp256k1 tools)
+    ftxui::component fmt::fmt secp256k1 tools httplib::httplib)
 
 
 add_executable(eth-wallet main.cpp)

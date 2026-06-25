@@ -48,7 +48,7 @@ Component CLI::set_bit_length(void) {
     auto box =
         vbox({
 
-            text("SELECT ENTROPY LENGTH") | bold | hcenter |
+            text("SELECT ENTROPY LENGTH") | ftxui::bold | hcenter |
                 color(Color::Cyan2),
             separatorLight(),
 
@@ -123,7 +123,7 @@ Component CLI::handle_extra_entropy(void) {
     Element box;
     if (*active_sub_tab == 1) {
       box = vbox(
-          {text("ENTER EXTRA ENTROPY") | bold | hcenter | color(Color::Cyan3),
+          {text("ENTER EXTRA ENTROPY") | ftxui::bold  | hcenter | color(Color::Cyan3),
            separatorLight(), filler() | size(HEIGHT, EQUAL, 1),
            vbox({text_box->Render() | color(Color::White) | hcenter}) |
                borderStyled(DOUBLE) | color(Color::Cyan3),
@@ -138,7 +138,7 @@ Component CLI::handle_extra_entropy(void) {
           paragraph(descriptions[selected]) | color(Color::GrayDark) | hcenter;
       box =
           vbox(
-              {text("SELECT EXTRA ENTROPY SETTING") | bold | hcenter |
+              {text("SELECT EXTRA ENTROPY SETTING") | ftxui::bold  | hcenter |
                    color(Color::Cyan2),
                separatorLight(),
 
@@ -214,7 +214,7 @@ Component CLI::handle_passphrase(void) {
     Element box;
     if (*active_sub_tab == 1) {
       box =
-          vbox({text("ENTER PASSPHRASE") | bold | hcenter | color(Color::Cyan3),
+          vbox({text("ENTER PASSPHRASE") | ftxui::bold  | hcenter | color(Color::Cyan3),
                 separatorLight(), filler() | size(HEIGHT, EQUAL, 1),
                 vbox({text_box->Render() | color(Color::White) | hcenter}) |
                     borderStyled(DOUBLE) | color(Color::Cyan3),
@@ -229,7 +229,7 @@ Component CLI::handle_passphrase(void) {
           paragraph(descriptions[selected]) | color(Color::GrayDark) | hcenter;
       box =
           vbox(
-              {text("SELECT PASSPHRASE SETTING") | bold | hcenter |
+              {text("SELECT PASSPHRASE SETTING") | ftxui::bold  | hcenter |
                    color(Color::Cyan2),
                separatorLight(),
 
@@ -311,7 +311,7 @@ Component CLI::handle_derivation_path(void) {
     Element box;
     if (*active_sub_tab == 1) {
       box = vbox(
-          {text("ENTER DERIVATION PATH") | bold | hcenter | color(Color::Cyan3),
+          {text("ENTER DERIVATION PATH") | ftxui::bold  | hcenter | color(Color::Cyan3),
            separatorLight(), filler() | size(HEIGHT, EQUAL, 1),
 
            vbox({text_box->Render() | color(Color::White) | hcenter}) |
@@ -328,7 +328,7 @@ Component CLI::handle_derivation_path(void) {
           paragraph(descriptions[selected]) | color(Color::GrayDark) | hcenter;
       box =
           vbox({
-              text("SELECT PASSPHRASE SETTING") | bold | hcenter |
+              text("SELECT PASSPHRASE SETTING") | ftxui::bold  | hcenter |
                   color(Color::Cyan2),
               separatorLight(),
 

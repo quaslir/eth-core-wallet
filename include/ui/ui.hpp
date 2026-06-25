@@ -5,6 +5,7 @@
 #include "core/wallet.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
+#include "drivers/rpc_bridge.hpp"
 #include "iwallet_actions.hpp"
 class UserInterface : public IWalletActions {
 public:
@@ -21,6 +22,7 @@ private:
   TEMP_DATA temp;
   CLI cli;
   AssetsStore assets_store;
+  RpcBridge rpc_bridge;
   void apply_choice_from_wallet_ui(int choice) override;
 
   secure_string get_mnemonic(void) override;
@@ -67,4 +69,10 @@ private:
   bool check_password(const secure_string& password) override;
 
   uint64_t get_current_chain_id(void) override;
+  /*std::shared_ptr<DappRequest> get_pending_dapp_request(void) override;
+  void approve_dapp_request(uint64_t id, const secure_string& password) override;
+  void reject_dapp_request(uint64_t id) override;
+ void toggle_dapp_bridge(bool enable) override;
+   bool is_bridge_running(void) override;
+   */
 };

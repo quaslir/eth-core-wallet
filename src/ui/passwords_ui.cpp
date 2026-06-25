@@ -23,23 +23,23 @@ Component CLI::render_password_setup(void) {
 
   return Renderer(first_stage, [=, this] {
     auto header = vbox(
-        {text(" 🛡️  CREATE MASTER PASSWORD ") | bold | hcenter |
+        {text(" 🛡️  CREATE MASTER PASSWORD ") | ftxui::bold | hcenter |
              color(Color::Cyan),
          text(" This password protects your private keys ") | dim | hcenter});
 
     auto warning_box =
-        vbox({text(" ⚠️  CRITICAL WARNING ") | bold | hcenter |
+        vbox({text(" ⚠️  CRITICAL WARNING ") | ftxui::bold | hcenter |
                   color(Color::Yellow2),
               text(""),
               text(" This password will encrypt your wallet on disk. ") |
                   hcenter,
               text(" If you forget it, your funds are LOST FOREVER. ") |
-                  hcenter | bold,
+                  hcenter | ftxui::bold,
               text(" There is no 'Reset Password' in crypto. ") | hcenter |
                   dim}) |
         border | color(Color::Red);
 
-    auto input_box = hbox({text(" >>> ") | bold | color(Color::Yellow),
+    auto input_box = hbox({text(" >>> ") | ftxui::bold | color(Color::Yellow),
                            field->Render() | flex}) |
                      border | color(Color::GrayDark);
 
@@ -84,7 +84,7 @@ Component CLI::render_confirm_password_setup(void) {
     Color text_color = !*is_incorrect ? Color::Cyan : Color::Red;
 
     auto header = vbox(
-        {text(" 🔒 VERIFY MASTER PASSWORD ") | bold | hcenter |
+        {text(" 🔒 VERIFY MASTER PASSWORD ") | ftxui::bold | hcenter |
              color(text_color),
          text(" Repeat the password to finalize encryption ") | dim | hcenter});
 
@@ -95,14 +95,14 @@ Component CLI::render_confirm_password_setup(void) {
                     text("If it doesn't match, you will have to restart.") |
                         dim};
     } else {
-      info_lines = {text(" [!] ERROR: PASSWORDS DO NOT MATCH ") | bold |
+      info_lines = {text(" [!] ERROR: PASSWORDS DO NOT MATCH ") | ftxui::bold |
                         color(Color::Red),
                     text(" Verification failed. Please try again. ") |
                         color(Color::Red)};
     }
 
     auto input_box = vbox(
-        {text(" CONFIRM >>> ") | bold | color(text_color),
+        {text(" CONFIRM >>> ") | ftxui::bold | color(text_color),
          field->Render() | flex | border | color(Color::GrayDark) | focus});
 
     auto content =
@@ -149,12 +149,12 @@ Component CLI::render_request_unlock_password(void) {
     int remaining = max_attempts - *attempts;
     Elements status_info;
     if (*attempts > 0) {
-      status_info.push_back(text("[!] ACCESS DENIED: INVALID PASSWORD") | bold |
+      status_info.push_back(text("[!] ACCESS DENIED: INVALID PASSWORD") | ftxui::bold |
                             color(Color::Red) | hcenter);
 
       if (remaining == 1) {
         status_info.push_back(text("!!! FINAL ATTEMPT: WIPE ON FAILURE !!!") |
-                              bold | color(Color::RedLight) | blink | hcenter);
+                              ftxui::bold | color(Color::RedLight) | blink | hcenter);
       } else {
         status_info.push_back(
             text("Remaining attempts: " + std::to_string(remaining)) | dim |
@@ -163,7 +163,7 @@ Component CLI::render_request_unlock_password(void) {
     }
 
     auto header =
-        vbox({text(" 🔒 UNLOCK WALLET ") | bold | hcenter | color(Color::Cyan),
+        vbox({text(" 🔒 UNLOCK WALLET ") | ftxui::bold | hcenter | color(Color::Cyan),
               separatorDouble(),
               text(" Encryption active. Enter master password to access "
                    "private keys. ") |
@@ -175,7 +175,7 @@ Component CLI::render_request_unlock_password(void) {
 
     });
 
-    auto input_box = vbox({text(" PASSWORD >>> ") | bold | color(Color::Cyan),
+    auto input_box = vbox({text(" PASSWORD >>> ") | ftxui::bold | color(Color::Cyan),
                            field->Render() | flex | border |
                                color(Color::GrayDark) | focus}) |
                      size(HEIGHT, EQUAL, 6);

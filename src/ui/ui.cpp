@@ -7,11 +7,13 @@
 #include "core/security.hpp"
 #include "drivers/balance_client.hpp"
 #include "drivers/blockchain_client.hpp"
+#include "drivers/rpc_bridge.hpp"
 #include "iwallet_actions.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
 #include <openssl/crypto.h>
 #include <string>
 #include <unistd.h>
@@ -30,6 +32,18 @@ void UserInterface::load(void) {
     cli.set_active_tab(UNLOCK_PASSWORD);
   }
   assets_store.load();
+  rpc_bridge.form_url = [this] {
+      return block_client.form_url();
+  };
+  rpc_bridge.get_current_address = [this] {
+      return wallet.get_eth_address();
+  };
+  rpc_bridge.get_chain_id = [this] {
+      return block_client.get_current_chain_id();
+  };
+  rpc_bridge.on_new_request = [this](std::shared_ptr<DappRequest> req) {
+
+  };
   cli.load();
 
 
@@ -67,9 +81,13 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
   case 6: // show private_key
     cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
-  case 7: // exit
-    //wallet.save();
+  case 7:
+  if(!rpc_bridge.is_running()) rpc_bridge.start();
 
+  break;
+
+
+    case 8:
     break;
   }
 }

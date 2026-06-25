@@ -23,7 +23,7 @@ Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries = {
       " 💸 SEND FUNDS     ", " 📜 HISTORY        ", " 🌐 NETWORK        ",
-      " ➡  NEXT ADDR      ", " ⬅  PREV ADDR      ", " 🔑 EXPORT KEY     ",
+      " ➡  NEXT ADDR      ", " ⬅  PREV ADDR      ", " 🔑 EXPORT KEY     ", " 🔗 ENABLE DEFI BRIDGE      ",
       " 🚪 LOCK & EXIT    "};
 
   auto menu = Menu(&entries, &selected);
@@ -38,7 +38,7 @@ Component CLI::print_wallet_ui(void) {
     for (const auto & asset : *wallet_info.assets) {
 
       asset_rows.push_back(hbox(
-          {text(" " + asset.symbol + ": ") | bold | size(WIDTH, EQUAL, 8),
+          {text(" " + asset.symbol + ": ") | ftxui::bold | size(WIDTH, EQUAL, 8),
            text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),
            filler(),
            text(fmt::format("{:.2f}", asset.balance * asset.fiat_price)) |
@@ -47,13 +47,13 @@ Component CLI::print_wallet_ui(void) {
     asset_rows.push_back(separator());
     asset_rows.push_back(
 
-        hbox({text(" TOTAL PORTFOLIO: ") | bold | color(Color::Yellow),
+        hbox({text(" TOTAL PORTFOLIO: ") | ftxui::bold | color(Color::Yellow),
               filler(),
-              text(fmt::format("{:.2f} USD", wallet_info.total)) | bold |
+              text(fmt::format("{:.2f} USD", wallet_info.total)) | ftxui::bold |
                   color(Color::Green)}));
 
     auto asset_panel = vbox({
-                           text(" 💰 ASSETS ") | bold | color(Color::Yellow),
+                           text(" 💰 ASSETS ") | ftxui::bold | color(Color::Yellow),
                            separatorDouble() | color(Color::Yellow),
 
                            vbox(std::move(asset_rows)),
@@ -69,7 +69,7 @@ Component CLI::print_wallet_ui(void) {
     float refresh_in = actions->get_next_refresh();
 
     auto network_info =
-        vbox({text(" 🌐 NETWORK & NODES ") | bold | color(Color::Magenta),
+        vbox({text(" 🌐 NETWORK & NODES ") | ftxui::bold | color(Color::Magenta),
               separator(),
 
               hbox({text(" TARGET: "), text(actions->get_current_network()) |
@@ -89,7 +89,7 @@ Component CLI::print_wallet_ui(void) {
         }) |
         borderHeavy;
     Elements log = {
-        text(" 📑 RECENT ACTIVITY ") | bold | dim,
+        text(" 📑 RECENT ACTIVITY ") | ftxui::bold | dim,
         separator(),
     };
 
@@ -109,7 +109,7 @@ Component CLI::print_wallet_ui(void) {
       }
     }
 
-    auto footer = hbox({text(" [ENTER] EXECUTE ") | bold | hcenter |
+    auto footer = hbox({text(" [ENTER] EXECUTE ") | ftxui::bold | hcenter |
                             color(Color::Black) | bgcolor(Color::Cyan),
 
                         text(" [C] COPY ADDRESS ") | dim, filler(),
@@ -117,7 +117,7 @@ Component CLI::print_wallet_ui(void) {
                         text("  Build: v1.0-alpha ") | dim});
 
     auto dashboard = vbox(
-        {hbox({text(" 💠 ETH-CORE WALLET v1.0 ") | bold | color(Color::Cyan),
+        {hbox({text(" 💠 ETH-CORE WALLET v1.0 ") | ftxui::bold | color(Color::Cyan),
                filler(),
                text(" SESSION: ACTIVE ") | color(Color::Green) | dim}),
 
@@ -125,7 +125,7 @@ Component CLI::print_wallet_ui(void) {
                vbox({network_info,
                      hbox({
 
-                         vbox({text(" AVAILABLE OPERATIONS ") | bold |
+                         vbox({text(" AVAILABLE OPERATIONS ") | ftxui::bold |
                                    color(Color::CyanLight),
                                separator(), menu_renderer->Render()}) |
                              borderHeavy | size(WIDTH, EQUAL, 35),
@@ -172,7 +172,7 @@ Component CLI::display_private_key(void) {
 
   Component warning_view = Renderer(button_subtab_0, [=, this] {
     auto element =
-        vbox({text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | bold | hcenter |
+        vbox({text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | ftxui::bold | hcenter |
                   color(Color::Red1),
               separatorDouble() | color(Color::Red1),
 
@@ -230,7 +230,7 @@ Component CLI::display_private_key(void) {
 
     auto content_box =
         vbox(
-            {text(" YOUR PRIVATE KEY ") | bold | hcenter | color(Color::Yellow),
+            {text(" YOUR PRIVATE KEY ") | ftxui::bold | hcenter | color(Color::Yellow),
 
              separatorLight(), filler(),
 
@@ -239,7 +239,7 @@ Component CLI::display_private_key(void) {
              filler(),
 
              separatorLight(),
-             text("Press C to copy private key") | bold | color(Color::Yellow),
+             text("Press C to copy private key") | ftxui::bold | color(Color::Yellow),
              button_subtab_1->Render() | dim | hcenter}) |
         borderStyled(ROUNDED) | color(Color::Red1) | size(WIDTH, EQUAL, 60) |
         size(HEIGHT, EQUAL, 10) | hcenter;
@@ -290,21 +290,21 @@ Component CLI::transaction_history_render(void) {
   auto component = Renderer(buttons, [=, this]() mutable -> Element {
     auto [history, error] = actions->get_transactions_history();
     if (history->empty() && !error) {
-      return vbox({text("LOADING...") | bold | hcenter | color(Color::Cyan2)}) |
+      return vbox({text("LOADING...") | ftxui::bold | hcenter | color(Color::Cyan2)}) |
              center;
     } else if (error) {
-      return vbox({text("Could not load data") | bold | hcenter |
+      return vbox({text("Could not load data") | ftxui::bold | hcenter |
                    color(Color::Red1)}) |
              center;
     }
 
     Elements rows;
 
-    rows.push_back(hbox({text(" DATE           ") | bold | color(Color::Blue),
-                         text(" TYPE     ") | bold | color(Color::Blue),
-                         text(" AMOUNT           ") | bold | color(Color::Blue),
-                         text(" FROM             ") | bold | color(Color::Blue),
-                         text(" HASH     ") | bold | color(Color::Blue)}) |
+    rows.push_back(hbox({text(" DATE           ") | ftxui::bold | color(Color::Blue),
+                         text(" TYPE     ") | ftxui::bold | color(Color::Blue),
+                         text(" AMOUNT           ") | ftxui::bold | color(Color::Blue),
+                         text(" FROM             ") | ftxui::bold | color(Color::Blue),
+                         text(" HASH     ") | ftxui::bold | color(Color::Blue)}) |
                    bgcolor(Color::Blue) | color(Color::White));
 
     rows.push_back(separator());
@@ -333,7 +333,7 @@ Component CLI::transaction_history_render(void) {
         {filler(), text(fmt::format(" {}/{} ", end, history->size())) | dim}));
 
     auto table_element = vbox(std::move(rows)) | flex;
-    auto box = vbox({text(" TRANSACTION HISTORY ") | bold | hcenter |
+    auto box = vbox({text(" TRANSACTION HISTORY ") | ftxui::bold | hcenter |
                          color(Color::Yellow),
                      separator(), table_element,
                      text(""),
@@ -392,13 +392,13 @@ Component CLI::change_network_render(void) {
                        size(HEIGHT, LESS_THAN, 10) | color(Color::CyanLight);
 
     auto box = vbox(
-        {text(" 🌐 NETWORK SELECTION ") | bold | hcenter | color(Color::Cyan),
+        {text(" 🌐 NETWORK SELECTION ") | ftxui::bold | hcenter | color(Color::Cyan),
          separatorDouble() | color(Color::Cyan),
 
          text(" Select target provider: ") | dim | hcenter, text(""),
          menu_render, filler(), separatorLight(),
 
-         hbox({text(" ACTIVE: ") | bold, text(actions->get_current_network()) |
+         hbox({text(" ACTIVE: ") | ftxui::bold, text(actions->get_current_network()) |
                                              color(Color::GreenLight)}) |
              hcenter,
 
@@ -528,7 +528,7 @@ Component CLI::make_transaction_render(void) {
     bool amount_valid = !amount_str->empty();
 
     auto box = vbox(
-        {text(" 💸 SEND FUNDS ") | bold | color(Color::Cyan) | hcenter,
+        {text(" 💸 SEND FUNDS ") | ftxui::bold | color(Color::Cyan) | hcenter,
          separatorDouble() | color(Color::Cyan),
 
          hbox({text(" ASSET:  ") | dim,
@@ -648,7 +648,7 @@ Component CLI::make_transaction_render(void) {
 
     return to_center(
         vbox(
-            {text(" ⚠️  CONFIRM TRANSACTION ") | bold | color(Color::Yellow) |
+            {text(" ⚠️  CONFIRM TRANSACTION ") | ftxui::bold | color(Color::Yellow) |
                  hcenter,
              hbox({text(" To:     ") | dim, filler(),
                    text(*preview_addr) | color(Color::Cyan)}),
@@ -770,7 +770,7 @@ Component CLI::make_transaction_render(void) {
 
     case TxStatus::SUCCESS:
       status_element =
-          vbox({text(" ✓ Confirmed! ") | color(Color::Green) | bold | hcenter,
+          vbox({text(" ✓ Confirmed! ") | color(Color::Green) | ftxui::bold | hcenter,
                 text(" Transaction included in block ") | dim | hcenter});
       break;
 
@@ -786,7 +786,7 @@ Component CLI::make_transaction_render(void) {
     }
 
     return to_center(
-        vbox({text(" 📡 TRANSACTION STATUS ") | bold | color(Color::Cyan) |
+        vbox({text(" 📡 TRANSACTION STATUS ") | ftxui::bold | color(Color::Cyan) |
                   hcenter,
               separatorDouble() | color(Color::Cyan), filler(), status_element,
               filler(), buttons_element, filler(), separator(),
