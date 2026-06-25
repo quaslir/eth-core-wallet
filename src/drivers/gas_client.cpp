@@ -51,7 +51,7 @@ void GasManager::update(void) {
       try {
         auto [result, gen] = worker.get();
         if (gen == get_generation()) {
-          if (!isnan(result))
+          if (!std::isnan(result))
             current_gas_price = result;
         }
 

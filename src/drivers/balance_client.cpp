@@ -2,7 +2,7 @@
 #include "api/http.hpp"
 #include "api/json.hpp"
 #include "config/configuration.hpp"
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "drivers/price_client.hpp"
@@ -63,13 +63,12 @@ bool BalanceManager::update_one_asset(Asset &asset,
 }
 
 assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
-  assets_data new_assets = crypto_assets::get_default_assets();
 
+  assets_data current_assets = get_current_assets(get_current_chain_id());
   std::vector<std::future<bool>> balance_futures;
 
-  balance_futures.reserve(new_assets.size());
-
-  for (auto &[key, asset] : new_assets) {
+  balance_futures.reserve(current_assets.size());
+  for (auto & asset : current_assets) {
     Asset *asset_ptr = &asset;
     if (asset.is_native) {
       balance_futures.push_back(
@@ -86,10 +85,10 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
 
   std::vector<std::string> symbols;
 
-  symbols.reserve(new_assets.size());
+  symbols.reserve(current_assets.size());
 
-  for (const auto &asset : new_assets) {
-    symbols.push_back(asset.second.id);
+  for (const auto &asset : current_assets) {
+    symbols.push_back(asset.id);
   }
 
   auto price_future = std::async(std::launch::async, [&symbols]() {
@@ -101,20 +100,19 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
 
   auto prices = price_future.get();
 
-  for (auto &asset : new_assets) {
-    auto it = prices.find(asset.second.id);
+  for (auto &asset : current_assets) {
+    auto it = prices.find(asset.id);
 
     if (it != prices.end()) {
-      asset.second.fiat_price = it->second;
+      asset.fiat_price = it->second;
     }
   }
 
-  return new_assets;
+  return current_assets;
 }
 
 bool BalanceManager::update_native(Asset &asset,
                                    const secure_string &eth_addr) const {
-
   try {
     AlchemyJSON alchm("2.0", "eth_getBalance",
                       {std::string{eth_addr}, "latest"}, 1);
@@ -191,4 +189,12 @@ BalanceManager::~BalanceManager() {
   if (worker.valid()) {
     worker.wait();
   }
+}
+
+void BalanceManager::set_current_chain_id_callback(std::function<uint64_t()> callback) {
+    get_current_chain_id = callback;
+}
+
+void BalanceManager::set_current_assets_callback(std::function<assets_data(uint64_t chain_id)> callback) {
+    get_current_assets = callback;
 }

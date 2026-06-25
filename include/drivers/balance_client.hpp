@@ -1,6 +1,6 @@
 #pragma once
 #include "config/configuration.hpp"
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "drivers/manager.hpp"
 #include <atomic>
@@ -10,7 +10,7 @@
 #include <memory>
 #include <string>
 
-using assets_data = std::map<std::pair<uint64_t, std::string>, Asset>;
+using assets_data = std::vector<Asset>;
 
 class BalanceManager : public Manager {
 private:
@@ -26,6 +26,10 @@ private:
   bool update_one_asset(Asset &asset, const secure_string &eth_addr) const;
   assets_data update_all(const secure_string &eth_addr) const;
 
+
+
+  std::function<uint64_t()> get_current_chain_id;
+  std::function<assets_data(uint64_t)> get_current_assets;
 public:
   std::function<std::string(void)> form_url;
   BalanceManager()
@@ -35,4 +39,6 @@ public:
   void request(const secure_string &eth_addr) override;
   void update(void) override;
   std::shared_ptr<assets_data> get_balance(void) const;
+  void set_current_chain_id_callback(std::function<uint64_t()> callback);
+  void set_current_assets_callback(std::function<assets_data(uint64_t)> callback);
 };

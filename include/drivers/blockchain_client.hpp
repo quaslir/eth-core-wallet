@@ -1,5 +1,5 @@
 #pragma once
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/supported_networks.hpp"
 #include "drivers/balance_client.hpp"
@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include <functional>
 struct ActivityEvent {
   std::string icon;
   std::string msg;
@@ -43,7 +43,7 @@ public:
   float get_next_refresh(void) const;
   void push_activity(const std::string &icon, const std::string &msg);
   const std::deque<ActivityEvent> &get_activity(void) const;
-  bool send_raw_transaction(const secure_string &to_addr,
+  std::pair<std::string, bool> send_raw_transaction(const secure_string &to_addr,
                             const bytes_data &private_key, const Asset &asset,
                             const std::string &value, double target_gas_gwei,
                             uint64_t gas_limit);
@@ -51,7 +51,8 @@ public:
   void update_current_tx_status(void);
   bool speed_up_transaction(const bytes_data &private_key);
   bool cancel_transaction(const bytes_data &private_key);
-
+  uint64_t get_current_chain_id(void) const;
+  void set_get_current_assets_callback( std::function<assets_data(uint64_t chain_id)> callback);
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;
@@ -62,4 +63,6 @@ private:
   std::deque<ActivityEvent> activity_log;
   networks::NetworkConfig active_network =
       networks::NetworkConfig{" 🌐 Ethereum Mainnet ", "eth-mainnet", 1};
+
+    std::function<assets_data(uint64_t)> get_current_assets;
 };

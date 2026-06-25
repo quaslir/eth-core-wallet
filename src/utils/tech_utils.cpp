@@ -156,10 +156,10 @@ std::string decimals_to_divisor(int decimals) {
   return "1" + std::string(decimals, '0');
 }
 
-double calculate_total(const assets_data &assets) {
+double calculate_total(const std::vector<Asset>& assets) {
   double total = 0.0;
   for (const auto &asset : assets) {
-    total += (asset.second.fiat_price * asset.second.balance);
+    total += (asset.fiat_price * asset.balance);
   }
 
   return total;
@@ -183,7 +183,7 @@ void copy_to_clipboard(const secure_string& text) {
     #else
     FILE * pipe = popen("xclip -selection clipboard 2>/dev/null", "w");
     if(!pipe) pipe = popen("xsel --clipboard --input 2>/dev/null", "w");
-    if(!pipe) = pipe popen("wl-copy 2>/dev/null", "w");
+    if(!pipe) pipe = popen("wl-copy 2>/dev/null", "w");
     #endif
 
     if(pipe) {
@@ -202,5 +202,16 @@ std::optional<uint64_t> parse_hex(const std::string & hex) {
         return std::nullopt;
     }
 }
+secure_string sanitize_hex(secure_string hex) {
+    if(hex.starts_with("0x")) {
+        hex = hex.substr(2);
+        }
+    hex.erase(0, hex.find_first_not_of('0'));
 
+    if(hex.empty()) {
+        return "0x0";
+    }
+
+    return "0x" + hex;
+}
 } // namespace tech_utils

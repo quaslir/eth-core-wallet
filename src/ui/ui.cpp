@@ -2,7 +2,7 @@
 
 #include "api/json.hpp"
 #include "config/config.hpp"
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
 #include "drivers/balance_client.hpp"
@@ -23,11 +23,16 @@ void UserInterface::load(void) {
   block_client.get_current_eth_addr = [this]() -> secure_string {
     return wallet.get_eth_address();
   };
+    block_client.set_get_current_assets_callback([this](uint64_t chain_id = 1) -> assets_data {
+        return assets_store.get_current_assets(chain_id);
+    });
   if (encrp.load()) {
     cli.set_active_tab(UNLOCK_PASSWORD);
   }
-
+  assets_store.load();
   cli.load();
+
+
 }
 
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
@@ -180,6 +185,10 @@ void UserInterface::copy_private_key(void) {
     tech_utils::copy_to_clipboard(tech_utils::to_hex(wallet.get_private_key()));
 }
 
+void UserInterface::copy_mnemonic(void) {
+    tech_utils::copy_to_clipboard(temp.mnemonic);
+}
+
 std::pair<double, bool> UserInterface::get_current_gas_price(void) {
   return block_client.get_current_gas();
 }
@@ -215,7 +224,7 @@ const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
   return block_client.get_activity();
 }
 
-bool UserInterface::send_transaction(const std::string &to, const Asset &asset,
+std::pair<std::string, bool> UserInterface::send_transaction(const std::string &to, const Asset &asset,
                                      const std::string &amount,
                                      double target_gas_gwei,
                                      const std::string &gas_limit_input) {
@@ -239,4 +248,8 @@ bool UserInterface::speed_up_transaction(void) {
 }
 bool UserInterface::cancel_transaction(void) {
   return block_client.cancel_transaction(wallet.get_private_key());
+}
+
+uint64_t UserInterface::get_current_chain_id(void) {
+return block_client.get_current_chain_id();
 }

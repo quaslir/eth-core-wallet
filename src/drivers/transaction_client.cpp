@@ -15,8 +15,8 @@
 #include <optional>
 #include <string>
 #include <tuple>
-std::future<std::string> TransactionManager::send(RawTx &tx) {
-  return std::async(std::launch::async, [this, tx]() -> std::string {
+std::future<std::pair<std::string, bool>> TransactionManager::send(RawTx &tx) {
+  return std::async(std::launch::async, [this, tx]() -> std::pair<std::string, bool> {
     bytes_data to_sign = rlp::encode_list(
         {rlp::encode_uint(tx.nonce), rlp::encode_uint(tx.gas_price),
          rlp::encode_uint(tx.gas_limit), rlp::encode_bytes(tx.to),
@@ -79,7 +79,7 @@ TransactionManager::sign_transaction(const bytes_data &hash,
           recovery_id};
 }
 
-std::string TransactionManager::make_request(const bytes_data &data) const {
+std::pair<std::string, bool> TransactionManager::make_request(const bytes_data &data) const {
   try {
     secure_string hex_data = "0x";
     hex_data += tech_utils::to_hex(data);
@@ -91,10 +91,16 @@ std::string TransactionManager::make_request(const bytes_data &data) const {
 
     std::string result = http::post_request(form_url(), j.dump());
     json res = json::parse(result);
-
-    return res.at("result").get<std::string>();
+    if(res.contains("result")) {
+    return {res.at("result").get<std::string>(), false};
+    } else if(res.contains("error")) {
+        if(res["error"].contains("message")){
+        return {res["error"]["message"].get<std::string>(), true};
+    }
+    }
+    return {"Unknown JSON-RPC error", true};
   } catch (const std::exception &err) {
-      return "";
+      return {std::string("Parse/Network Exception: ") + err.what(), true};
   }
 }
 
@@ -128,7 +134,7 @@ TransactionManager::estimate_gas(const RawTx &raw_tx,
     bytes_data val_bytes = raw_tx.value.to_bytes();
 
     if (!val_bytes.empty()) {
-      params["value"] = "0x" + tech_utils::to_hex(val_bytes);
+      params["value"] = tech_utils::sanitize_hex(tech_utils::to_hex(val_bytes));
     }
 
     json j;

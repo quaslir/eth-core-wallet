@@ -3,11 +3,13 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "drivers/balance_client.hpp"
+#include "fmt/format.h"
 #include "utils/tech_utils.hpp"
 #include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <string_view>
 BlockchainClient::BlockchainClient(void)
     : last_update_time(std::chrono::steady_clock::now() -
                        std::chrono::milliseconds(FULL_UPDATE_TIMEOUT)) {
@@ -18,6 +20,13 @@ BlockchainClient::BlockchainClient(void)
   gas_manager.form_url = form_url_callback;
   transaction_manager.form_url = form_url_callback;
   tx_status_manager.form_url = form_url_callback;
+
+  balance_manager.set_current_chain_id_callback([this]() -> uint64_t {
+      return active_network.chain_id;
+  });
+  balance_manager.set_current_assets_callback([this](uint64_t chain_id) -> assets_data {
+      return get_current_assets(chain_id);
+  });
 }
 
 void BlockchainClient::update(void) {
@@ -163,7 +172,7 @@ const std::deque<ActivityEvent> &BlockchainClient::get_activity(void) const {
   return activity_log;
 }
 
-bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
+std::pair<std::string, bool> BlockchainClient::send_raw_transaction(const secure_string &to_addr,
                                             const bytes_data &private_key,
                                             const Asset &asset,
                                             const std::string &value,
@@ -173,7 +182,7 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
   auto nonce =
       transaction_manager.get_nonce(get_current_eth_addr(), form_url());
   if (!nonce) {
-    return false;
+    return {"Unable to get nonce", false};
   }
 
   Uint256 val = Uint256::from_decimal_string(value, asset.decimals);
@@ -192,19 +201,26 @@ bool BlockchainClient::send_raw_transaction(const secure_string &to_addr,
     raw_tx.data = transaction_manager.make_transfer_token_data(
         tech_utils::from_hex_to_bytes(std::string{to_addr}), val);
   }
+
   if (gas_limit == 0) {
     auto estimated_gas =
         transaction_manager.estimate_gas(raw_tx, get_current_eth_addr());
     if (!estimated_gas)
-      return false;
+      return {"Unable to estimate gas", false};
 
-    raw_tx.gas_limit = static_cast<uint64_t>(*estimated_gas * 1.2);
+    raw_tx.gas_limit = (*estimated_gas * 125) / 100;
   } else
     raw_tx.gas_limit = gas_limit;
 
   auto rs = transaction_manager.send(raw_tx);
-  tx_status_manager.set_tx_hash(rs.get());
-  return true;
+  auto [hash, error] = rs.get();
+  if(hash.empty() || error) {
+      return {hash, false};
+  }
+  tx_status_manager.set_tx_hash(hash);
+  std::string short_addr{to_addr.size() >= 10 ? to_addr.substr(0, 6) + "..." + to_addr.substr(to_addr.size() - 4) : to_addr};
+  push_activity("Sent", fmt::format("{} {} to {}", value, asset.symbol, short_addr));
+  return {"", true};
 }
 
 bool BlockchainClient::speed_up_transaction(const bytes_data &private_key) {
@@ -214,8 +230,8 @@ bool BlockchainClient::speed_up_transaction(const bytes_data &private_key) {
   tx.private_key = private_key;
   tx.v = active_network.chain_id;
   auto rs = transaction_manager.send(tx);
-  std::string hash = rs.get();
-  if (hash.empty())
+  auto[hash, error] = rs.get();
+  if (hash.empty() || error)
     return false;
   tx_status_manager.set_tx_hash(hash);
   return true;
@@ -232,9 +248,18 @@ bool BlockchainClient::cancel_transaction(const bytes_data &private_key) {
   tx.gas_limit = 21000;
   tx.v = active_network.chain_id;
   auto rs = transaction_manager.send(tx);
-  std::string hash = rs.get();
-  if (hash.empty())
+  auto[hash, error] = rs.get();
+  if (hash.empty() || error)
     return false;
   tx_status_manager.set_tx_hash(hash);
   return true;
+}
+
+uint64_t BlockchainClient::get_current_chain_id(void) const {
+    return active_network.chain_id;
+}
+
+
+void BlockchainClient::set_get_current_assets_callback( std::function<assets_data(uint64_t chain_id)> callback) {
+    get_current_assets = callback;
 }

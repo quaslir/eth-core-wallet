@@ -1,4 +1,4 @@
-#include "core/asset.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/tx_status_client.hpp"
@@ -34,7 +34,9 @@ Component CLI::print_wallet_ui(void) {
   auto walletUI = Renderer(menu_renderer, [=, this] {
     WalletInfo wallet_info = actions->get_wallet();
     Elements asset_rows;
-    for (auto const &[id, asset] : *wallet_info.assets) {
+
+    for (const auto & asset : *wallet_info.assets) {
+
       asset_rows.push_back(hbox(
           {text(" " + asset.symbol + ": ") | bold | size(WIDTH, EQUAL, 8),
            text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),
@@ -442,7 +444,7 @@ Component CLI::make_transaction_render(void) {
   Component sign_transaction = PasswordUI::create("Confirm transaction", [=, this](const secure_string& password){
       return actions->check_password(password);
   }, [=, this]{
-      bool ok =
+      auto[msg, ok] =
           actions->send_transaction(*to_addr, *current_asset, *amount_str,
                                     *final_gas, *custom_gas_limit);
       if (ok) {
@@ -451,7 +453,10 @@ Component CLI::make_transaction_render(void) {
               *selected_subtab = 3;
         status_component_ptr->get()->TakeFocus();
       } else {
-        *error_msg = "Failed to send transaction";
+          *selected_subtab = 0;
+          if(!msg.empty()) *error_msg = msg;
+          else  *error_msg = "Failed to send transaction";
+
       }
 
   }, [=]{
@@ -475,20 +480,25 @@ Component CLI::make_transaction_render(void) {
 
   auto gas_toggle = Toggle(&gas_options, gas_multiplayer.get());
 
+  auto max_amount_to_send_btn = Button("MAX AMOUNT", [=]() {
+      *amount_str = std::to_string(current_asset->balance);
+  }, ButtonOption::Ascii());
+
+
   auto container_send =
       Container::Vertical({asset_toggle, addr_input, amount_input, gas_toggle,
-                           gas_limit_input, custom_gas_input});
+                           gas_limit_input, custom_gas_input, max_amount_to_send_btn});
 
   auto send_form = Renderer(container_send, [=, this]() {
     asset_names->clear();
 
     WalletInfo info = actions->get_wallet();
 
-    for (const auto &[id, asset] : *info.assets) {
+    for (const auto & asset : *info.assets) {
       asset_names->push_back(" " + asset.symbol + " ");
     }
     int idx = 0;
-    for (const auto &[id, asset] : *info.assets) {
+    for (const auto & asset : *info.assets) {
       if (idx == *selected_asset) {
         *current_asset = asset;
         break;
@@ -539,8 +549,11 @@ Component CLI::make_transaction_render(void) {
               addr_input->Render() | flex |
                   (addr_valid ? color(Color::White) : color(Color::RedLight))}),
 
-         hbox({text(" AMOUNT: ") | dim, amount_input->Render() | flex,
-               text(" " + current_asset->symbol + " ") | dim}),
+         hbox({
+             text(" AMOUNT: ") | dim, amount_input->Render() | flex,
+               text(" " + current_asset->symbol + " ") | dim,
+               max_amount_to_send_btn->Render() | size(WIDTH, EQUAL, 14) | size(HEIGHT, EQUAL, 1)
+         }),
 
          hbox({text(" GAS:    ") | dim,
                gas_toggle->Render() | color(Color::CyanLight), filler(),
@@ -569,7 +582,7 @@ Component CLI::make_transaction_render(void) {
     return to_center(
         box | borderHeavy |
         color(addr_valid && amount_valid ? Color::CyanLight : Color::GrayDark) |
-        size(WIDTH, EQUAL, 70) | size(HEIGHT, EQUAL, 22));
+        size(WIDTH, EQUAL, 80) | size(HEIGHT, EQUAL, 24));
   });
 
   auto send_component = CatchEvent(send_form, [=, this](Event event) {
@@ -600,7 +613,7 @@ Component CLI::make_transaction_render(void) {
 
       WalletInfo info = actions->get_wallet();
 
-      for (const auto &[id, asset] : *info.assets) {
+      for (const auto &asset : *info.assets) {
         if (idx == *selected_asset) {
           *current_asset = asset;
           break;
@@ -669,7 +682,7 @@ Component CLI::make_transaction_render(void) {
   });
 
   Component preview_component =
-      CatchEvent(preview_form, [=, this](Event event) {
+      CatchEvent(preview_form, [=](Event event) {
         if (event == Event::Return) {
             *selected_subtab = 2;
             sign_transaction->TakeFocus();
