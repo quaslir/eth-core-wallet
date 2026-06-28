@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "ETH Core Wallet Bridge",
+  "version": "1.0",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "host_permissions": ["http://127.0.0.1:8989/*"]
+}

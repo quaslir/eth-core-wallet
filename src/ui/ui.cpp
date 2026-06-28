@@ -9,10 +9,12 @@
 #include "drivers/blockchain_client.hpp"
 #include "drivers/rpc_bridge.hpp"
 #include "iwallet_actions.hpp"
+#include "utils/crypto_utils.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <memory>
 #include <openssl/crypto.h>
 #include <string>
@@ -25,28 +27,24 @@ void UserInterface::load(void) {
   block_client.get_current_eth_addr = [this]() -> secure_string {
     return wallet.get_eth_address();
   };
-    block_client.set_get_current_assets_callback([this](uint64_t chain_id = 1) -> assets_data {
+  block_client.set_get_current_assets_callback(
+      [this](uint64_t chain_id = 1) -> assets_data {
         return assets_store.get_current_assets(chain_id);
-    });
+      });
   if (encrp.load()) {
     cli.set_active_tab(UNLOCK_PASSWORD);
   }
   assets_store.load();
-  rpc_bridge.form_url = [this] {
-      return block_client.form_url();
-  };
-  rpc_bridge.get_current_address = [this] {
-      return wallet.get_eth_address();
-  };
+  rpc_bridge.form_url = [this] { return block_client.form_url(); };
+  rpc_bridge.get_current_address = [this] { return wallet.get_eth_address(); };
   rpc_bridge.get_chain_id = [this] {
-      return block_client.get_current_chain_id();
+    return block_client.get_current_chain_id();
   };
   rpc_bridge.on_new_request = [this](std::shared_ptr<DappRequest> req) {
-
+    pending_request = req;
+    cli.set_active_tab(DAPP_REQUEST);
   };
   cli.load();
-
-
 }
 
 void UserInterface::apply_choice_from_wallet_ui(int choice) {
@@ -63,17 +61,17 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     cli.set_active_tab(CHANGE_NETWORK);
     break;
   case 4:
-    if(wallet.derive_next()) {
-    block_client.clear_history();
-    update_balance(true);
-    update_transactions_data(true);
+    if (wallet.derive_next()) {
+      block_client.clear_history();
+      update_balance(true);
+      update_transactions_data(true);
     }
 
     break;
 
   case 5:
     if (wallet.derive_prev()) {
-         block_client.clear_history();
+      block_client.clear_history();
       update_balance(true);
       update_transactions_data(true);
     }
@@ -82,12 +80,12 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
     cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
   case 7:
-  if(!rpc_bridge.is_running()) rpc_bridge.start();
+    if (!rpc_bridge.is_running())
+      rpc_bridge.start();
 
-  break;
+    break;
 
-
-    case 8:
+  case 8:
     break;
   }
 }
@@ -153,8 +151,8 @@ bool UserInterface::check_and_load_wallet(const secure_string &password) {
   return security_manager::load_wallet(wallet, password);
 }
 
-bool UserInterface::check_password(const secure_string& password) {
-    return security_manager::check_password(password);
+bool UserInterface::check_password(const secure_string &password) {
+  return security_manager::check_password(password);
 }
 void UserInterface::load_wallet(void) {
   std::vector<uint32_t> current_path =
@@ -196,15 +194,15 @@ void UserInterface::update_gas_price(bool force) {
 }
 
 void UserInterface::copy_address(void) {
-    tech_utils::copy_to_clipboard(wallet.get_eth_address());
+  tech_utils::copy_to_clipboard(wallet.get_eth_address());
 }
 
 void UserInterface::copy_private_key(void) {
-    tech_utils::copy_to_clipboard(tech_utils::to_hex(wallet.get_private_key()));
+  tech_utils::copy_to_clipboard(tech_utils::to_hex(wallet.get_private_key()));
 }
 
 void UserInterface::copy_mnemonic(void) {
-    tech_utils::copy_to_clipboard(temp.mnemonic);
+  tech_utils::copy_to_clipboard(temp.mnemonic);
 }
 
 std::pair<double, bool> UserInterface::get_current_gas_price(void) {
@@ -242,10 +240,9 @@ const std::deque<ActivityEvent> &UserInterface::get_activity(void) {
   return block_client.get_activity();
 }
 
-std::pair<std::string, bool> UserInterface::send_transaction(const std::string &to, const Asset &asset,
-                                     const std::string &amount,
-                                     double target_gas_gwei,
-                                     const std::string &gas_limit_input) {
+std::pair<std::string, bool> UserInterface::send_transaction(
+    const std::string &to, const Asset &asset, const std::string &amount,
+    double target_gas_gwei, const std::string &gas_limit_input) {
   uint64_t gas_limit = tech_utils::string_to_uint64(gas_limit_input);
 
   return block_client.send_raw_transaction(secure_string{to},
@@ -269,5 +266,82 @@ bool UserInterface::cancel_transaction(void) {
 }
 
 uint64_t UserInterface::get_current_chain_id(void) {
-return block_client.get_current_chain_id();
+  return block_client.get_current_chain_id();
 }
+
+std::shared_ptr<DappRequest> UserInterface::get_pending_dapp_request(void) {
+  return pending_request;
+}
+void UserInterface::approve_dapp_request(uint64_t id) {
+  if (!pending_request || pending_request->id != id)
+    return;
+
+  auto req = pending_request;
+
+  try {
+    switch (req->type) {
+    case DappRequestType::RequestAccounts: {
+      rpc_bridge.resolve(id,
+                         json::array({std::string{wallet.get_eth_address()}}));
+      break;
+    }
+    case DappRequestType::SendTransaction: {
+      try {
+        json tx_params = req->params[0];
+
+        secure_string from = tx_params.at("from").get<secure_string>();
+        secure_string active_addr = wallet.get_eth_address();
+
+        if (tech_utils::tolower(from) != tech_utils::tolower(active_addr))
+          break;
+
+
+
+        const bytes_data &priv_key = wallet.get_private_key();
+        std::string hash =
+            block_client.form_and_send_tx_from_dapp(tx_params, priv_key);
+
+        rpc_bridge.resolve(id, hash);
+        break;
+      } catch (const std::exception &err) {
+        rpc_bridge.reject(id, std::string("Tx error: ") + err.what());
+      }
+    }
+
+    case DappRequestType::PersonalSign: {
+        std::string msg_hex = req->params[0].get<std::string>();
+        bytes_data msg = tech_utils::from_hex_to_bytes(msg_hex);
+        const bytes_data &priv_key = wallet.get_private_key();
+        secure_string signature =
+            crypto_utils::sign_personal_message(msg, priv_key);
+
+        rpc_bridge.resolve(id, signature);
+        break;
+    }
+    case DappRequestType::SignTypedData: {
+        rpc_bridge.reject(id, "Method eth_signTypedData_v4 is currently not supported by this wallet. Please use standard transaction approval.");
+      break;
+    }
+    }
+  } catch (const std::exception &err) {
+    rpc_bridge.reject(id, err.what());
+  }
+
+  pending_request.reset();
+  cli.set_active_tab(WALLET_UI);
+}
+void UserInterface::reject_dapp_request(uint64_t id) {
+  rpc_bridge.reject(id, "User rejected the request");
+  pending_request.reset();
+  cli.set_active_tab(WALLET_UI);
+}
+void UserInterface::toggle_dapp_bridge(bool enable) {
+  if (enable && !rpc_bridge.is_running()) {
+    rpc_bridge.start();
+    // push_activity("🔗", "DeFi bridge enabled on :8989");
+  } else if (!enable && rpc_bridge.is_running()) {
+    rpc_bridge.stop();
+    // push_activity("🔌", "DeFi bridge disabled");
+  }
+}
+bool UserInterface::is_bridge_running(void) { return rpc_bridge.is_running(); }

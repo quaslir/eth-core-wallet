@@ -149,12 +149,13 @@ Component CLI::render_request_unlock_password(void) {
     int remaining = max_attempts - *attempts;
     Elements status_info;
     if (*attempts > 0) {
-      status_info.push_back(text("[!] ACCESS DENIED: INVALID PASSWORD") | ftxui::bold |
-                            color(Color::Red) | hcenter);
+      status_info.push_back(text("[!] ACCESS DENIED: INVALID PASSWORD") |
+                            ftxui::bold | color(Color::Red) | hcenter);
 
       if (remaining == 1) {
         status_info.push_back(text("!!! FINAL ATTEMPT: WIPE ON FAILURE !!!") |
-                              ftxui::bold | color(Color::RedLight) | blink | hcenter);
+                              ftxui::bold | color(Color::RedLight) | blink |
+                              hcenter);
       } else {
         status_info.push_back(
             text("Remaining attempts: " + std::to_string(remaining)) | dim |
@@ -163,7 +164,8 @@ Component CLI::render_request_unlock_password(void) {
     }
 
     auto header =
-        vbox({text(" 🔒 UNLOCK WALLET ") | ftxui::bold | hcenter | color(Color::Cyan),
+        vbox({text(" 🔒 UNLOCK WALLET ") | ftxui::bold | hcenter |
+                  color(Color::Cyan),
               separatorDouble(),
               text(" Encryption active. Enter master password to access "
                    "private keys. ") |
@@ -175,10 +177,11 @@ Component CLI::render_request_unlock_password(void) {
 
     });
 
-    auto input_box = vbox({text(" PASSWORD >>> ") | ftxui::bold | color(Color::Cyan),
-                           field->Render() | flex | border |
-                               color(Color::GrayDark) | focus}) |
-                     size(HEIGHT, EQUAL, 6);
+    auto input_box =
+        vbox({text(" PASSWORD >>> ") | ftxui::bold | color(Color::Cyan),
+              field->Render() | flex | border | color(Color::GrayDark) |
+                  focus}) |
+        size(HEIGHT, EQUAL, 6);
 
     auto content = vbox({
         header,

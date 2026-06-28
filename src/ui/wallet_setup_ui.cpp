@@ -81,25 +81,21 @@ Component CLI::create_main_menu(void) {
 Component CLI::render_mnemonic_element(void) {
   auto mnemonic = std::make_shared<secure_string>(actions->get_mnemonic());
 
-
-
-
-
   auto button = Button(
       " [ I HAVE WRITTEN IT DOWN ] ",
       [this, mnemonic] { this->set_active_tab(MNEMONIC_WIPING); },
       ButtonOption::Ascii());
 
-    auto mnemonic_component = CatchEvent(button, [this](Event event) {
-        if(event.character() == "c" || event.character() == "C") {
-            actions->copy_mnemonic();
-            return true;
-        }
+  auto mnemonic_component = CatchEvent(button, [this](Event event) {
+    if (event.character() == "c" || event.character() == "C") {
+      actions->copy_mnemonic();
+      return true;
+    }
 
-        return false;
-    });
+    return false;
+  });
 
-  return Renderer(mnemonic_component, [this,button, mnemonic] {
+  return Renderer(mnemonic_component, [this, button, mnemonic] {
     if (mnemonic->empty()) {
       *mnemonic = actions->get_mnemonic();
     }
@@ -109,15 +105,17 @@ Component CLI::render_mnemonic_element(void) {
                   color(Color::Yellow),
               text(" Keep this phrase private and offline! ") | dim | hcenter});
 
-    auto phrase_display =
-        vbox({filler(),
-              paragraph_(*mnemonic) | ftxui::bold | hcenter | color(Color::White),
-              filler()}) |
-        borderRounded | color(Color::Cyan) | size(HEIGHT, EQUAL, 6);
+    auto phrase_display = vbox({filler(),
+                                paragraph_(*mnemonic) | ftxui::bold | hcenter |
+                                    color(Color::White),
+                                filler()}) |
+                          borderRounded | color(Color::Cyan) |
+                          size(HEIGHT, EQUAL, 6);
 
     auto warning_box =
         vbox(
-            {text(" ⚠️  CRITICAL WARNING  ⚠️ ") | ftxui::bold | hcenter, separator(),
+            {text(" ⚠️  CRITICAL WARNING  ⚠️ ") | ftxui::bold | hcenter,
+             separator(),
              text(" • DO NOT take a screenshot or digital copy.") | hcenter,
              text(" • Anyone with these words can STEAL your money.") | hcenter,
              text(" • There is NO 'Forgot Phrase' option.") | hcenter}) |
@@ -125,7 +123,8 @@ Component CLI::render_mnemonic_element(void) {
 
     auto content =
         vbox({header, filler(), phrase_display, filler(), warning_box, filler(),
-              button->Render() | hcenter | ftxui::bold | focus | color(Color::Green)});
+              button->Render() | hcenter | ftxui::bold | focus |
+                  color(Color::Green)});
 
     return to_center(content | border | size(WIDTH, EQUAL, 70) |
                      size(HEIGHT, EQUAL, 22));
@@ -159,9 +158,9 @@ Component CLI::render_mnemonic_wiping(void) {
     bool is_correct = (*user_input == "I AM RESPONSIBLE");
     auto input_style = is_correct ? color(Color::Green) : color(Color::Red);
 
-    auto warning_header =
-        vbox({text(" ⚠️  LEGAL & SECURITY TERMINATION  ⚠️ ") | ftxui::bold | hcenter}) |
-        borderDouble | color(Color::Red);
+    auto warning_header = vbox({text(" ⚠️  LEGAL & SECURITY TERMINATION  ⚠️ ") |
+                                ftxui::bold | hcenter}) |
+                          borderDouble | color(Color::Red);
 
     auto warning_list =
         vbox(
@@ -247,8 +246,8 @@ Component CLI::render_import_mnemonic_component(void) {
   return Renderer(component, [=, this] {
     Element error_box = emptyElement();
     if (*is_incorrect) {
-      error_box = vbox({text(" ⚠  VERIFICATION FAILED ") | ftxui::bold | hcenter |
-                            color(Color::Red),
+      error_box = vbox({text(" ⚠  VERIFICATION FAILED ") | ftxui::bold |
+                            hcenter | color(Color::Red),
 
                         vbox({
 
@@ -263,15 +262,16 @@ Component CLI::render_import_mnemonic_component(void) {
     auto input_box =
         vbox({
 
-            hbox({text(" SEED PHRASE ") | ftxui::bold | color(Color::Cyan), filler(),
+            hbox({text(" SEED PHRASE ") | ftxui::bold | color(Color::Cyan),
+                  filler(),
                   text(std::to_string(user_input->length()) + " chars") | dim}),
 
             separator(),
 
             text(""),
 
-            hbox(
-                {text(" >>> ") | ftxui::bold | color(Color::Yellow), field->Render()}),
+            hbox({text(" >>> ") | ftxui::bold | color(Color::Yellow),
+                  field->Render()}),
 
             text("")
 
@@ -285,10 +285,10 @@ Component CLI::render_import_mnemonic_component(void) {
 
     auto content = vbox({
 
-        vbox(
-            {text(" 📥  IMPORT WALLET  ") | ftxui::bold | hcenter | color(Color::Cyan),
-             text(" Recovery phase is the master key to your funds ") | dim |
-                 hcenter}),
+        vbox({text(" 📥  IMPORT WALLET  ") | ftxui::bold | hcenter |
+                  color(Color::Cyan),
+              text(" Recovery phase is the master key to your funds ") | dim |
+                  hcenter}),
 
         filler(),
 
@@ -338,16 +338,17 @@ Component CLI::render_input_optional_passphrase_component(void) {
                  hcenter,
              text(" If you used a passphrase before, you MUST enter it now. ") |
                  hcenter,
-             text(" Wrong passphrase = EMPTY WALLET ") | ftxui::bold | hcenter}) |
+             text(" Wrong passphrase = EMPTY WALLET ") | ftxui::bold |
+                 hcenter}) |
         border | color(Color::Red);
 
     auto input_box =
         vbox({text(" ENTER PASSPHRASE (LEAVE EMPTY IF NONE): ") | ftxui::bold,
               text(""), field->Render() | hcenter});
 
-    auto footer = hbox(
-        {text(" [ESC] Back ") | dim, filler(),
-         text(" [ENTER] Confirm and Import ") | color(Color::Green) | ftxui::bold});
+    auto footer = hbox({text(" [ESC] Back ") | dim, filler(),
+                        text(" [ENTER] Confirm and Import ") |
+                            color(Color::Green) | ftxui::bold});
 
     auto content = vbox(
         {header, filler(), warning_box, filler(), input_box, filler(), footer});
@@ -417,7 +418,8 @@ Component CLI::render_config_menu(void) {
                   text(" [ENTER] Edit ") | dim,
                   filler(),
 
-                  text(" [G] Generate ") | ftxui::bold | color(Color::LightCyan1Bis),
+                  text(" [G] Generate ") | ftxui::bold |
+                      color(Color::LightCyan1Bis),
                   filler(),
                   text(" [B] Back") | ftxui::bold | color(Color::DarkCyan),
               })}) |

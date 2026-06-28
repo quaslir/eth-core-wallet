@@ -1,8 +1,10 @@
 #include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
+#include "drivers/rpc_bridge.hpp"
 #include "drivers/tx_status_client.hpp"
 #include "fmt/core.h"
+#include "ftxui/dom/elements.hpp"
 #include "ui/cli.hpp"
 #include "ui/ftxui-components/text_bytes.hpp"
 #include "ui/ftxui-components/text_component.hpp"
@@ -14,6 +16,7 @@
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/deprecated.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/color.hpp>
@@ -22,9 +25,10 @@
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries = {
-      " 💸 SEND FUNDS     ", " 📜 HISTORY        ", " 🌐 NETWORK        ",
-      " ➡  NEXT ADDR      ", " ⬅  PREV ADDR      ", " 🔑 EXPORT KEY     ", " 🔗 ENABLE DEFI BRIDGE      ",
-      " 🚪 LOCK & EXIT    "};
+      " 💸 SEND FUNDS     ",          " 📜 HISTORY        ",
+      " 🌐 NETWORK        ",          " ➡  NEXT ADDR      ",
+      " ⬅  PREV ADDR      ",          " 🔑 EXPORT KEY     ",
+      " 🔗 ENABLE DEFI BRIDGE      ", " 🚪 LOCK & EXIT    "};
 
   auto menu = Menu(&entries, &selected);
 
@@ -35,10 +39,11 @@ Component CLI::print_wallet_ui(void) {
     WalletInfo wallet_info = actions->get_wallet();
     Elements asset_rows;
 
-    for (const auto & asset : *wallet_info.assets) {
+    for (const auto &asset : *wallet_info.assets) {
 
       asset_rows.push_back(hbox(
-          {text(" " + asset.symbol + ": ") | ftxui::bold | size(WIDTH, EQUAL, 8),
+          {text(" " + asset.symbol + ": ") | ftxui::bold |
+               size(WIDTH, EQUAL, 8),
            text(fmt::format("{:.5f}", asset.balance)) | color(Color::White),
            filler(),
            text(fmt::format("{:.2f}", asset.balance * asset.fiat_price)) |
@@ -52,41 +57,43 @@ Component CLI::print_wallet_ui(void) {
               text(fmt::format("{:.2f} USD", wallet_info.total)) | ftxui::bold |
                   color(Color::Green)}));
 
-    auto asset_panel = vbox({
-                           text(" 💰 ASSETS ") | ftxui::bold | color(Color::Yellow),
-                           separatorDouble() | color(Color::Yellow),
+    auto asset_panel =
+        vbox({
+            text(" 💰 ASSETS ") | ftxui::bold | color(Color::Yellow),
+            separatorDouble() | color(Color::Yellow),
 
-                           vbox(std::move(asset_rows)),
+            vbox(std::move(asset_rows)),
 
-                           separator(),
+            separator(),
 
-                           text(" ADDRESS: ") | dim,
-                           text_(wallet_info.addr) | color(Color::Cyan) | flex,
-                           text(" (Press 'C' to copy) ") | dim | hcenter,
-                       }) |
-                       borderHeavy | size(WIDTH, EQUAL, 45);
+            text(" ADDRESS: ") | dim,
+            text_(wallet_info.addr) | color(Color::Cyan) | flex,
+            text(" (Press 'C' to copy) ") | dim | hcenter,
+        }) |
+        borderHeavy | size(WIDTH, EQUAL, 45);
 
     float refresh_in = actions->get_next_refresh();
 
     auto network_info =
-        vbox({text(" 🌐 NETWORK & NODES ") | ftxui::bold | color(Color::Magenta),
-              separator(),
+        vbox(
+            {text(" 🌐 NETWORK & NODES ") | ftxui::bold | color(Color::Magenta),
+             separator(),
 
-              hbox({text(" TARGET: "), text(actions->get_current_network()) |
-                                           color(Color::Green)}),
-              hbox({text(" GAS:    "),
-                    text(fmt::format("{:.3f}",
-                                     actions->get_current_gas_price().first) +
-                         " GWei") |
-                        color(Color::Yellow)}),
+             hbox({text(" TARGET: "),
+                   text(actions->get_current_network()) | color(Color::Green)}),
+             hbox({text(" GAS:    "),
+                   text(fmt::format("{:.3f}",
+                                    actions->get_current_gas_price().first) +
+                        " GWei") |
+                       color(Color::Yellow)}),
 
-              text(""),
+             text(""),
 
-              hbox({text(" REFRESH IN: ") | dim,
-                    gauge(refresh_in) | color(Color::Blue) | flex,
-                    text(fmt::format(" {:.0f} ", refresh_in * 100)) | dim})
+             hbox({text(" REFRESH IN: ") | dim,
+                   gauge(refresh_in) | color(Color::Blue) | flex,
+                   text(fmt::format(" {:.0f} ", refresh_in * 100)) | dim})
 
-        }) |
+            }) |
         borderHeavy;
     Elements log = {
         text(" 📑 RECENT ACTIVITY ") | ftxui::bold | dim,
@@ -117,7 +124,8 @@ Component CLI::print_wallet_ui(void) {
                         text("  Build: v1.0-alpha ") | dim});
 
     auto dashboard = vbox(
-        {hbox({text(" 💠 ETH-CORE WALLET v1.0 ") | ftxui::bold | color(Color::Cyan),
+        {hbox({text(" 💠 ETH-CORE WALLET v1.0 ") | ftxui::bold |
+                   color(Color::Cyan),
                filler(),
                text(" SESSION: ACTIVE ") | color(Color::Green) | dim}),
 
@@ -172,8 +180,8 @@ Component CLI::display_private_key(void) {
 
   Component warning_view = Renderer(button_subtab_0, [=, this] {
     auto element =
-        vbox({text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | ftxui::bold | hcenter |
-                  color(Color::Red1),
+        vbox({text("⚠️  CRITICAL SECURITY WARNING  ⚠️  ") | ftxui::bold |
+                  hcenter | color(Color::Red1),
               separatorDouble() | color(Color::Red1),
 
               paragraph("You are about to reveal your PRIVATE KEY. Anyone who "
@@ -214,33 +222,34 @@ Component CLI::display_private_key(void) {
     return false;
   });
 
-
-  Component to_approve = PasswordUI::create("Confirm showing private key", [this](const secure_string& password) {
-      return actions->check_password(password);
-  }, [=]() {
-      *active_sub_tab = 2;
-  }, [=, this]() {
-      *active_sub_tab = 0;
-      active_tab = WALLET_UI;
-  });
-
+  Component to_approve = PasswordUI::create(
+      "Confirm showing private key",
+      [this](const secure_string &password) {
+        return actions->check_password(password);
+      },
+      [=]() { *active_sub_tab = 2; },
+      [=, this]() {
+        *active_sub_tab = 0;
+        active_tab = WALLET_UI;
+      });
 
   Component private_key_view = Renderer(button_subtab_1, [=, this] {
     const bytes_data &private_key_in_bytes = actions->get_private_key();
 
     auto content_box =
-        vbox(
-            {text(" YOUR PRIVATE KEY ") | ftxui::bold | hcenter | color(Color::Yellow),
+        vbox({text(" YOUR PRIVATE KEY ") | ftxui::bold | hcenter |
+                  color(Color::Yellow),
 
-             separatorLight(), filler(),
+              separatorLight(), filler(),
 
-             byte_text(private_key_in_bytes) | hcenter | color(Color::Red1),
+              byte_text(private_key_in_bytes) | hcenter | color(Color::Red1),
 
-             filler(),
+              filler(),
 
-             separatorLight(),
-             text("Press C to copy private key") | ftxui::bold | color(Color::Yellow),
-             button_subtab_1->Render() | dim | hcenter}) |
+              separatorLight(),
+              text("Press C to copy private key") | ftxui::bold |
+                  color(Color::Yellow),
+              button_subtab_1->Render() | dim | hcenter}) |
         borderStyled(ROUNDED) | color(Color::Red1) | size(WIDTH, EQUAL, 60) |
         size(HEIGHT, EQUAL, 10) | hcenter;
 
@@ -260,16 +269,16 @@ Component CLI::display_private_key(void) {
 
         return false;
       });
-  auto container =
-      Container::Tab({warning_component, to_approve, private_key_displayer_component},
-                     active_sub_tab.get());
+  auto container = Container::Tab(
+      {warning_component, to_approve, private_key_displayer_component},
+      active_sub_tab.get());
 
   return Renderer(container, [=] {
     container->ChildAt(*active_sub_tab)->TakeFocus();
     if (*active_sub_tab == 0) {
       return warning_component->Render();
-    } else if(*active_sub_tab == 1) {
-        return to_approve->Render();
+    } else if (*active_sub_tab == 1) {
+      return to_approve->Render();
     }
     return private_key_displayer_component->Render();
   });
@@ -290,7 +299,8 @@ Component CLI::transaction_history_render(void) {
   auto component = Renderer(buttons, [=, this]() mutable -> Element {
     auto [history, error] = actions->get_transactions_history();
     if (history->empty() && !error) {
-      return vbox({text("LOADING...") | ftxui::bold | hcenter | color(Color::Cyan2)}) |
+      return vbox({text("LOADING...") | ftxui::bold | hcenter |
+                   color(Color::Cyan2)}) |
              center;
     } else if (error) {
       return vbox({text("Could not load data") | ftxui::bold | hcenter |
@@ -300,12 +310,13 @@ Component CLI::transaction_history_render(void) {
 
     Elements rows;
 
-    rows.push_back(hbox({text(" DATE           ") | ftxui::bold | color(Color::Blue),
-                         text(" TYPE     ") | ftxui::bold | color(Color::Blue),
-                         text(" AMOUNT           ") | ftxui::bold | color(Color::Blue),
-                         text(" FROM             ") | ftxui::bold | color(Color::Blue),
-                         text(" HASH     ") | ftxui::bold | color(Color::Blue)}) |
-                   bgcolor(Color::Blue) | color(Color::White));
+    rows.push_back(
+        hbox({text(" DATE           ") | ftxui::bold | color(Color::Blue),
+              text(" TYPE     ") | ftxui::bold | color(Color::Blue),
+              text(" AMOUNT           ") | ftxui::bold | color(Color::Blue),
+              text(" FROM             ") | ftxui::bold | color(Color::Blue),
+              text(" HASH     ") | ftxui::bold | color(Color::Blue)}) |
+        bgcolor(Color::Blue) | color(Color::White));
 
     rows.push_back(separator());
 
@@ -335,8 +346,7 @@ Component CLI::transaction_history_render(void) {
     auto table_element = vbox(std::move(rows)) | flex;
     auto box = vbox({text(" TRANSACTION HISTORY ") | ftxui::bold | hcenter |
                          color(Color::Yellow),
-                     separator(), table_element,
-                     text(""),
+                     separator(), table_element, text(""),
                      hbox({buttons->Render() | hcenter}) | hcenter
 
                }) |
@@ -349,7 +359,7 @@ Component CLI::transaction_history_render(void) {
   return CatchEvent(component, [=, this](Event event) {
     auto [history, error] = actions->get_transactions_history();
     if (event == Event::Character('b') || event == Event::Character('B')) {
-        *scroll_offset = 0;
+      *scroll_offset = 0;
       set_active_tab(WALLET_UI);
       return true;
     } else if (event == Event::Character('r') ||
@@ -391,20 +401,21 @@ Component CLI::change_network_render(void) {
     auto menu_render = menu->Render() | vscroll_indicator | frame |
                        size(HEIGHT, LESS_THAN, 10) | color(Color::CyanLight);
 
-    auto box = vbox(
-        {text(" 🌐 NETWORK SELECTION ") | ftxui::bold | hcenter | color(Color::Cyan),
-         separatorDouble() | color(Color::Cyan),
+    auto box = vbox({text(" 🌐 NETWORK SELECTION ") | ftxui::bold | hcenter |
+                         color(Color::Cyan),
+                     separatorDouble() | color(Color::Cyan),
 
-         text(" Select target provider: ") | dim | hcenter, text(""),
-         menu_render, filler(), separatorLight(),
+                     text(" Select target provider: ") | dim | hcenter,
+                     text(""), menu_render, filler(), separatorLight(),
 
-         hbox({text(" ACTIVE: ") | ftxui::bold, text(actions->get_current_network()) |
-                                             color(Color::GreenLight)}) |
-             hcenter,
+                     hbox({text(" ACTIVE: ") | ftxui::bold,
+                           text(actions->get_current_network()) |
+                               color(Color::GreenLight)}) |
+                         hcenter,
 
-         separatorLight(),
+                     separatorLight(),
 
-         text(" [ENTER] Select | [B] Back ") | hcenter | dim});
+                     text(" [ENTER] Select | [B] Back ") | hcenter | dim});
 
     return to_center(box | borderHeavy | size(WIDTH, EQUAL, 60) |
                      size(HEIGHT, EQUAL, 16));
@@ -441,27 +452,29 @@ Component CLI::make_transaction_render(void) {
   auto status_container_tab = std::make_shared<int>(0);
   auto to_cancel = std::make_shared<bool>();
   auto to_speed_up = std::make_shared<bool>();
-  Component sign_transaction = PasswordUI::create("Confirm transaction", [=, this](const secure_string& password){
-      return actions->check_password(password);
-  }, [=, this]{
-      auto[msg, ok] =
-          actions->send_transaction(*to_addr, *current_asset, *amount_str,
-                                    *final_gas, *custom_gas_limit);
-      if (ok) {
-        to_addr->clear();
-        amount_str->clear();
-              *selected_subtab = 3;
-        status_component_ptr->get()->TakeFocus();
-      } else {
+  Component sign_transaction = PasswordUI::create(
+      "Confirm transaction",
+      [=, this](const secure_string &password) {
+        return actions->check_password(password);
+      },
+      [=, this] {
+        auto [msg, ok] =
+            actions->send_transaction(*to_addr, *current_asset, *amount_str,
+                                      *final_gas, *custom_gas_limit);
+        if (ok) {
+          to_addr->clear();
+          amount_str->clear();
+          *selected_subtab = 3;
+          status_component_ptr->get()->TakeFocus();
+        } else {
           *selected_subtab = 0;
-          if(!msg.empty()) *error_msg = msg;
-          else  *error_msg = "Failed to send transaction";
-
-      }
-
-  }, [=]{
-      *selected_subtab = 0;
-  });
+          if (!msg.empty())
+            *error_msg = msg;
+          else
+            *error_msg = "Failed to send transaction";
+        }
+      },
+      [=] { *selected_subtab = 0; });
   auto spinner =
       std::make_shared<std::vector<std::string>>(std::vector<std::string>{
           "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"});
@@ -480,25 +493,25 @@ Component CLI::make_transaction_render(void) {
 
   auto gas_toggle = Toggle(&gas_options, gas_multiplayer.get());
 
-  auto max_amount_to_send_btn = Button("MAX AMOUNT", [=]() {
-      *amount_str = std::to_string(current_asset->balance);
-  }, ButtonOption::Ascii());
+  auto max_amount_to_send_btn = Button(
+      "MAX AMOUNT",
+      [=]() { *amount_str = std::to_string(current_asset->balance); },
+      ButtonOption::Ascii());
 
-
-  auto container_send =
-      Container::Vertical({asset_toggle, addr_input, amount_input, gas_toggle,
-                           gas_limit_input, custom_gas_input, max_amount_to_send_btn});
+  auto container_send = Container::Vertical(
+      {asset_toggle, addr_input, amount_input, gas_toggle, gas_limit_input,
+       custom_gas_input, max_amount_to_send_btn});
 
   auto send_form = Renderer(container_send, [=, this]() {
     asset_names->clear();
 
     WalletInfo info = actions->get_wallet();
 
-    for (const auto & asset : *info.assets) {
+    for (const auto &asset : *info.assets) {
       asset_names->push_back(" " + asset.symbol + " ");
     }
     int idx = 0;
-    for (const auto & asset : *info.assets) {
+    for (const auto &asset : *info.assets) {
       if (idx == *selected_asset) {
         *current_asset = asset;
         break;
@@ -549,11 +562,10 @@ Component CLI::make_transaction_render(void) {
               addr_input->Render() | flex |
                   (addr_valid ? color(Color::White) : color(Color::RedLight))}),
 
-         hbox({
-             text(" AMOUNT: ") | dim, amount_input->Render() | flex,
+         hbox({text(" AMOUNT: ") | dim, amount_input->Render() | flex,
                text(" " + current_asset->symbol + " ") | dim,
-               max_amount_to_send_btn->Render() | size(WIDTH, EQUAL, 14) | size(HEIGHT, EQUAL, 1)
-         }),
+               max_amount_to_send_btn->Render() | size(WIDTH, EQUAL, 14) |
+                   size(HEIGHT, EQUAL, 1)}),
 
          hbox({text(" GAS:    ") | dim,
                gas_toggle->Render() | color(Color::CyanLight), filler(),
@@ -626,12 +638,12 @@ Component CLI::make_transaction_render(void) {
       *selected_subtab = 1;
       preview_component_ptr->get()->TakeFocus();
       return true;
-    } else if(event.is_character() && event.character().size() > 1) {
-        for(char c : event.character()) {
-            to_addr->push_back(c);
-        }
+    } else if (event.is_character() && event.character().size() > 1) {
+      for (char c : event.character()) {
+        to_addr->push_back(c);
+      }
 
-        return true;
+      return true;
     }
 
     return false;
@@ -648,8 +660,8 @@ Component CLI::make_transaction_render(void) {
 
     return to_center(
         vbox(
-            {text(" ⚠️  CONFIRM TRANSACTION ") | ftxui::bold | color(Color::Yellow) |
-                 hcenter,
+            {text(" ⚠️  CONFIRM TRANSACTION ") | ftxui::bold |
+                 color(Color::Yellow) | hcenter,
              hbox({text(" To:     ") | dim, filler(),
                    text(*preview_addr) | color(Color::Cyan)}),
 
@@ -681,67 +693,78 @@ Component CLI::make_transaction_render(void) {
     );
   });
 
-  Component preview_component =
-      CatchEvent(preview_form, [=](Event event) {
-        if (event == Event::Return) {
-            *selected_subtab = 2;
-            sign_transaction->TakeFocus();
-          return true;
-        } else if (event == Event::Escape) {
-          *selected_subtab = 0;
-          send_component_ptr->get()->TakeFocus();
-          return true;
-        }
+  Component preview_component = CatchEvent(preview_form, [=](Event event) {
+    if (event == Event::Return) {
+      *selected_subtab = 2;
+      sign_transaction->TakeFocus();
+      return true;
+    } else if (event == Event::Escape) {
+      *selected_subtab = 0;
+      send_component_ptr->get()->TakeFocus();
+      return true;
+    }
 
-        return false;
-      });
+    return false;
+  });
   *preview_component_ptr = preview_component;
 
-
   auto speed_up_btn = Button(
-      " ⚡ Speed Up ", [=] {
-          *to_speed_up = true;
-          *status_container_tab = 1;
+      " ⚡ Speed Up ",
+      [=] {
+        *to_speed_up = true;
+        *status_container_tab = 1;
       },
       ButtonOption::Ascii());
 
   auto cancel_btn = Button(
-      " ✕ Cancel Tx ", [=] {
-          *to_cancel = true;
-          *status_container_tab = 2;
+      " ✕ Cancel Tx ",
+      [=] {
+        *to_cancel = true;
+        *status_container_tab = 2;
       },
       ButtonOption::Ascii());
 
   auto status_btn_container = Container::Horizontal({speed_up_btn, cancel_btn});
 
-  Component confirm_canceling = PasswordUI::create("Confirm cancel transaction", [=, this](const secure_string& password){
-      return actions->check_password(password);
-  }, [=, this]{
-      actions->cancel_transaction();
-       *status_container_tab = 0;
-       status_btn_container->TakeFocus();
-  }, [=]{
-      *to_cancel = false;
-       *status_container_tab = 0;
-       status_btn_container->TakeFocus();
-  });
+  Component confirm_canceling = PasswordUI::create(
+      "Confirm cancel transaction",
+      [=, this](const secure_string &password) {
+        return actions->check_password(password);
+      },
+      [=, this] {
+        actions->cancel_transaction();
+        *status_container_tab = 0;
+        status_btn_container->TakeFocus();
+      },
+      [=] {
+        *to_cancel = false;
+        *status_container_tab = 0;
+        status_btn_container->TakeFocus();
+      });
 
-  Component confirm_speeding_up= PasswordUI::create("Confirm speed up transaction", [=, this](const secure_string& password){
-      return actions->check_password(password);
-  }, [=, this]{
-      actions->speed_up_transaction();
-      *status_container_tab = 0;
-      status_btn_container->TakeFocus();
-  }, [=]{
-      *to_speed_up = false;
-       *status_container_tab = 0;
-       status_btn_container->TakeFocus();
-  });
-  auto container_status = Container::Tab({status_btn_container, confirm_speeding_up, confirm_canceling}, status_container_tab.get());
+  Component confirm_speeding_up = PasswordUI::create(
+      "Confirm speed up transaction",
+      [=, this](const secure_string &password) {
+        return actions->check_password(password);
+      },
+      [=, this] {
+        actions->speed_up_transaction();
+        *status_container_tab = 0;
+        status_btn_container->TakeFocus();
+      },
+      [=] {
+        *to_speed_up = false;
+        *status_container_tab = 0;
+        status_btn_container->TakeFocus();
+      });
+  auto container_status = Container::Tab(
+      {status_btn_container, confirm_speeding_up, confirm_canceling},
+      status_container_tab.get());
   Component status_form = Renderer(container_status, [=, this]() {
-      if(*status_container_tab == 1) return confirm_speeding_up->Render();
-      else if(*status_container_tab == 2) return confirm_canceling->Render();
-
+    if (*status_container_tab == 1)
+      return confirm_speeding_up->Render();
+    else if (*status_container_tab == 2)
+      return confirm_canceling->Render();
 
     actions->update_current_tx_status();
     auto [status, confirmed] = actions->get_current_tx_status();
@@ -756,22 +779,19 @@ Component CLI::make_transaction_render(void) {
                 text(" Waiting for confirmation... ") | color(Color::Yellow)}) |
           hcenter;
 
+      if (!*to_speed_up && !*to_cancel) {
 
-
-
-      if(!*to_speed_up && !*to_cancel) {
-
-      buttons_element =
-          hbox({speed_up_btn->Render() | color(Color::YellowLight), text("  "),
-                cancel_btn->Render() | color(Color::RedLight)}) |
-          hcenter;
+        buttons_element =
+            hbox({speed_up_btn->Render() | color(Color::YellowLight),
+                  text("  "), cancel_btn->Render() | color(Color::RedLight)}) |
+            hcenter;
       }
       break;
 
     case TxStatus::SUCCESS:
-      status_element =
-          vbox({text(" ✓ Confirmed! ") | color(Color::Green) | ftxui::bold | hcenter,
-                text(" Transaction included in block ") | dim | hcenter});
+      status_element = vbox(
+          {text(" ✓ Confirmed! ") | color(Color::Green) | ftxui::bold | hcenter,
+           text(" Transaction included in block ") | dim | hcenter});
       break;
 
     case TxStatus::FAILED:
@@ -786,8 +806,8 @@ Component CLI::make_transaction_render(void) {
     }
 
     return to_center(
-        vbox({text(" 📡 TRANSACTION STATUS ") | ftxui::bold | color(Color::Cyan) |
-                  hcenter,
+        vbox({text(" 📡 TRANSACTION STATUS ") | ftxui::bold |
+                  color(Color::Cyan) | hcenter,
               separatorDouble() | color(Color::Cyan), filler(), status_element,
               filler(), buttons_element, filler(), separator(),
               text(" [ESC] Back to wallet ") | dim | hcenter}) |
@@ -810,19 +830,134 @@ Component CLI::make_transaction_render(void) {
     return false;
   });
   *status_component_ptr = status_component;
-  auto root =
-      Container::Tab({send_component, preview_component,  sign_transaction, status_component},
-                     selected_subtab.get());
+  auto root = Container::Tab(
+      {send_component, preview_component, sign_transaction, status_component},
+      selected_subtab.get());
 
   return Renderer(root, [=] {
     if (*selected_subtab == 0) {
       return send_component->Render();
     } else if (*selected_subtab == 1) {
       return preview_component->Render();
+    } else if (*selected_subtab == 2) {
+      return sign_transaction->Render();
     }
-    else if(*selected_subtab == 2) {
-     return sign_transaction->Render();
- }
     return status_component->Render();
+  });
+}
+
+Component CLI::dapp_request_render(void) {
+  auto error_msg = std::make_shared<std::string>();
+  auto selected_subtab = std::make_shared<int>(0);
+
+  auto preview_btn = Button("", [] {}, ButtonOption::Ascii());
+
+  auto preview_form = Renderer(preview_btn, [=, this]() {
+    auto req = actions->get_pending_dapp_request();
+
+    if (!req) {
+
+      return to_center(text(" No pending request ") | dim);
+    }
+
+    std::string method_label{};
+    Element body = emptyElement();
+
+    switch (req->type) {
+    case DappRequestType::RequestAccounts:
+      method_label = "Connect wallet";
+      body = text(" Allow this site to view your address ") | dim | hcenter;
+      break;
+
+    case DappRequestType::SendTransaction: {
+      method_label = "Send transaction";
+      json p = req->params[0];
+
+      body = vbox({hbox({text(" To:    ") | dim, filler(),
+                         text(p.value("to", "")) | color(Color::Cyan)}),
+
+                   hbox({text(" Value: ") | dim, filler(),
+                         text(p.value("value", "0x80")) | color(Color::White)}),
+
+                   hbox({text(" Value: ") | dim, filler(),
+                         text(p.contains("data")
+                                  ? std::string(p["data"].get<std::string>())
+                                            .substr(0, 14) +
+                                        "..."
+                                  : "(none)") |
+                             dim})
+
+      });
+
+      break;
+    }
+
+    case DappRequestType::PersonalSign:
+    case DappRequestType::SignTypedData:
+      method_label = "Sign message";
+      body = text(" Site is requesting a signature ") | dim | hcenter;
+      break;
+    }
+
+    return to_center(
+        vbox({text(" 🌐 DAPP REQUEST ") | ftxui::bold | color(Color::Magenta) |
+                  hcenter,
+              separatorDouble() | color(Color::Magenta),
+
+              hbox({text(" Origin: ") | dim, filler(),
+                    text(req->origin.empty() ? "(unknown)" : req->origin) |
+                        color(Color::Yellow) | ftxui::bold}),
+
+              hbox({text(" Action: ") | dim, filler(),
+                    text(method_label) | color(Color::White)}),
+
+              separator(), body, separator(),
+              error_msg->empty()
+                  ? text("")
+                  : text(" ✗ " + *error_msg) | color(Color::Red1) | hcenter,
+              separator(),
+              text(" [ENTER] Approve | [ESC] Reject ") | dim | hcenter
+
+        }) |
+        borderHeavy | color(Color::Magenta) | size(WIDTH, EQUAL, 65) |
+        size(HEIGHT, EQUAL, 16));
+  });
+
+  Component preview_component =
+      CatchEvent(preview_form, [=, this](Event event) {
+        auto req = actions->get_pending_dapp_request();
+        if (!req)
+          return false;
+
+        if (event == Event::Return) {
+          *selected_subtab = 1;
+          return true;
+        } else if (event == Event::Escape) {
+          actions->reject_dapp_request(req->id);
+          return true;
+        }
+
+        return false;
+      });
+  Component sign_request = PasswordUI::create(
+      " [ENTER] Approve | [ESC] Reject ",
+      [=, this](const secure_string &password) {
+        return actions->check_password(password);
+      },
+      [=, this]() {
+        auto req = actions->get_pending_dapp_request();
+        if (req)
+          actions->approve_dapp_request(req->id);
+        *selected_subtab = 0;
+      },
+      [=]() { *selected_subtab = 0; }
+
+  );
+
+  auto root =
+      Container::Tab({preview_component, sign_request}, selected_subtab.get());
+  return Renderer(root, [=] {
+    return *selected_subtab == 0 ? preview_component->Render()
+                                 : sign_request->Render();
   });
 }

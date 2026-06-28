@@ -33,7 +33,5 @@ public:
   RawTx get_original_tx(const std::string &tx_hash) const;
 
 private:
-  std::tuple<bytes_data, bytes_data, int>
-  sign_transaction(const bytes_data &hash, const bytes_data &key);
   std::pair<std::string, bool> make_request(const bytes_data &data) const;
 };
