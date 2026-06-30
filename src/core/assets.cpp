@@ -1,5 +1,6 @@
 #include "core/assets.hpp"
 #include "api/json.hpp"
+#include "drivers/balance_client.hpp"
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -41,4 +42,8 @@ void AssetsStore::save(const std::string &filename) {
 
 std::vector<Asset> AssetsStore::get_current_assets(uint64_t target_chain_id) {
   return current_assets[target_chain_id];
+}
+
+void AssetsStore::add_asset(const Asset & new_asset) {
+    current_assets[new_asset.chain_id].push_back(new_asset);
 }

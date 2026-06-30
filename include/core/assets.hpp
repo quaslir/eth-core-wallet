@@ -59,7 +59,7 @@ class AssetsStore {
 public:
   void load(const std::string &filename = "assets.json");
   void save(const std::string &filename = "assets.json");
-
+  void add_asset(const Asset & new_asset);
   std::vector<Asset> get_current_assets(uint64_t target_chain_id = 1);
 };
 

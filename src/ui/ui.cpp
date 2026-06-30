@@ -8,6 +8,7 @@
 #include "drivers/balance_client.hpp"
 #include "drivers/blockchain_client.hpp"
 #include "drivers/rpc_bridge.hpp"
+#include "eip712.hpp"
 #include "iwallet_actions.hpp"
 #include "utils/crypto_utils.hpp"
 #include "utils/tech_utils.hpp"
@@ -20,6 +21,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include "eip712.hpp"
 
 void UserInterface::load(void) {
   cli.set_actions(this);
@@ -306,6 +308,7 @@ void UserInterface::approve_dapp_request(uint64_t id) {
       } catch (const std::exception &err) {
         rpc_bridge.reject(id, std::string("Tx error: ") + err.what());
       }
+      break;
     }
 
     case DappRequestType::PersonalSign: {
@@ -319,7 +322,18 @@ void UserInterface::approve_dapp_request(uint64_t id) {
         break;
     }
     case DappRequestType::SignTypedData: {
-        rpc_bridge.reject(id, "Method eth_signTypedData_v4 is currently not supported by this wallet. Please use standard transaction approval.");
+        try {
+        json typed_data = req->params[1].is_string() ? json::parse(req->params[1].get<std::string>()) :
+            req->params[1];
+
+        eip712::bytes_t digest = eip712::hash_typed_data(typed_data);
+        const bytes_data& priv_key = wallet.get_private_key();
+        secure_string signature = crypto_utils::sign_typed_data(digest, priv_key);
+        rpc_bridge.resolve(id, signature);
+
+        } catch(const std::exception& err) {
+        rpc_bridge.reject(id, std::string("Failed to sign typed data: ") + err.what());
+        }
       break;
     }
     }

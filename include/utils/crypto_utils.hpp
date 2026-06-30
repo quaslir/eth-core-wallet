@@ -1,4 +1,5 @@
 #pragma once
+#include "eip712.hpp"
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -67,4 +68,5 @@ std::tuple<bytes_data, bytes_data, int> sign_transaction(const bytes_data &hash,
 
 secure_string sign_personal_message(const bytes_data &raw_msg_bytes,
                                     const bytes_data &key);
+secure_string sign_typed_data(const eip712::bytes_t& digest, const bytes_data& key);
 } // namespace crypto_utils
