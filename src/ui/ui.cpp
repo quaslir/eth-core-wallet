@@ -84,6 +84,7 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
   case 7:
     if (!rpc_bridge.is_running())
       rpc_bridge.start();
+    else rpc_bridge.stop();
 
     break;
 
