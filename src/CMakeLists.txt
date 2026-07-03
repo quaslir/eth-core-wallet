@@ -50,17 +50,34 @@ set(CONFIG_SOURCES
 config/config.cpp
 )
 
-add_library(wallet_core STATIC ${CORE_SOURCES} ${UI_SOURCES} ${UTILS_SOURCES} ${MANAGERS_SOURCES}
+add_library(wallet_core STATIC ${CORE_SOURCES} ${UI_SOURCES} ${UTILS_SOURCES}
 ${API_SOURCES} ${DRIVERS_SOURCES} ${CONFIG_SOURCES})
 
-target_include_directories(wallet_core PUBLIC ${CMAKE_SOURCE_DIR}/include
-    ${SECP256K1_INCLUDE_DIRS})
+target_include_directories(wallet_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
-target_link_libraries(wallet_core PUBLIC OpenSSL::Crypto
-nlohmann_json::nlohmann_json libcurl ftxui::screen
+target_link_libraries(wallet_core PUBLIC
+    libcurl
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    nlohmann_json::nlohmann_json
+    ftxui::screen
     ftxui::dom
-    ftxui::component fmt::fmt secp256k1 tools httplib::httplib)
+    ftxui::component
+    fmt::fmt
+    secp256k1
+    tools
+    httplib::httplib
+)
 
+
+if(APPLE)
+    target_link_libraries(wallet_core PRIVATE
+        "-framework CoreFoundation"
+        "-framework Security"
+        "-framework SystemConfiguration"
+        z
+    )
+endif()
 
 add_executable(eth-wallet main.cpp)
 target_link_libraries(eth-wallet PRIVATE wallet_core)

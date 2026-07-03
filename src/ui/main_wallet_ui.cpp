@@ -70,10 +70,11 @@ Component CLI::print_wallet_ui(void) {
 
             text(" ADDRESS: ") | dim,
             text_(wallet_info.addr) | color(Color::Cyan),
+                        text(" (Press 'C' to copy) ") | dim | hcenter,
+                        text(""),
             actions->is_bridge_running()
-                ? text(" DEFI BRIDGE ENABLED ") | color(Color::Green)
-                : text(" DEFI BRIDGE DISABLED ") | color(Color::Red),
-            text(" (Press 'C' to copy) ") | dim | hcenter,
+                ? text(" DEFI BRIDGE ENABLED ") | color(Color::Green) | hcenter
+                : text(" DEFI BRIDGE DISABLED ") | color(Color::Red) | hcenter
         }) |
         borderHeavy | size(WIDTH, EQUAL, 45);
 
@@ -166,6 +167,7 @@ Component CLI::print_wallet_ui(void) {
     } else if (event == Event::Character('q') ||
                event == Event::Character('Q')) {
       screen.Exit();
+      actions->toggle_dapp_bridge(false);
       return true;
     }
 
