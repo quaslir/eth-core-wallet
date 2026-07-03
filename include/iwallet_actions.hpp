@@ -3,6 +3,7 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/wallet_info.hpp"
 #include "drivers/blockchain_client.hpp"
+#include "drivers/rpc_bridge.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -54,10 +55,10 @@ public:
 
   virtual const std::deque<ActivityEvent> &get_activity(void) = 0;
 
-  virtual std::pair<std::string, bool> send_transaction(const std::string &to, const Asset &asset,
-                                const std::string &amount,
-                                double target_gas_gwei,
-                                const std::string &gas_limit_input) = 0;
+  virtual std::pair<std::string, bool>
+  send_transaction(const std::string &to, const Asset &asset,
+                   const std::string &amount, double target_gas_gwei,
+                   const std::string &gas_limit_input) = 0;
 
   virtual std::pair<TxStatus, bool> get_current_tx_status(void) = 0;
   virtual void update_current_tx_status(void) = 0;
@@ -65,7 +66,16 @@ public:
   virtual bool speed_up_transaction(void) = 0;
   virtual bool cancel_transaction(void) = 0;
 
-  virtual bool check_password(const secure_string& password) = 0;
+  virtual bool check_password(const secure_string &password) = 0;
 
   virtual uint64_t get_current_chain_id(void) = 0;
+
+  virtual std::shared_ptr<DappRequest> get_pending_dapp_request(void) = 0;
+  virtual void approve_dapp_request(uint64_t id) = 0;
+  virtual void reject_dapp_request(uint64_t id) = 0;
+  virtual void toggle_dapp_bridge(bool enable) = 0;
+  virtual bool is_bridge_running(void) = 0;
+
+  virtual void add_new_asset(const Asset &new_asset) = 0;
+  virtual Asset fetch_new_asset_metadata(const std::string &contract_addr) = 0;
 };

@@ -52,6 +52,12 @@ FetchContent_Declare(
   GIT_TAG        v0.4.1
 )
 
+FetchContent_Declare(
+  httplib
+  GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+  GIT_TAG v0.15.3
+)
+
 
 set(SECP256K1_ENABLE_MODULE_RECOVERY ON CACHE BOOL "" FORCE)
 set(SECP256K1_ENABLE_MODULE_SCHNORRSIG OFF CACHE BOOL "" FORCE)
@@ -62,6 +68,8 @@ FetchContent_MakeAvailable(curl)
 FetchContent_MakeAvailable(ftxui)
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(secp256k1)
+FetchContent_MakeAvailable(httplib)
+
 find_package(OpenSSL REQUIRED)
 
 add_subdirectory(external)

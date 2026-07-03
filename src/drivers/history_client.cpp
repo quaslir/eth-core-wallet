@@ -3,6 +3,7 @@
 #include "api/json.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "fmt/format.h"
+#include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <functional>
 #include <future>
@@ -11,7 +12,6 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
-#include "utils/tech_utils.hpp"
 std::vector<TransactionRecord>
 HistoryManager::parse_transactions(const json &j, bool incoming) const {
   try {
@@ -99,11 +99,10 @@ HistoryManager::make_request(const std::string &eth_addr) {
 
   if (!cached_history.empty()) {
 
-     auto block_num = tech_utils::parse_hex(cached_history.front().block_num);
-     if(block_num.has_value()) {
+    auto block_num = tech_utils::parse_hex(cached_history.front().block_num);
+    if (block_num.has_value()) {
       last_known_block = fmt::format("0x{:x}", *block_num + 1);
-     }
-
+    }
   }
   return cached_history;
 }
@@ -161,6 +160,6 @@ HistoryManager::~HistoryManager() {
 }
 
 void HistoryManager::clear_history(void) {
-    cached_history.clear();
-    last_known_block = "0x0";
+  cached_history.clear();
+  last_known_block = "0x0";
 }

@@ -12,10 +12,10 @@
 #include <cstdint>
 #include <exception>
 #include <future>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
-#include <iostream>
 std::string form_data(const std::string &contract_address,
                       const secure_string &eth_addr) {
   json j;
@@ -68,7 +68,7 @@ assets_data BalanceManager::update_all(const secure_string &eth_addr) const {
   std::vector<std::future<bool>> balance_futures;
 
   balance_futures.reserve(current_assets.size());
-  for (auto & asset : current_assets) {
+  for (auto &asset : current_assets) {
     Asset *asset_ptr = &asset;
     if (asset.is_native) {
       balance_futures.push_back(
@@ -191,10 +191,12 @@ BalanceManager::~BalanceManager() {
   }
 }
 
-void BalanceManager::set_current_chain_id_callback(std::function<uint64_t()> callback) {
-    get_current_chain_id = callback;
+void BalanceManager::set_current_chain_id_callback(
+    std::function<uint64_t()> callback) {
+  get_current_chain_id = callback;
 }
 
-void BalanceManager::set_current_assets_callback(std::function<assets_data(uint64_t chain_id)> callback) {
-    get_current_assets = callback;
+void BalanceManager::set_current_assets_callback(
+    std::function<assets_data(uint64_t chain_id)> callback) {
+  get_current_assets = callback;
 }

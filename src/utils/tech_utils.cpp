@@ -2,6 +2,7 @@
 #include "core/secure_bytes_data.hpp"
 #include "drivers/balance_client.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cstddef>
@@ -14,6 +15,16 @@
 #include <string>
 #include <system_error>
 namespace tech_utils {
+
+secure_string tolower(const secure_string &target) {
+  secure_string lowercase_str{target};
+
+  std::transform(lowercase_str.begin(), lowercase_str.end(),
+                 lowercase_str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+
+  return lowercase_str;
+}
 
 secure_string to_hex(const bytes_data &data) {
   secure_string hex_format;
@@ -156,7 +167,7 @@ std::string decimals_to_divisor(int decimals) {
   return "1" + std::string(decimals, '0');
 }
 
-double calculate_total(const std::vector<Asset>& assets) {
+double calculate_total(const std::vector<Asset> &assets) {
   double total = 0.0;
   for (const auto &asset : assets) {
     total += (asset.fiat_price * asset.balance);
@@ -177,41 +188,71 @@ uint64_t string_to_uint64(const std::string &str) {
   return 0;
 }
 
-void copy_to_clipboard(const secure_string& text) {
-    #ifdef __APPLE__
-    FILE * pipe = popen("pbcopy", "w");
-    #else
-    FILE * pipe = popen("xclip -selection clipboard 2>/dev/null", "w");
-    if(!pipe) pipe = popen("xsel --clipboard --input 2>/dev/null", "w");
-    if(!pipe) pipe = popen("wl-copy 2>/dev/null", "w");
-    #endif
+void copy_to_clipboard(const secure_string &text) {
+#ifdef __APPLE__
+  FILE *pipe = popen("pbcopy", "w");
+#else
+  FILE *pipe = popen("xclip -selection clipboard 2>/dev/null", "w");
+  if (!pipe)
+    pipe = popen("xsel --clipboard --input 2>/dev/null", "w");
+  if (!pipe)
+    pipe = popen("wl-copy 2>/dev/null", "w");
+#endif
 
-    if(pipe) {
-        fwrite(text.data(), 1, text.size(), pipe);
-        pclose(pipe);
-    }
+  if (pipe) {
+    fwrite(text.data(), 1, text.size(), pipe);
+    pclose(pipe);
+  }
 }
 
-std::optional<uint64_t> parse_hex(const std::string & hex) {
-    try {
-        size_t pos = 0;
-        uint64_t res = std::stoull(hex, &pos,16);
-        if(pos != hex.size()) return std::nullopt;
-        return res;
-    } catch(...) {
-        return std::nullopt;
-    }
+std::optional<uint64_t> parse_hex(const std::string &hex) {
+  try {
+    size_t pos = 0;
+    uint64_t res = std::stoull(hex, &pos, 16);
+    if (pos != hex.size())
+      return std::nullopt;
+    return res;
+  } catch (...) {
+    return std::nullopt;
+  }
 }
 secure_string sanitize_hex(secure_string hex) {
-    if(hex.starts_with("0x")) {
-        hex = hex.substr(2);
-        }
-    hex.erase(0, hex.find_first_not_of('0'));
+  if (hex.starts_with("0x")) {
+    hex = hex.substr(2);
+  }
+  hex.erase(0, hex.find_first_not_of('0'));
 
-    if(hex.empty()) {
-        return "0x0";
-    }
+  if (hex.empty()) {
+    return "0x0";
+  }
 
-    return "0x" + hex;
+  return "0x" + hex;
+}
+
+std::string decode_abi_string(const std::string &hex) {
+  if (hex.size() < 2)
+    return "";
+  std::string clean = hex.substr(0, 2) == "0x" ? hex.substr(2) : hex;
+  if (clean.size() < 128)
+    return "";
+
+  std::string length_hex = clean.substr(64, 64);
+
+  uint64_t length = std::stoull(length_hex, nullptr, 16);
+
+  if (length == 0)
+    return "";
+  std::string data_hex = clean.substr(128, length * 2);
+
+  std::string result{};
+
+  for (size_t i = 0; i < data_hex.size(); i += 2) {
+    uint8_t byte =
+        static_cast<uint8_t>(std::stoul(data_hex.substr(i, 2), nullptr, 16));
+    if (byte != 0)
+      result.push_back(static_cast<char>(byte));
+  }
+
+  return result;
 }
 } // namespace tech_utils

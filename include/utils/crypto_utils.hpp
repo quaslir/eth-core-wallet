@@ -1,4 +1,5 @@
 #pragma once
+#include "eip712.hpp"
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -62,4 +63,11 @@ const std::vector<uint32_t> path_deriv = {0x8000002C, 0x8000003C, 0x80000000,
 bool is_valid_derive_path(const std::string &path);
 std::vector<uint32_t> change_derive_path(unsigned int index);
 
+std::tuple<bytes_data, bytes_data, int> sign_transaction(const bytes_data &hash,
+                                                         const bytes_data &key);
+
+secure_string sign_personal_message(const bytes_data &raw_msg_bytes,
+                                    const bytes_data &key);
+secure_string sign_typed_data(const eip712::bytes_t &digest,
+                              const bytes_data &key);
 } // namespace crypto_utils

@@ -28,7 +28,9 @@ enum state_t {
   DISPLAY_PRIVATE_KEY = 14,
   TRANSACTION_HISTORY = 15,
   CHANGE_NETWORK = 16,
-  SEND_FUNDS = 17
+  SEND_FUNDS = 17,
+  DAPP_REQUEST = 18,
+  ADD_TOKEN = 19
 };
 
 class CLI {
@@ -55,7 +57,8 @@ private:
   Component transaction_history_render(void);
   Component change_network_render(void);
   Component make_transaction_render(void);
-
+  Component dapp_request_render(void);
+  Component add_token_render(void);
   ButtonOption create_button(const std::string &label, Color c) const;
 
 public:

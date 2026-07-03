@@ -6,16 +6,17 @@
 #include "drivers/gas_client.hpp"
 #include "drivers/history_client.hpp"
 #include "drivers/price_client.hpp"
+#include "drivers/tokens_metadata_client.hpp"
 #include "drivers/transaction_client.hpp"
 #include "drivers/tx_status_client.hpp"
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
-#include <functional>
 struct ActivityEvent {
   std::string icon;
   std::string msg;
@@ -36,33 +37,40 @@ public:
   std::pair<std::shared_ptr<std::vector<TransactionRecord>>, bool>
   get_transaction_history(void) const;
   std::pair<double, bool> get_current_gas(void) const;
-  void clear_history(void) ;
+  void clear_history(void);
   bool update_history_manager(bool force = false);
   bool update_balance_manager(bool force = false);
   bool update_gas_manager(bool force = false);
   float get_next_refresh(void) const;
   void push_activity(const std::string &icon, const std::string &msg);
   const std::deque<ActivityEvent> &get_activity(void) const;
-  std::pair<std::string, bool> send_raw_transaction(const secure_string &to_addr,
-                            const bytes_data &private_key, const Asset &asset,
-                            const std::string &value, double target_gas_gwei,
-                            uint64_t gas_limit);
+  std::pair<std::string, bool>
+  send_raw_transaction(const secure_string &to_addr,
+                       const bytes_data &private_key, const Asset &asset,
+                       const std::string &value, double target_gas_gwei,
+                       uint64_t gas_limit);
   std::pair<TxStatus, bool> get_current_tx_status(void) const;
   void update_current_tx_status(void);
   bool speed_up_transaction(const bytes_data &private_key);
   bool cancel_transaction(const bytes_data &private_key);
   uint64_t get_current_chain_id(void) const;
-  void set_get_current_assets_callback( std::function<assets_data(uint64_t chain_id)> callback);
+  void set_get_current_assets_callback(
+      std::function<assets_data(uint64_t chain_id)> callback);
+  std::string form_and_send_tx_from_dapp(json params,
+                                         const bytes_data &private_key);
+  Asset fetch_new_asset(const std::string &contract_addr) const;
+
 private:
   HistoryManager history_manager;
   BalanceManager balance_manager;
   GasManager gas_manager;
   TransactionManager transaction_manager;
   TxStatusManager tx_status_manager;
+  TokensMetadata tokens_metadata_manager;
   std::chrono::steady_clock::time_point last_update_time;
   std::deque<ActivityEvent> activity_log;
   networks::NetworkConfig active_network =
       networks::NetworkConfig{" 🌐 Ethereum Mainnet ", "eth-mainnet", 1};
 
-    std::function<assets_data(uint64_t)> get_current_assets;
+  std::function<assets_data(uint64_t)> get_current_assets;
 };

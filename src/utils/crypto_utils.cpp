@@ -1,9 +1,15 @@
 #include "utils/crypto_utils.hpp"
+#include "Keccak256.hpp"
+#include "core/secure_bytes_data.hpp"
+#include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <regex>
 #include <span>
 #include <stdexcept>
+#include <string>
 extern "C" {
+#include "secp256k1.h"
+#include "secp256k1_recovery.h"
 #include <openssl/rand.h>
 }
 namespace crypto_utils {
@@ -154,4 +160,59 @@ std::vector<uint32_t> change_derive_path(unsigned int index) {
   return new_path_deriv;
 }
 
+std::tuple<bytes_data, bytes_data, int>
+sign_transaction(const bytes_data &hash, const bytes_data &key) {
+  secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+  secp256k1_ecdsa_recoverable_signature signature;
+  secp256k1_ecdsa_sign_recoverable(ctx, &signature, hash.data(), key.data(),
+                                   nullptr, nullptr);
+
+  uint8_t output[64];
+
+  int recovery_id;
+  secp256k1_ecdsa_recoverable_signature_serialize_compact(
+      ctx, output, &recovery_id, &signature);
+
+  secp256k1_context_destroy(ctx);
+  return {bytes_data(output, output + 32), bytes_data(output + 32, output + 64),
+          recovery_id};
+}
+
+secure_string sign_personal_message(const bytes_data &raw_msg_bytes,
+                                    const bytes_data &key) {
+  std::string prefix = "\x19"
+                       "Ethereum Signed Message:\n" +
+                       std::to_string(raw_msg_bytes.size());
+
+  bytes_data prefixed_msg;
+  prefixed_msg.insert(prefixed_msg.end(), prefix.begin(), prefix.end());
+  prefixed_msg.insert(prefixed_msg.end(), raw_msg_bytes.begin(),
+                      raw_msg_bytes.end());
+
+  bytes_data hash(32);
+  Keccak256::getHash(prefixed_msg.data(), prefixed_msg.size(), hash.data());
+
+  auto [r, s, rec_id] = sign_transaction(hash, key);
+
+  uint8_t v = 27 + rec_id;
+
+  bytes_data full_signature;
+
+  full_signature.insert(full_signature.end(), r.begin(), r.end());
+  full_signature.insert(full_signature.end(), s.begin(), s.end());
+  full_signature.push_back(v);
+
+  return "0x" + tech_utils::to_hex(full_signature);
+}
+secure_string sign_typed_data(const eip712::bytes_t &digest,
+                              const bytes_data &key) {
+  bytes_data hash(digest.begin(), digest.end());
+  auto [r, s, recovery_id] = sign_transaction(hash, key);
+  uint8_t v = 27 + recovery_id;
+  bytes_data signature(r.begin(), r.end());
+  signature.insert(signature.end(), s.begin(), s.end());
+  signature.push_back(v);
+
+  return "0x" + tech_utils::to_hex(signature);
+}
 } // namespace crypto_utils

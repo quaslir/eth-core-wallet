@@ -25,7 +25,7 @@ ButtonOption CLI::create_button(const std::string &label, Color c) const {
     auto t = text(" " + label + " ");
 
     if (state.focused) {
-      return t | bold | inverted | color(c);
+      return t | ftxui::bold | inverted | color(c);
     }
 
     return t | color(Color::DarkSlateGray1) | dim;

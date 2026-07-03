@@ -5,8 +5,8 @@
 #include "api/rlp.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
-#include "secp256k1.h"
-#include "secp256k1_recovery.h"
+
+#include "utils/crypto_utils.hpp"
 #include "utils/tech_utils.hpp"
 #include <cstdint>
 #include <exception>
@@ -16,27 +16,29 @@
 #include <string>
 #include <tuple>
 std::future<std::pair<std::string, bool>> TransactionManager::send(RawTx &tx) {
-  return std::async(std::launch::async, [this, tx]() -> std::pair<std::string, bool> {
-    bytes_data to_sign = rlp::encode_list(
-        {rlp::encode_uint(tx.nonce), rlp::encode_uint(tx.gas_price),
-         rlp::encode_uint(tx.gas_limit), rlp::encode_bytes(tx.to),
-         rlp::encode_bytes(tx.value.to_bytes()), rlp::encode_bytes(tx.data),
-         rlp::encode_uint(tx.v), rlp::encode_uint(0), rlp::encode_uint(0)});
-    bytes_data hash(32);
-    Keccak256::getHash(to_sign.data(), to_sign.size(), hash.data());
+  return std::async(
+      std::launch::async, [this, tx]() -> std::pair<std::string, bool> {
+        bytes_data to_sign = rlp::encode_list(
+            {rlp::encode_uint(tx.nonce), rlp::encode_uint(tx.gas_price),
+             rlp::encode_uint(tx.gas_limit), rlp::encode_bytes(tx.to),
+             rlp::encode_bytes(tx.value.to_bytes()), rlp::encode_bytes(tx.data),
+             rlp::encode_uint(tx.v), rlp::encode_uint(0), rlp::encode_uint(0)});
+        bytes_data hash(32);
+        Keccak256::getHash(to_sign.data(), to_sign.size(), hash.data());
 
-    auto [r, s, recovery_id] = sign_transaction(hash, tx.private_key);
+        auto [r, s, recovery_id] =
+            crypto_utils::sign_transaction(hash, tx.private_key);
 
-    uint64_t final_v = tx.v * 2 + 35 + recovery_id;
+        uint64_t final_v = tx.v * 2 + 35 + recovery_id;
 
-    bytes_data signed_tx = rlp::encode_list(
-        {rlp::encode_uint(tx.nonce), rlp::encode_uint(tx.gas_price),
-         rlp::encode_uint(tx.gas_limit), rlp::encode_bytes(tx.to),
-         rlp::encode_bytes(tx.value.to_bytes()), rlp::encode_bytes(tx.data),
-         rlp::encode_uint(final_v), rlp::encode_bytes(r),
-         rlp::encode_bytes(s)});
-    return make_request(signed_tx);
-  });
+        bytes_data signed_tx = rlp::encode_list(
+            {rlp::encode_uint(tx.nonce), rlp::encode_uint(tx.gas_price),
+             rlp::encode_uint(tx.gas_limit), rlp::encode_bytes(tx.to),
+             rlp::encode_bytes(tx.value.to_bytes()), rlp::encode_bytes(tx.data),
+             rlp::encode_uint(final_v), rlp::encode_bytes(r),
+             rlp::encode_bytes(s)});
+        return make_request(signed_tx);
+      });
 }
 
 std::optional<uint64_t>
@@ -59,27 +61,8 @@ TransactionManager::get_nonce(const secure_string &eth_addr,
     return std::nullopt;
   }
 }
-
-std::tuple<bytes_data, bytes_data, int>
-TransactionManager::sign_transaction(const bytes_data &hash,
-                                     const bytes_data &key) {
-  secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
-  secp256k1_ecdsa_recoverable_signature signature;
-  secp256k1_ecdsa_sign_recoverable(ctx, &signature, hash.data(), key.data(),
-                                   nullptr, nullptr);
-
-  uint8_t output[64];
-
-  int recovery_id;
-  secp256k1_ecdsa_recoverable_signature_serialize_compact(
-      ctx, output, &recovery_id, &signature);
-
-  secp256k1_context_destroy(ctx);
-  return {bytes_data(output, output + 32), bytes_data(output + 32, output + 64),
-          recovery_id};
-}
-
-std::pair<std::string, bool> TransactionManager::make_request(const bytes_data &data) const {
+std::pair<std::string, bool>
+TransactionManager::make_request(const bytes_data &data) const {
   try {
     secure_string hex_data = "0x";
     hex_data += tech_utils::to_hex(data);
@@ -91,16 +74,16 @@ std::pair<std::string, bool> TransactionManager::make_request(const bytes_data &
 
     std::string result = http::post_request(form_url(), j.dump());
     json res = json::parse(result);
-    if(res.contains("result")) {
-    return {res.at("result").get<std::string>(), false};
-    } else if(res.contains("error")) {
-        if(res["error"].contains("message")){
+    if (res.contains("result")) {
+      return {res.at("result").get<std::string>(), false};
+    } else if (res.contains("error")) {
+      if (res["error"].contains("message")) {
         return {res["error"]["message"].get<std::string>(), true};
-    }
+      }
     }
     return {"Unknown JSON-RPC error", true};
   } catch (const std::exception &err) {
-      return {std::string("Parse/Network Exception: ") + err.what(), true};
+    return {std::string("Parse/Network Exception: ") + err.what(), true};
   }
 }
 
@@ -144,6 +127,7 @@ TransactionManager::estimate_gas(const RawTx &raw_tx,
     j["id"] = 1;
     std::string data = j.dump();
     std::string result = http::post_request(form_url(), data);
+
     json res = json::parse(result);
     if (res.contains("error"))
       return std::nullopt;
