@@ -75,4 +75,7 @@ public:
   virtual void reject_dapp_request(uint64_t id) = 0;
   virtual void toggle_dapp_bridge(bool enable) = 0;
   virtual bool is_bridge_running(void) = 0;
+
+  virtual void add_new_asset(const Asset &new_asset) = 0;
+  virtual Asset fetch_new_asset_metadata(const std::string &contract_addr) = 0;
 };

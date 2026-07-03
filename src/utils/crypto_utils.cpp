@@ -204,14 +204,15 @@ secure_string sign_personal_message(const bytes_data &raw_msg_bytes,
 
   return "0x" + tech_utils::to_hex(full_signature);
 }
-secure_string sign_typed_data(const eip712::bytes_t& digest, const bytes_data& key) {
-    bytes_data hash(digest.begin(), digest.end());
-    auto[r, s, recovery_id] = sign_transaction(hash, key);
-    uint8_t v= 27 + recovery_id;
-    bytes_data signature(r.begin(), r.end());
-    signature.insert(signature.end(), s.begin(), s.end());
-    signature.push_back(v);
+secure_string sign_typed_data(const eip712::bytes_t &digest,
+                              const bytes_data &key) {
+  bytes_data hash(digest.begin(), digest.end());
+  auto [r, s, recovery_id] = sign_transaction(hash, key);
+  uint8_t v = 27 + recovery_id;
+  bytes_data signature(r.begin(), r.end());
+  signature.insert(signature.end(), s.begin(), s.end());
+  signature.push_back(v);
 
-    return "0x" + tech_utils::to_hex(signature);
+  return "0x" + tech_utils::to_hex(signature);
 }
 } // namespace crypto_utils

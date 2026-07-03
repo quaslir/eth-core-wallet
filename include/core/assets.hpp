@@ -23,6 +23,15 @@ struct Asset {
   bool has_error{};
 
   std::string id{};
+
+  bool operator==(const Asset &other) const {
+    if (is_native && other.is_native) {
+      return chain_id == other.chain_id;
+    }
+
+    return chain_id == other.chain_id &&
+           contract_address == other.contract_address;
+  }
 };
 
 inline void to_json(json &j, const Asset &a) {
@@ -54,12 +63,14 @@ inline void from_json(const json &j, Asset &a) {
 }
 
 class AssetsStore {
+private:
   std::unordered_map<uint64_t, std::vector<Asset>> current_assets;
+  bool contains(const Asset &target_asset) const;
 
 public:
   void load(const std::string &filename = "assets.json");
   void save(const std::string &filename = "assets.json");
-  void add_asset(const Asset & new_asset);
+  void add_asset(const Asset &new_asset);
   std::vector<Asset> get_current_assets(uint64_t target_chain_id = 1);
 };
 

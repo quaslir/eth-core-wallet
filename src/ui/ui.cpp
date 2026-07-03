@@ -21,7 +21,6 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include "eip712.hpp"
 
 void UserInterface::load(void) {
   cli.set_actions(this);
@@ -78,17 +77,22 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
       update_transactions_data(true);
     }
     break;
-  case 6: // show private_key
+  case 6:
     cli.set_active_tab(DISPLAY_PRIVATE_KEY);
     break;
   case 7:
     if (!rpc_bridge.is_running())
       rpc_bridge.start();
-    else rpc_bridge.stop();
+    else
+      rpc_bridge.stop();
 
     break;
 
   case 8:
+    cli.set_active_tab(ADD_TOKEN);
+    break;
+
+  case 9:
     break;
   }
 }
@@ -298,8 +302,6 @@ void UserInterface::approve_dapp_request(uint64_t id) {
         if (tech_utils::tolower(from) != tech_utils::tolower(active_addr))
           break;
 
-
-
         const bytes_data &priv_key = wallet.get_private_key();
         std::string hash =
             block_client.form_and_send_tx_from_dapp(tx_params, priv_key);
@@ -313,28 +315,31 @@ void UserInterface::approve_dapp_request(uint64_t id) {
     }
 
     case DappRequestType::PersonalSign: {
-        std::string msg_hex = req->params[0].get<std::string>();
-        bytes_data msg = tech_utils::from_hex_to_bytes(msg_hex);
-        const bytes_data &priv_key = wallet.get_private_key();
-        secure_string signature =
-            crypto_utils::sign_personal_message(msg, priv_key);
+      std::string msg_hex = req->params[0].get<std::string>();
+      bytes_data msg = tech_utils::from_hex_to_bytes(msg_hex);
+      const bytes_data &priv_key = wallet.get_private_key();
+      secure_string signature =
+          crypto_utils::sign_personal_message(msg, priv_key);
 
-        rpc_bridge.resolve(id, signature);
-        break;
+      rpc_bridge.resolve(id, signature);
+      break;
     }
     case DappRequestType::SignTypedData: {
-        try {
-        json typed_data = req->params[1].is_string() ? json::parse(req->params[1].get<std::string>()) :
-            req->params[1];
+      try {
+        json typed_data = req->params[1].is_string()
+                              ? json::parse(req->params[1].get<std::string>())
+                              : req->params[1];
 
         eip712::bytes_t digest = eip712::hash_typed_data(typed_data);
-        const bytes_data& priv_key = wallet.get_private_key();
-        secure_string signature = crypto_utils::sign_typed_data(digest, priv_key);
+        const bytes_data &priv_key = wallet.get_private_key();
+        secure_string signature =
+            crypto_utils::sign_typed_data(digest, priv_key);
         rpc_bridge.resolve(id, signature);
 
-        } catch(const std::exception& err) {
-        rpc_bridge.reject(id, std::string("Failed to sign typed data: ") + err.what());
-        }
+      } catch (const std::exception &err) {
+        rpc_bridge.reject(id, std::string("Failed to sign typed data: ") +
+                                  err.what());
+      }
       break;
     }
     }
@@ -353,10 +358,16 @@ void UserInterface::reject_dapp_request(uint64_t id) {
 void UserInterface::toggle_dapp_bridge(bool enable) {
   if (enable && !rpc_bridge.is_running()) {
     rpc_bridge.start();
-    // push_activity("🔗", "DeFi bridge enabled on :8989");
   } else if (!enable && rpc_bridge.is_running()) {
     rpc_bridge.stop();
-    // push_activity("🔌", "DeFi bridge disabled");
   }
 }
 bool UserInterface::is_bridge_running(void) { return rpc_bridge.is_running(); }
+
+void UserInterface::add_new_asset(const Asset &new_asset) {
+  assets_store.add_asset(new_asset);
+}
+Asset UserInterface::fetch_new_asset_metadata(
+    const std::string &contract_addr) {
+  return block_client.fetch_new_asset(contract_addr);
+}

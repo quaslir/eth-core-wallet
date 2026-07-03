@@ -76,4 +76,6 @@ private:
   void reject_dapp_request(uint64_t id) override;
   void toggle_dapp_bridge(bool enable) override;
   bool is_bridge_running(void) override;
+  void add_new_asset(const Asset &new_asset) override;
+  Asset fetch_new_asset_metadata(const std::string &contract_addr) override;
 };

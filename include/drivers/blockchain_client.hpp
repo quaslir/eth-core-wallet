@@ -6,6 +6,7 @@
 #include "drivers/gas_client.hpp"
 #include "drivers/history_client.hpp"
 #include "drivers/price_client.hpp"
+#include "drivers/tokens_metadata_client.hpp"
 #include "drivers/transaction_client.hpp"
 #include "drivers/tx_status_client.hpp"
 #include <chrono>
@@ -57,6 +58,7 @@ public:
       std::function<assets_data(uint64_t chain_id)> callback);
   std::string form_and_send_tx_from_dapp(json params,
                                          const bytes_data &private_key);
+  Asset fetch_new_asset(const std::string &contract_addr) const;
 
 private:
   HistoryManager history_manager;
@@ -64,6 +66,7 @@ private:
   GasManager gas_manager;
   TransactionManager transaction_manager;
   TxStatusManager tx_status_manager;
+  TokensMetadata tokens_metadata_manager;
   std::chrono::steady_clock::time_point last_update_time;
   std::deque<ActivityEvent> activity_log;
   networks::NetworkConfig active_network =

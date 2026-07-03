@@ -16,14 +16,14 @@
 #include <system_error>
 namespace tech_utils {
 
-secure_string tolower(const secure_string& target) {
-    secure_string lowercase_str{target};
+secure_string tolower(const secure_string &target) {
+  secure_string lowercase_str{target};
 
-    std::transform(lowercase_str.begin(), lowercase_str.end(), lowercase_str.begin(),[](unsigned char c) {
-        return std::tolower(c);
-    });
+  std::transform(lowercase_str.begin(), lowercase_str.end(),
+                 lowercase_str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
 
-    return lowercase_str;
+  return lowercase_str;
 }
 
 secure_string to_hex(const bytes_data &data) {
@@ -227,5 +227,32 @@ secure_string sanitize_hex(secure_string hex) {
   }
 
   return "0x" + hex;
+}
+
+std::string decode_abi_string(const std::string &hex) {
+  if (hex.size() < 2)
+    return "";
+  std::string clean = hex.substr(0, 2) == "0x" ? hex.substr(2) : hex;
+  if (clean.size() < 128)
+    return "";
+
+  std::string length_hex = clean.substr(64, 64);
+
+  uint64_t length = std::stoull(length_hex, nullptr, 16);
+
+  if (length == 0)
+    return "";
+  std::string data_hex = clean.substr(128, length * 2);
+
+  std::string result{};
+
+  for (size_t i = 0; i < data_hex.size(); i += 2) {
+    uint8_t byte =
+        static_cast<uint8_t>(std::stoul(data_hex.substr(i, 2), nullptr, 16));
+    if (byte != 0)
+      result.push_back(static_cast<char>(byte));
+  }
+
+  return result;
 }
 } // namespace tech_utils

@@ -27,4 +27,21 @@ inline std::vector<std::string> get_network_names(void) {
 
   return names;
 }
+
+inline std::string get_coingecko_platform_id(uint64_t chain_id) {
+  switch (chain_id) {
+  case 1:
+    return "ethereum";
+  case 137:
+    return "polygon-pos";
+  case 42161:
+    return "arbitrum-one";
+  case 10:
+    return "optimistic-ethereum";
+  case 11155111:
+    return "";
+  default:
+    return "";
+  }
+} // namespace networks
 } // namespace networks

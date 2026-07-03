@@ -37,15 +37,28 @@ void CLI::load(void) {
   auto network_changer = change_network_render();
   auto make_tranasction = make_transaction_render();
   auto dapp_request = dapp_request_render();
-  auto root_container = Container::Tab(
-      {main_menu, config_menu, import_wallet_ui, optional_passphrase,
-       mnemonic_display, mnenonic_wiping_confirmation, set_password_component,
-       confirm_password_component, wallet_ui, password_unlock,
-       bit_length_selection_config, extra_entropy_selection_config,
-       passphrase_selection_config, derive_path_selection_config,
-       display_priv_key, trans_history, network_changer, make_tranasction,
-       dapp_request},
-      &this->active_tab);
+  auto add_token = add_token_render();
+  auto root_container = Container::Tab({main_menu,
+                                        config_menu,
+                                        import_wallet_ui,
+                                        optional_passphrase,
+                                        mnemonic_display,
+                                        mnenonic_wiping_confirmation,
+                                        set_password_component,
+                                        confirm_password_component,
+                                        wallet_ui,
+                                        password_unlock,
+                                        bit_length_selection_config,
+                                        extra_entropy_selection_config,
+                                        passphrase_selection_config,
+                                        derive_path_selection_config,
+                                        display_priv_key,
+                                        trans_history,
+                                        network_changer,
+                                        make_tranasction,
+                                        dapp_request,
+                                        add_token},
+                                       &this->active_tab);
 
   std::atomic<bool> refresh_ui = true;
   std::thread refresh_thread([&] {

@@ -22,13 +22,15 @@
 #include <ftxui/screen/color.hpp>
 #include <memory>
 #include <string>
+#include <thread>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries = {
       " 💸 SEND FUNDS     ",          " 📜 HISTORY        ",
       " 🌐 NETWORK        ",          " ➡  NEXT ADDR      ",
       " ⬅  PREV ADDR      ",          " 🔑 EXPORT KEY     ",
-      " 🔗 ENABLE DEFI BRIDGE      ", " 🚪 LOCK & EXIT    "};
+      " 🔗 Toggle DEFI BRIDGE      ", " ADD TOKEN    ",
+      " 🚪 LOCK & EXIT    "};
 
   auto menu = Menu(&entries, &selected);
 
@@ -67,9 +69,10 @@ Component CLI::print_wallet_ui(void) {
             separator(),
 
             text(" ADDRESS: ") | dim,
-            text_(wallet_info.addr) | color(Color::Cyan) | flex,
-            actions->is_bridge_running() ? text(" DEFI BRIDGE ENABLED ") | color(Color::Green) :
-            text(" DEFI BRIDGE DISABLED ") | color(Color::Red),
+            text_(wallet_info.addr) | color(Color::Cyan),
+            actions->is_bridge_running()
+                ? text(" DEFI BRIDGE ENABLED ") | color(Color::Green)
+                : text(" DEFI BRIDGE DISABLED ") | color(Color::Red),
             text(" (Press 'C' to copy) ") | dim | hcenter,
         }) |
         borderHeavy | size(WIDTH, EQUAL, 45);
@@ -961,5 +964,154 @@ Component CLI::dapp_request_render(void) {
   return Renderer(root, [=] {
     return *selected_subtab == 0 ? preview_component->Render()
                                  : sign_request->Render();
+  });
+}
+
+Component CLI::add_token_render(void) {
+  auto contract_addr = std::make_shared<std::string>();
+  auto error_msg = std::make_shared<std::string>();
+  auto selected_subtab = std::make_shared<int>(0);
+  auto pending_asset = std::make_shared<Asset>();
+  auto loading = std::make_shared<bool>(false);
+
+  auto send_component_ptr = std::make_shared<Component>();
+  auto preview_component_ptr = std::make_shared<Component>();
+
+  InputOption input_opt;
+
+  input_opt.multiline = false;
+  input_opt.on_change = [=] { error_msg->clear(); };
+
+  auto addr_input = Input(contract_addr.get(), "0x...", input_opt);
+  auto container = Container::Vertical({addr_input});
+
+  auto form = Renderer(container, [=, this]() {
+    bool valid =
+        contract_addr->size() == 42 && contract_addr->substr(0, 2) == "0x";
+
+    return to_center(
+        vbox({text(" ➕ ADD TOKEN ") | ftxui::bold | color(Color::Cyan) |
+                  hcenter,
+              separatorDouble() | color(Color::Cyan),
+              text(" Paste ERC-20 contract address ") | dim | hcenter,
+              separator(),
+              hbox({text(" CONTRACT: ") | dim,
+                    addr_input->Render() | flex |
+                        (valid ? color(Color::White) : color(Color::RedLight))
+
+              }),
+
+              separator(),
+              error_msg->empty()
+                  ? text("")
+                  : text(" ✗ " + *error_msg) | color(Color::Red1) | hcenter,
+              separator(),
+              *loading
+                  ? text(" ⏳ Fetching token info... ") | color(Color::Yellow) |
+                        hcenter
+                  : text(" [ENTER] Fetch | [ESC] Back ") | dim | hcenter}) |
+        borderHeavy | color(valid ? Color::CyanLight : Color::GrayDark) |
+        size(WIDTH, EQUAL, 65) | size(HEIGHT, EQUAL, 12)
+
+    );
+  });
+
+  auto form_component = CatchEvent(form, [=, this](Event event) {
+    if (event == Event::Escape) {
+      set_active_tab(WALLET_UI);
+      contract_addr->clear();
+      return true;
+    }
+
+    else if (event == Event::Return) {
+      if (contract_addr->size() != 42 || contract_addr->substr(0, 2) != "0x") {
+        *error_msg = "Invalid contract address";
+        return true;
+      }
+
+      auto result = actions->fetch_new_asset_metadata(*contract_addr);
+      if (result.contract_address.empty()) {
+        *error_msg = "Not a valid ERC-20 contract on this network";
+        return true;
+      }
+
+      *pending_asset = result;
+      *selected_subtab = 1;
+      preview_component_ptr->get()->TakeFocus();
+      return true;
+    }
+
+    return false;
+  });
+
+  *send_component_ptr = form_component;
+
+  auto preview_btn = Button("", [] {}, ButtonOption::Ascii());
+
+  auto preview_form = Renderer(preview_btn, [=, this]() {
+    return to_center(
+        vbox({
+            text(" ✅ TOKEN FOUND ") | ftxui::bold | color(Color::Green) |
+                hcenter,
+            separatorDouble() | color(Color::Green),
+            hbox({text(" Symbol:   ") | dim, filler(),
+                  text(pending_asset->symbol) | color(Color::White) |
+                      ftxui::bold}),
+
+            hbox({text(" Name:     ") | dim, filler(),
+                  text(pending_asset->name) | color(Color::White)}),
+
+            hbox({text(" Decimals: ") | dim, filler(),
+                  text(std::to_string(pending_asset->decimals)) |
+                      color(Color::Yellow)}),
+
+            hbox({
+                text(" Contract: ") | dim,
+                filler(),
+                text(pending_asset->contract_address.substr(0, 8) + "..." +
+                     pending_asset->contract_address.substr(34)) |
+                    dim,
+
+            }),
+
+            hbox({text(" Network:  ") | dim, filler(),
+                  text(actions->get_current_network()) | color(Color::Green)}),
+
+            separator(),
+
+            text(" [ENTER] Add token | [ESC] Back ") | dim | hcenter,
+
+        }) |
+        borderHeavy | color(Color::Green) | size(WIDTH, EQUAL, 65) |
+        size(HEIGHT, EQUAL, 14));
+  });
+
+  Component preview_component =
+      CatchEvent(preview_form, [=, this](Event event) {
+        if (event == Event::Return) {
+          actions->add_new_asset(*pending_asset);
+          set_active_tab(WALLET_UI);
+          *selected_subtab = 0;
+          contract_addr->clear();
+          return true;
+        }
+
+        else if (event == Event::Escape) {
+          *selected_subtab = 0;
+          send_component_ptr->get()->TakeFocus();
+          return true;
+        }
+
+        return false;
+      });
+
+  *preview_component_ptr = preview_component;
+
+  auto root = Container::Tab({form_component, preview_component},
+                             selected_subtab.get());
+
+  return Renderer(root, [=] {
+    return *selected_subtab == 0 ? form_component->Render()
+                                 : preview_component->Render();
   });
 }

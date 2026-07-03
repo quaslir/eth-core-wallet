@@ -13,7 +13,7 @@ secure_string Wallet::prepare_mnemonic(const Config &conf) const {
 }
 
 void Wallet::sync_derive_path(std::vector<uint32_t> &derive_path) const {
-  derive_path.back() = this->index; //!
+  derive_path.back() = this->index;
 }
 bool Wallet::update_index() const {
 

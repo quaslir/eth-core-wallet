@@ -1,5 +1,6 @@
 #include "drivers/blockchain_client.hpp"
 #include "config/configuration.hpp"
+#include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "drivers/balance_client.hpp"
@@ -21,13 +22,17 @@ BlockchainClient::BlockchainClient(void)
   gas_manager.form_url = form_url_callback;
   transaction_manager.form_url = form_url_callback;
   tx_status_manager.form_url = form_url_callback;
-
+  tokens_metadata_manager.form_url = form_url_callback;
   balance_manager.set_current_chain_id_callback(
       [this]() -> uint64_t { return active_network.chain_id; });
   balance_manager.set_current_assets_callback(
       [this](uint64_t chain_id) -> assets_data {
         return get_current_assets(chain_id);
       });
+
+  tokens_metadata_manager.get_chain_id = [this]() -> uint64_t {
+    return active_network.chain_id;
+  };
 }
 
 void BlockchainClient::update(void) {
@@ -261,26 +266,24 @@ BlockchainClient::form_and_send_tx_from_dapp(json params,
       raw_tx.gas_limit = (*estimated_gas * 125) / 100;
     }
 
-
-    if(params.contains("maxFeePerGas")) {
-        std::string gas_hex = params.at("maxFeePerGas").get<std::string>();
-        raw_tx.gas_price = std::stoull(gas_hex, nullptr, 16);
+    if (params.contains("maxFeePerGas")) {
+      std::string gas_hex = params.at("maxFeePerGas").get<std::string>();
+      raw_tx.gas_price = std::stoull(gas_hex, nullptr, 16);
     }
 
-
-   else  if (params.contains("gasPrice")) {
-        std::string gas_hex = params.at("gasPrice").get<std::string>();
+    else if (params.contains("gasPrice")) {
+      std::string gas_hex = params.at("gasPrice").get<std::string>();
       raw_tx.gas_price = std::stoull(gas_hex, nullptr, 16);
     } else {
       raw_tx.gas_price =
           static_cast<uint64_t>((gas_manager.get_current_gas() * 115) / 100);
     }
 
-    if(params.contains("chainId")) {
-        std::string chain_hex = params.at("chainId").get<std::string>();
-        raw_tx.v = std::stoull(chain_hex, nullptr, 16);
+    if (params.contains("chainId")) {
+      std::string chain_hex = params.at("chainId").get<std::string>();
+      raw_tx.v = std::stoull(chain_hex, nullptr, 16);
     } else {
-        raw_tx.v = active_network.chain_id;
+      raw_tx.v = active_network.chain_id;
     }
 
     auto res = transaction_manager.send(raw_tx);
@@ -331,4 +334,11 @@ uint64_t BlockchainClient::get_current_chain_id(void) const {
 void BlockchainClient::set_get_current_assets_callback(
     std::function<assets_data(uint64_t chain_id)> callback) {
   get_current_assets = callback;
+}
+
+Asset BlockchainClient::fetch_new_asset(
+    const std::string &contract_addr) const {
+  return tokens_metadata_manager
+      .fetch_token_metadata_by_contract_addr(contract_addr)
+      .value_or(Asset{});
 }

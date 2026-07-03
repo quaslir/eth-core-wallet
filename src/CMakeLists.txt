@@ -43,6 +43,7 @@ drivers/manager.cpp
 drivers/transaction_client.cpp
 drivers/tx_status_client.cpp
 drivers/rpc_bridge.cpp
+drivers/tokens_metadata_client.cpp
 )
 
 set(CONFIG_SOURCES
