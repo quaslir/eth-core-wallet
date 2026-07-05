@@ -298,6 +298,7 @@ BlockchainClient::form_and_send_tx_from_dapp(json params,
       std::string gas_hex = params.at("gasPrice").get<std::string>();
       raw_tx.gas_price = std::stoull(gas_hex, nullptr, 16);
     } else {
+
       raw_tx.gas_price =
           static_cast<uint64_t>((gas_manager.get_current_gas() * 115) / 100);
     }
