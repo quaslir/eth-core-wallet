@@ -91,9 +91,6 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
   case 8:
     cli.set_active_tab(ADD_TOKEN);
     break;
-
-  case 9:
-    break;
   }
 }
 

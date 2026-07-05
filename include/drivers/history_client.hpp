@@ -41,7 +41,7 @@ private:
   std::vector<TransactionRecord> make_request(const std::string &eth_addr);
 
 public:
-  HistoryManager() : Manager(TRANSACTION_TIMEOUT) {}
+  HistoryManager() : Manager(Configuration::get_instance().TRANSACTION_TIMEOUT) {}
   ~HistoryManager();
   std::function<std::string(void)> form_url;
 

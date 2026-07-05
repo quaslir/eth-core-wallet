@@ -9,12 +9,10 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
-#include <iostream>
 #include <string>
-#include <string_view>
 BlockchainClient::BlockchainClient(void)
     : last_update_time(std::chrono::steady_clock::now() -
-                       std::chrono::milliseconds(FULL_UPDATE_TIMEOUT)) {
+                       std::chrono::milliseconds(Configuration::get_instance().FULL_UPDATE_TIMEOUT)) {
   auto form_url_callback = [this](void) -> std::string { return form_url(); };
 
   history_manager.form_url = form_url_callback;
@@ -41,7 +39,7 @@ void BlockchainClient::update(void) {
   gas_manager.update();
   auto now = std::chrono::steady_clock::now();
   if ((now - last_update_time >=
-       std::chrono::milliseconds(FULL_UPDATE_TIMEOUT))) {
+       std::chrono::milliseconds(Configuration::get_instance().FULL_UPDATE_TIMEOUT))) {
     bool upd_balance = update_balance_manager(true);
     bool upd_history = update_history_manager(true);
     bool upd_gas = update_gas_manager(true);
@@ -61,7 +59,7 @@ void BlockchainClient::change_network(
   history_manager.clear();
 
   last_update_time = std::chrono::steady_clock::now() -
-                     std::chrono::milliseconds(FULL_UPDATE_TIMEOUT);
+                     std::chrono::milliseconds(Configuration::get_instance().FULL_UPDATE_TIMEOUT);
 
   update();
   push_activity("🔗", "Switched to " + new_network.name);
@@ -69,7 +67,7 @@ void BlockchainClient::change_network(
 
 std::string BlockchainClient::form_url(void) const {
   return "https://" + active_network.rpc_prefix + ".g.alchemy.com/v2/" +
-         "MkveNSvN4rHOvLoZK8dE3";
+         Configuration::get_instance().get_alchemy_api();
 }
 
 std::string BlockchainClient::get_active_network_name(void) const {
@@ -157,7 +155,7 @@ float BlockchainClient::get_next_refresh(void) const {
                      now - last_update_time)
                      .count();
   float progress =
-      static_cast<float>(elapsed) / static_cast<float>(FULL_UPDATE_TIMEOUT);
+      static_cast<float>(elapsed) / static_cast<float>(Configuration::get_instance().FULL_UPDATE_TIMEOUT);
 
   return std::min(progress, 1.0f);
 }

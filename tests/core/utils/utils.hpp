@@ -7,7 +7,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-#include <iostream>
 using namespace nlohmann;
 
 namespace core_test_utils {

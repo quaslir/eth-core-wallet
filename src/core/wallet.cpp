@@ -3,7 +3,6 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/security.hpp"
 #include "utils/tech_utils.hpp"
-#include <iostream>
 #include <string_view>
 
 int Wallet::get_number_of_bits(void) const { return 0; }

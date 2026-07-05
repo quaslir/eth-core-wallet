@@ -11,10 +11,8 @@
 #include <cstdint>
 #include <exception>
 #include <future>
-#include <iostream>
 #include <optional>
 #include <string>
-#include <tuple>
 std::future<std::pair<std::string, bool>> TransactionManager::send(RawTx &tx) {
   return std::async(
       std::launch::async, [this, tx]() -> std::pair<std::string, bool> {

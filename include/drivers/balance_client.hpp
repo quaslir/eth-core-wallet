@@ -32,7 +32,7 @@ private:
 public:
   std::function<std::string(void)> form_url;
   BalanceManager()
-      : Manager(BALANCE_TIMEOUT), atomic_assets(std::make_shared<assets_data>(
+      : Manager(Configuration::get_instance().BALANCE_TIMEOUT), atomic_assets(std::make_shared<assets_data>(
                                       crypto_assets::get_default_assets())) {}
   ~BalanceManager();
   void request(const secure_string &eth_addr) override;

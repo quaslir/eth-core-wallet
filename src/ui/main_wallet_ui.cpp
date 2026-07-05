@@ -22,15 +22,14 @@
 #include <ftxui/screen/color.hpp>
 #include <memory>
 #include <string>
-#include <thread>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries = {
       " 💸 SEND FUNDS     ",          " 📜 HISTORY        ",
       " 🌐 NETWORK        ",          " ➡  NEXT ADDR      ",
       " ⬅  PREV ADDR      ",          " 🔑 EXPORT KEY     ",
-      " 🔗 Toggle DEFI BRIDGE      ", " ADD TOKEN    ",
-      " 🚪 LOCK & EXIT    "};
+      " 🔗 Toggle DEFI BRIDGE      ", " ADD TOKEN    "
+  };
 
   auto menu = Menu(&entries, &selected);
 
@@ -365,7 +364,7 @@ Component CLI::transaction_history_render(void) {
 
   return CatchEvent(component, [=, this](Event event) {
     auto [history, error] = actions->get_transactions_history();
-    if (event == Event::Character('b') || event == Event::Character('B')) {
+    if (event == Event::Escape || event == Event::Character('b') || event == Event::Character('B')) {
       *scroll_offset = 0;
       set_active_tab(WALLET_UI);
       return true;

@@ -1,7 +1,6 @@
 #include "drivers/balance_client.hpp"
 #include "api/http.hpp"
 #include "api/json.hpp"
-#include "config/configuration.hpp"
 #include "core/assets.hpp"
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
@@ -12,7 +11,6 @@
 #include <cstdint>
 #include <exception>
 #include <future>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>

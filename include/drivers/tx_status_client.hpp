@@ -15,7 +15,7 @@ private:
   std::pair<TxStatus, bool> make_request(void);
 
 public:
-  TxStatusManager() : Manager(TX_STATUS_UPDATE_TIMEOUT) {}
+  TxStatusManager() : Manager(Configuration::get_instance().TX_STATUS_UPDATE_TIMEOUT) {}
   ~TxStatusManager();
   std::function<std::string(void)> form_url;
 
