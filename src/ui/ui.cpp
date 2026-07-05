@@ -91,9 +91,6 @@ void UserInterface::apply_choice_from_wallet_ui(int choice) {
   case 8:
     cli.set_active_tab(ADD_TOKEN);
     break;
-
-  case 9:
-    break;
   }
 }
 
@@ -230,7 +227,7 @@ std::string UserInterface::get_current_network(void) {
 
 void UserInterface::change_network(size_t index) {
   if (index >= networks::list.size())
-    return; // handle
+    return;
   block_client.change_network(networks::list[index]);
 }
 
@@ -305,7 +302,7 @@ void UserInterface::approve_dapp_request(uint64_t id) {
         const bytes_data &priv_key = wallet.get_private_key();
         std::string hash =
             block_client.form_and_send_tx_from_dapp(tx_params, priv_key);
-
+        if(hash.empty()) rpc_bridge.reject(id, "Could not make a transaction");
         rpc_bridge.resolve(id, hash);
         break;
       } catch (const std::exception &err) {

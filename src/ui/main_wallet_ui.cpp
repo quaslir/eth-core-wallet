@@ -22,15 +22,13 @@
 #include <ftxui/screen/color.hpp>
 #include <memory>
 #include <string>
-#include <thread>
 Component CLI::print_wallet_ui(void) {
   static int selected = 0;
   static std::vector<std::string> entries = {
       " 💸 SEND FUNDS     ",          " 📜 HISTORY        ",
       " 🌐 NETWORK        ",          " ➡  NEXT ADDR      ",
       " ⬅  PREV ADDR      ",          " 🔑 EXPORT KEY     ",
-      " 🔗 Toggle DEFI BRIDGE      ", " ADD TOKEN    ",
-      " 🚪 LOCK & EXIT    "};
+      " 🔗 Toggle DEFI BRIDGE      ", " ADD TOKEN    "};
 
   auto menu = Menu(&entries, &selected);
 
@@ -60,21 +58,20 @@ Component CLI::print_wallet_ui(void) {
                   color(Color::Green)}));
 
     auto asset_panel =
-        vbox({
-            text(" 💰 ASSETS ") | ftxui::bold | color(Color::Yellow),
-            separatorDouble() | color(Color::Yellow),
+        vbox({text(" 💰 ASSETS ") | ftxui::bold | color(Color::Yellow),
+              separatorDouble() | color(Color::Yellow),
 
-            vbox(std::move(asset_rows)),
+              vbox(std::move(asset_rows)),
 
-            separator(),
+              separator(),
 
-            text(" ADDRESS: ") | dim,
-            text_(wallet_info.addr) | color(Color::Cyan),
-            actions->is_bridge_running()
-                ? text(" DEFI BRIDGE ENABLED ") | color(Color::Green)
-                : text(" DEFI BRIDGE DISABLED ") | color(Color::Red),
-            text(" (Press 'C' to copy) ") | dim | hcenter,
-        }) |
+              text(" ADDRESS: ") | dim,
+              text_(wallet_info.addr) | color(Color::Cyan),
+              text(" (Press 'C' to copy) ") | dim | hcenter, text(""),
+              actions->is_bridge_running() ? text(" DEFI BRIDGE ENABLED ") |
+                                                 color(Color::Green) | hcenter
+                                           : text(" DEFI BRIDGE DISABLED ") |
+                                                 color(Color::Red) | hcenter}) |
         borderHeavy | size(WIDTH, EQUAL, 45);
 
     float refresh_in = actions->get_next_refresh();
@@ -166,6 +163,7 @@ Component CLI::print_wallet_ui(void) {
     } else if (event == Event::Character('q') ||
                event == Event::Character('Q')) {
       screen.Exit();
+      actions->toggle_dapp_bridge(false);
       return true;
     }
 
@@ -363,7 +361,8 @@ Component CLI::transaction_history_render(void) {
 
   return CatchEvent(component, [=, this](Event event) {
     auto [history, error] = actions->get_transactions_history();
-    if (event == Event::Character('b') || event == Event::Character('B')) {
+    if (event == Event::Escape || event == Event::Character('b') ||
+        event == Event::Character('B')) {
       *scroll_offset = 0;
       set_active_tab(WALLET_UI);
       return true;

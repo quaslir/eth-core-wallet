@@ -4,34 +4,76 @@ project(eth-core-wallet)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-set(HTTP_ONLY ON CACHE INTERNAL "")
-set(CURL_DISABLE_FTP ON CACHE INTERNAL "")
-set(CURL_DISABLE_TFTP ON CACHE INTERNAL "")
-set(CURL_DISABLE_PROXY ON CACHE INTERNAL "")
-set(CURL_DISABLE_DICT ON CACHE INTERNAL "")
-set(CURL_DISABLE_FILE ON CACHE INTERNAL "")
-set(CURL_DISABLE_GOPHER ON CACHE INTERNAL "")
-set(CURL_DISABLE_SMTP ON CACHE INTERNAL "")
-set(CURL_DISABLE_POP3 ON CACHE INTERNAL "")
-set(CURL_DISABLE_IMAP ON CACHE INTERNAL "")
-set(CURL_DISABLE_RTSP ON CACHE INTERNAL "")
-set(CURL_DISABLE_TELNET ON CACHE INTERNAL "")
-set(CURL_DISABLE_MQTT ON CACHE INTERNAL "")
-set(ENABLE_THREADED_RESOLVER OFF CACHE INTERNAL "")
-set(BUILD_TESTING OFF CACHE INTERNAL "")
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static building" FORCE)
 enable_testing()
 include(FetchContent)
+include(ExternalProject)
+set(VENDOR_DIR ${CMAKE_BINARY_DIR}/vendor)
+set(OPENSSL_INSTALL_DIR ${VENDOR_DIR}/openssl)
+set(CURL_INSTALL_DIR ${VENDOR_DIR}/curl)
+file(MAKE_DIRECTORY ${OPENSSL_INSTALL_DIR}/include)
+file(MAKE_DIRECTORY ${CURL_INSTALL_DIR}/include)
+
+ExternalProject_Add(ext_openssl
+    URL https://github.com/openssl/openssl/releases/download/openssl-3.0.13/openssl-3.0.13.tar.gz
+    PREFIX ${VENDOR_DIR}/openssl_build
+    CONFIGURE_COMMAND <SOURCE_DIR>/config no-shared no-tests --prefix=${OPENSSL_INSTALL_DIR} --libdir=lib
+    BUILD_COMMAND make -j8
+    INSTALL_COMMAND make install_sw
+)
+
+add_library(OpenSSL::Crypto STATIC IMPORTED GLOBAL)
+set_target_properties(OpenSSL::Crypto PROPERTIES
+    IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
+    INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
+)
+add_dependencies(OpenSSL::Crypto ext_openssl)
+
+add_library(OpenSSL::SSL STATIC IMPORTED GLOBAL)
+set_target_properties(OpenSSL::SSL PROPERTIES
+    IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libssl.a
+    INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
+    INTERFACE_LINK_LIBRARIES OpenSSL::Crypto
+)
+add_dependencies(OpenSSL::SSL ext_openssl)
+
+ExternalProject_Add(ext_curl
+    URL https://github.com/curl/curl/releases/download/curl-8_7_1/curl-8.7.1.tar.gz
+    PREFIX ${VENDOR_DIR}/curl_build
+    DEPENDS ext_openssl
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CURL_INSTALL_DIR}
+        -DBUILD_SHARED_LIBS=OFF
+        -DCURL_STATICLIB=ON
+        -DCURL_USE_OPENSSL=ON
+        -DOPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
+        -DOPENSSL_USE_STATIC_LIBS=TRUE
+        -DBUILD_CURL_EXE=OFF
+        -DHTTP_ONLY=ON
+        -DCMAKE_USE_LIBSSH2=OFF
+        -DCURL_USE_LIBSSH2=OFF
+        -DCURL_USE_LIBSSH=OFF
+        -DCURL_USE_LIBPSL=OFF
+        -DCURL_BROTLI=OFF
+        -DCURL_ZSTD=OFF
+        -DCURL_USE_GSSAPI=OFF
+        -DCURL_DISABLE_LDAP=ON
+)
+
+add_library(libcurl STATIC IMPORTED GLOBAL)
+set_target_properties(libcurl PROPERTIES
+    IMPORTED_LOCATION ${CURL_INSTALL_DIR}/lib/libcurl.a
+    INTERFACE_INCLUDE_DIRECTORIES ${CURL_INSTALL_DIR}/include
+    INTERFACE_LINK_LIBRARIES "OpenSSL::SSL;OpenSSL::Crypto"
+)
+add_dependencies(libcurl ext_curl)
+
+
 FetchContent_Declare(
     json
     URL  https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 
-FetchContent_Declare(
-    curl
-    GIT_REPOSITORY https://github.com/curl/curl.git
-    GIT_TAG        curl-8_7_1
-)
 
 FetchContent_Declare(
   ftxui
@@ -63,14 +105,12 @@ set(SECP256K1_ENABLE_MODULE_RECOVERY ON CACHE BOOL "" FORCE)
 set(SECP256K1_ENABLE_MODULE_SCHNORRSIG OFF CACHE BOOL "" FORCE)
 set(SECP256K1_INSTALL OFF CACHE BOOL "" FORCE)
 
+
 FetchContent_MakeAvailable(json)
-FetchContent_MakeAvailable(curl)
 FetchContent_MakeAvailable(ftxui)
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(secp256k1)
 FetchContent_MakeAvailable(httplib)
-
-find_package(OpenSSL REQUIRED)
 
 add_subdirectory(external)
 add_subdirectory(src)

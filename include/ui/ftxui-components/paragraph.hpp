@@ -19,7 +19,7 @@ public:
 
   void ComputeRequirement(void) override {
     requirement_.min_x = data_.size();
-    requirement_.min_y = MIN_Y;
+    requirement_.min_y = Configuration::get_instance().MIN_Y;
 
     requirement_.flex_grow_x = 1;
     requirement_.flex_grow_y = 1;

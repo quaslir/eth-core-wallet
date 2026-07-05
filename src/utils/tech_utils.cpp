@@ -10,14 +10,26 @@
 #include <ctime>
 #include <filesystem>
 #include <fmt/core.h>
+#include <iomanip>
 #include <openssl/crypto.h>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <system_error>
 namespace tech_utils {
 
 secure_string tolower(const secure_string &target) {
   secure_string lowercase_str{target};
+
+  std::transform(lowercase_str.begin(), lowercase_str.end(),
+                 lowercase_str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+
+  return lowercase_str;
+}
+
+std::string tolower(const std::string &target) {
+  std::string lowercase_str{target};
 
   std::transform(lowercase_str.begin(), lowercase_str.end(),
                  lowercase_str.begin(),
@@ -254,5 +266,23 @@ std::string decode_abi_string(const std::string &hex) {
   }
 
   return result;
+}
+
+std::string format_unix_timestamp(const std::string &unix_str) {
+  if (unix_str.empty() || unix_str == "0")
+    return "";
+
+  try {
+    std::time_t t = std::stoull(unix_str);
+    std::tm *tm_info = std::localtime(&t);
+
+    std::ostringstream ss;
+
+    ss << std::put_time(tm_info, "%Y-%m-%d %H:%M:%S");
+
+    return ss.str();
+  } catch (...) {
+    return "Invalid time";
+  }
 }
 } // namespace tech_utils

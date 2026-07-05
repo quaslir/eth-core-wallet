@@ -15,9 +15,7 @@ const static std::vector<NetworkConfig> list = {
     {" 💜 Polygon PoS      ", "polygon-mainnet", 137},
     {" 💙 Arbitrum One     ", "arb-mainnet", 42161},
     {" 🔴 Optimism         ", "opt-mainnet", 10},
-    {" 🧪 Sepolia Testnet  ", "eth-sepolia", 11155111},
-
-};
+    {" 🧪 Sepolia Testnet  ", "eth-sepolia", 11155111}};
 inline std::vector<std::string> get_network_names(void) {
   std::vector<std::string> names;
 

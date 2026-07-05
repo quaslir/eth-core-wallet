@@ -3,7 +3,6 @@
 #include "api/http.hpp"
 #include "api/json.hpp"
 #include <exception>
-#include <iostream>
 #include <utility>
 TxStatusManager::~TxStatusManager() {
   if (worker.valid()) {

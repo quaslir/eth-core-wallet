@@ -12,7 +12,7 @@ private:
   double request_gas(void);
 
 public:
-  GasManager() : Manager(GWEI_TIMEOUT) {}
+  GasManager() : Manager(Configuration::get_instance().GWEI_TIMEOUT) {}
   ~GasManager();
   std::function<std::string(void)> form_url;
 

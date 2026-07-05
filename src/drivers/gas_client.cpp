@@ -22,7 +22,8 @@ double GasManager::request_gas(void) {
     json j = json::parse(buffer);
     std::string res = j.at("result").get<std::string>();
     Uint256 value(res, true);
-    std::string converted = value.from_wei_to_asset(WEI_TO_GWEI);
+    std::string converted =
+        value.from_wei_to_asset(Configuration::get_instance().WEI_TO_GWEI);
 
     double to_number = 0.0;
     tech_utils::to_double(converted, to_number);
