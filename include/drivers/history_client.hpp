@@ -19,6 +19,7 @@ struct TransactionRecord {
   std::string to;
   std::string timestamp;
   bool incoming;
+  uint64_t unix_time;
 };
 class HistoryManager : public Manager {
 private:
@@ -35,15 +36,18 @@ private:
       std::make_shared<std::vector<TransactionRecord>>()};
 #endif
 
-  std::vector<TransactionRecord> parse_transactions(const json &j,
-                                                    bool incoming = true) const;
+  std::vector<TransactionRecord>
+  parse_transactions(const json &j, const std::string &target_addr,
+                     bool is_erc20) const;
 
   std::vector<TransactionRecord> make_request(const std::string &eth_addr);
 
 public:
-  HistoryManager() : Manager(Configuration::get_instance().TRANSACTION_TIMEOUT) {}
+  HistoryManager()
+      : Manager(Configuration::get_instance().TRANSACTION_TIMEOUT) {}
   ~HistoryManager();
-  std::function<std::string(void)> form_url;
+  std::function<std::string(const std::string &eth_addr)> form_erc20_url;
+  std::function<std::string(const std::string &eth_addr)> form_native_url;
 
   void request(const secure_string &eth_addr) override;
   void update(void) override;

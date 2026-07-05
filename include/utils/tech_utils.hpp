@@ -11,6 +11,7 @@
 struct Asset;
 namespace tech_utils {
 secure_string tolower(const secure_string &target);
+std::string tolower(const std::string &target);
 secure_string to_hex(const bytes_data &data);
 bytes_data to_hex_bytes(const bytes_data &data);
 bytes_data from_hex_to_bytes(std::string hex);
@@ -30,4 +31,5 @@ void copy_to_clipboard(const secure_string &text);
 std::optional<uint64_t> parse_hex(const std::string &hex);
 secure_string sanitize_hex(secure_string hex);
 std::string decode_abi_string(const std::string &hex);
+std::string format_unix_timestamp(const std::string &unix_str);
 } // namespace tech_utils

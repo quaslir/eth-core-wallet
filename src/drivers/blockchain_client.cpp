@@ -4,6 +4,7 @@
 #include "core/secure_bytes_data.hpp"
 #include "core/uint256.hpp"
 #include "drivers/balance_client.hpp"
+#include "fmt/core.h"
 #include "fmt/format.h"
 #include "utils/tech_utils.hpp"
 #include <chrono>
@@ -12,15 +13,36 @@
 #include <string>
 BlockchainClient::BlockchainClient(void)
     : last_update_time(std::chrono::steady_clock::now() -
-                       std::chrono::milliseconds(Configuration::get_instance().FULL_UPDATE_TIMEOUT)) {
+                       std::chrono::milliseconds(
+                           Configuration::get_instance().FULL_UPDATE_TIMEOUT)) {
   auto form_url_callback = [this](void) -> std::string { return form_url(); };
 
-  history_manager.form_url = form_url_callback;
   balance_manager.form_url = form_url_callback;
   gas_manager.form_url = form_url_callback;
   transaction_manager.form_url = form_url_callback;
   tx_status_manager.form_url = form_url_callback;
   tokens_metadata_manager.form_url = form_url_callback;
+
+  history_manager.form_native_url =
+      [this](const std::string &eth_addr) -> std::string {
+    return fmt::format(
+        "https://api.etherscan.io/v2/"
+        "api?chainid={}&module=account&action=txlist&address={}&startblock=0&"
+        "endblock=99999999&page=1&offset=50&sort=desc&apikey={}",
+        active_network.chain_id, eth_addr,
+        Configuration::get_instance().get_etherscan_api());
+  };
+
+  history_manager.form_erc20_url =
+      [this](const std::string &eth_addr) -> std::string {
+    return fmt::format(
+        "https://api.etherscan.io/v2/"
+        "api?chainid={}&module=account&action=tokentx&address={}&startblock=0&"
+        "endblock=99999999&page=1&offset=50&sort=desc&apikey={}",
+        active_network.chain_id, eth_addr,
+        Configuration::get_instance().get_etherscan_api());
+  };
+
   balance_manager.set_current_chain_id_callback(
       [this]() -> uint64_t { return active_network.chain_id; });
   balance_manager.set_current_assets_callback(
@@ -39,7 +61,8 @@ void BlockchainClient::update(void) {
   gas_manager.update();
   auto now = std::chrono::steady_clock::now();
   if ((now - last_update_time >=
-       std::chrono::milliseconds(Configuration::get_instance().FULL_UPDATE_TIMEOUT))) {
+       std::chrono::milliseconds(
+           Configuration::get_instance().FULL_UPDATE_TIMEOUT))) {
     bool upd_balance = update_balance_manager(true);
     bool upd_history = update_history_manager(true);
     bool upd_gas = update_gas_manager(true);
@@ -59,7 +82,8 @@ void BlockchainClient::change_network(
   history_manager.clear();
 
   last_update_time = std::chrono::steady_clock::now() -
-                     std::chrono::milliseconds(Configuration::get_instance().FULL_UPDATE_TIMEOUT);
+                     std::chrono::milliseconds(
+                         Configuration::get_instance().FULL_UPDATE_TIMEOUT);
 
   update();
   push_activity("🔗", "Switched to " + new_network.name);
@@ -155,7 +179,8 @@ float BlockchainClient::get_next_refresh(void) const {
                      now - last_update_time)
                      .count();
   float progress =
-      static_cast<float>(elapsed) / static_cast<float>(Configuration::get_instance().FULL_UPDATE_TIMEOUT);
+      static_cast<float>(elapsed) /
+      static_cast<float>(Configuration::get_instance().FULL_UPDATE_TIMEOUT);
 
   return std::min(progress, 1.0f);
 }

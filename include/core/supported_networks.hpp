@@ -8,16 +8,19 @@ struct NetworkConfig {
   std::string name;
   std::string rpc_prefix;
   uint32_t chain_id;
+  std::string explorer_api_url;
 };
 
 const static std::vector<NetworkConfig> list = {
-    {" 🌐 Ethereum Mainnet ", "eth-mainnet", 1},
-    {" 💜 Polygon PoS      ", "polygon-mainnet", 137},
-    {" 💙 Arbitrum One     ", "arb-mainnet", 42161},
-    {" 🔴 Optimism         ", "opt-mainnet", 10},
-    {" 🧪 Sepolia Testnet  ", "eth-sepolia", 11155111},
-
-};
+    {" 🌐 Ethereum Mainnet ", "eth-mainnet", 1, "https://api.etherscan.io/api"},
+    {" 💜 Polygon PoS      ", "polygon-mainnet", 137,
+     "https://api.polygonscan.com/api"},
+    {" 💙 Arbitrum One     ", "arb-mainnet", 42161,
+     "https://api.arbiscan.io/api"},
+    {" 🔴 Optimism         ", "opt-mainnet", 10,
+     "https://api-optimistic.etherscan.io/api"},
+    {" 🧪 Sepolia Testnet  ", "eth-sepolia", 11155111,
+     "https://api-sepolia.etherscan.io/api"}};
 inline std::vector<std::string> get_network_names(void) {
   std::vector<std::string> names;
 

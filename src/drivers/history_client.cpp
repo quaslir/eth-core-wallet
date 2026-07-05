@@ -2,108 +2,96 @@
 #include "api/http.hpp"
 #include "api/json.hpp"
 #include "core/secure_bytes_data.hpp"
-#include "fmt/format.h"
 #include "utils/tech_utils.hpp"
-#include <cstdint>
+#include <algorithm>
+#include <exception>
 #include <functional>
 #include <future>
 #include <memory>
 #include <string>
-#include <unistd.h>
 #include <utility>
 #include <vector>
-std::vector<TransactionRecord>
-HistoryManager::parse_transactions(const json &j, bool incoming) const {
-  try {
-    std::vector<TransactionRecord> history;
+std::vector<TransactionRecord> HistoryManager::parse_transactions(
+    const json &j, const std::string &target_addr, bool is_erc20) const {
 
-    if (!j.contains("result") || j["result"].is_null()) {
-      return std::vector<TransactionRecord>();
+  std::vector<TransactionRecord> history;
+
+  if (!j.contains("status") || j["status"].get<std::string>() != "1") {
+    return history;
+  }
+  std::string lower_target = tech_utils::tolower(target_addr);
+
+  for (const auto &item : j["result"]) {
+    TransactionRecord tx;
+    tx.hash = item.value("hash", "");
+    tx.from = item.value("from", "");
+    tx.to = item.value("to", "");
+    tx.incoming = (tech_utils::tolower(tx.to) == lower_target);
+    std::string unix_time = item.value("timeStamp", "0");
+    tx.unix_time = std::stoull(unix_time);
+    tx.timestamp = tech_utils::format_unix_timestamp(unix_time);
+    tx.block_num = item.value("blockNumber", "0");
+    std::string raw_value = item.value("value", "0");
+
+    double val_double = 0.0;
+    try {
+      val_double = std::stod(raw_value);
+
+    } catch (...) {
+      val_double = 0.0;
     }
 
-    if (!j["result"].contains("transfers") ||
-        j["result"]["transfers"].is_null()) {
-      return std::vector<TransactionRecord>();
-      ;
+    if (is_erc20) {
+      tx.asset = item.value("tokenSymbol", "UNKNOWN");
+      int decimals = 18;
+      if (item.contains("tokenDecimal") &&
+          !item["tokenDecimal"].get<std::string>().empty()) {
+        try {
+          decimals = std::stoi(item["tokenDecimal"].get<std::string>());
+        } catch (...) {
+        }
+      }
+
+      tx.value = val_double / std::pow(10, decimals);
+    } else {
+      tx.asset = "ETH";
+      tx.value = val_double / 1e18;
     }
-    for (const auto &item : j["result"]["transfers"]) {
-      TransactionRecord tx;
-      tx.hash = item["hash"].get<std::string>();
-      tx.value = item.is_null() ? 0.0 : item["value"].get<double>();
-      tx.asset = item["asset"].get<std::string>();
-      tx.incoming = incoming;
-      if (item.contains("from")) {
-        tx.from = item["from"].get<std::string>();
-      }
-      if (item.contains("to")) {
-        tx.to = item["to"].get<std::string>();
-      }
 
-      if (item.contains("metadata") &&
-          !item["metadata"]["blockTimestamp"].is_null()) {
-        tx.timestamp = item["metadata"]["blockTimestamp"].get<std::string>();
-      }
-
-      if (item.contains("blockNum")) {
-        tx.block_num = item["blockNum"].get<std::string>();
-      }
+    if (tx.value > 0.0 || !is_erc20) {
 
       history.push_back(tx);
     }
-    return history;
-  } catch (const std::exception &err) {
-    return std::vector<TransactionRecord>();
   }
+  return history;
 }
 
 std::vector<TransactionRecord>
 HistoryManager::make_request(const std::string &eth_addr) {
+  cached_history.clear();
+  std::string base_url{};
 
-  json request_body_1 =
-      transactions_history::form_receives(eth_addr, last_known_block);
-  json request_body_2 =
-      transactions_history::form_sends(eth_addr, last_known_block);
+  try {
+    std::string res_native = http::get_request(form_native_url(eth_addr));
+    std::string res_erc20 = http::get_request(form_erc20_url(eth_addr));
 
-  auto make_request_and_parse_buffer =
-      [this](const json &j) -> std::pair<json, bool> {
-    try {
-      std::string data = j.dump();
-      std::string buffer = http::post_request(form_url(), data);
-      json res = json::parse(buffer);
-      return {res, true};
-    } catch (const std::exception &err) {
-      return {json::object(), false};
-    }
-  };
+    auto history_native =
+        parse_transactions(json::parse(res_native), eth_addr, false);
+    auto history_erc20 =
+        parse_transactions(json::parse(res_erc20), eth_addr, true);
 
-  auto future_in = std::async(std::launch::async, make_request_and_parse_buffer,
-                              std::cref(request_body_1));
-  auto future_out =
-      std::async(std::launch::async, make_request_and_parse_buffer,
-                 std::cref(request_body_2));
-
-  auto [object_in, status_in] = future_in.get();
-  auto [object_out, status_out] = future_out.get();
-
-  auto history_in = parse_transactions(object_in);
-  auto history_out = parse_transactions(object_out, false);
-
-  cached_history.insert(cached_history.end(), history_in.begin(),
-                        history_in.end());
-  cached_history.insert(cached_history.end(), history_out.begin(),
-                        history_out.end());
+    cached_history.insert(cached_history.end(), history_native.begin(),
+                          history_native.end());
+    cached_history.insert(cached_history.end(), history_erc20.begin(),
+                          history_erc20.end());
+  } catch (const std::exception &err) {
+    return cached_history;
+  }
 
   std::sort(
       cached_history.begin(), cached_history.end(),
-      [](const auto &a, const auto &b) { return b.timestamp < a.timestamp; });
+      [](const auto &a, const auto &b) { return a.unix_time > b.unix_time; });
 
-  if (!cached_history.empty()) {
-
-    auto block_num = tech_utils::parse_hex(cached_history.front().block_num);
-    if (block_num.has_value()) {
-      last_known_block = fmt::format("0x{:x}", *block_num + 1);
-    }
-  }
   return cached_history;
 }
 

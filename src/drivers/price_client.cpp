@@ -21,7 +21,8 @@ price_manager::request_prices(const std::vector<std::string> &symbols) {
 
     const std::string url =
         "https://api.coingecko.com/api/v3/simple/price?ids=" + fsyms +
-        "&vs_currencies=usd&x_cg_demo_api_key=" + Configuration::get_instance().get_coingecko_api();
+        "&vs_currencies=usd&x_cg_demo_api_key=" +
+        Configuration::get_instance().get_coingecko_api();
     std::string buffer = http::get_request(url);
 
     json j = json::parse(buffer);
