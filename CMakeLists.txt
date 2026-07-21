@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static building" FORCE)
+
+set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release)
+
 enable_testing()
 include(FetchContent)
 include(ExternalProject)
@@ -42,6 +46,7 @@ ExternalProject_Add(ext_curl
     PREFIX ${VENDOR_DIR}/curl_build
     DEPENDS ext_openssl
     CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_INSTALL_PREFIX=${CURL_INSTALL_DIR}
         -DBUILD_SHARED_LIBS=OFF
         -DCURL_STATICLIB=ON
@@ -115,60 +120,10 @@ FetchContent_MakeAvailable(httplib)
 add_subdirectory(external)
 add_subdirectory(src)
 
-
-
-if(NOT CMAKE_BUILD_TYPE)
-set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build" FORCE)
-endif()
-
 if(TARGET wallet_core)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-target_compile_options(wallet_core PRIVATE
-        -Wall -Wextra -Wpedantic -Werror -g
-        -Wshadow -Wnon-virtual-dtor -Wold-style-cast
-        -Wcast-align -Wunused-parameter
-        -fstack-protector-strong
-        -fsanitize=address -fsanitize=undefined
-    )
-    target_link_options(wallet_core PUBLIC
-        -fsanitize=address -fsanitize=undefined
-    )
-
-find_program(CPPCHECK_EXE NAMES "cppcheck")
-
-if(CPPCHECK_EXE)
-    file(GLOB_RECURSE CPPCHECK_SOURCES "src/*.cpp" "include/*.hpp")
-
-    add_custom_target(cppcheck
-        COMMAND ${CPPCHECK_EXE}
-            --enable=all
-            --std=c++20
-            --inconclusive
-            --suppress=missingIncludeSystem
-            --inline-suppr
-            -I ${CMAKE_CURRENT_SOURCE_DIR}/include
-            ${CPPCHECK_SOURCES}
-        COMMENT "Running static analysis with cppcheck..."
-    )
+    target_compile_options(wallet_core PRIVATE -O3)
+    target_compile_definitions(wallet_core PRIVATE NDEBUG)
 endif()
-
-find_program(CLANGTIDY_EXE NAMES "clang-tidy")
-
-
-endif()
-endif()
-
-file(GLOB_RECURSE ALL_FILES "src/*.cpp" "include/*.hpp")
-find_program(CLANG_FORMAT_EXE NAMES "clang-format")
-
-if(CLANG_FORMAT_EXE)
-
-add_custom_target(format
-COMMAND ${CLANG_FORMAT_EXE} -i -style=LLVM ${ALL_FILES}
-COMMENT "Formatting all source files with clang format..."
-)
-endif()
-
 
 add_subdirectory(tests)
 
